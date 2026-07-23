@@ -1,0 +1,9 @@
+{
+  "name": "cisd-journal",
+  "version": "0.3.0",
+  "description": "CISD discipline journal desktop app",
+  "main": "main.js",
+  "scripts": {"start": "electron .", "dist:win": "electron-builder --win portable"},
+  "devDependencies": {"electron": "^37.2.1", "electron-builder": "^26.0.12"},
+  "build": {"appId": "ai.cisdjournal.desktop", "productName": "CISD Journal", "win": {"target": "portable"}}
+}

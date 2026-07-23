@@ -1,0 +1,2 @@
+const {contextBridge,ipcRenderer}=require('electron');
+contextBridge.exposeInMainWorld('journal',{settings:()=>ipcRenderer.invoke('get-settings'),selectCSV:()=>ipcRenderer.invoke('select-csv'),selectTerminal:k=>ipcRenderer.invoke('select-terminal',k),launch:k=>ipcRenderer.invoke('launch-terminal',k),reload:()=>ipcRenderer.invoke('reload-signals'),onSignals:fn=>ipcRenderer.on('signals',(_,x)=>fn(x)),onError:fn=>ipcRenderer.on('source-error',(_,x)=>fn(x))});
