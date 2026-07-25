@@ -1,8 +1,40 @@
 {
   "name": "cisd-journal",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "main.js",
-  "scripts": {"start": "electron .", "dist:win": "electron-builder --win portable"},
-  "devDependencies": {"electron": "^37.2.1", "electron-builder": "^26.0.12"},
-  "build": {"appId": "ai.cisdjournal.desktop", "productName": "CISD Journal", "win": {"target": "portable"}}
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis",
+    "test": "node --check main.js && node --check preload.js && node --check renderer/app.js && node qa/importer-tests.js && node qa/store-tests.js && node qa/news-providers-tests.js && node qa/e2e-simulation.js"
+  },
+  "devDependencies": {
+    "electron": "^37.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "ai.cisdjournal.desktop",
+    "productName": "CISD Journal",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CISD Journal"
+    },
+    "extraResources": [
+      {
+        "from": "docs",
+        "to": "docs"
+      }
+    ]
+  },
+  "description": "Private trading performance and discipline journal",
+  "author": "CISD Journal"
 }
