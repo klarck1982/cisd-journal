@@ -4,7 +4,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist:win": "electron-builder --win nsis",
+    "dist:win": "electron-builder --win nsis --publish never",
     "test": "node --check main.js && node --check preload.js && node --check renderer/app.js && node qa/importer-tests.js && node qa/store-tests.js && node qa/news-providers-tests.js && node qa/e2e-simulation.js"
   },
   "devDependencies": {
