@@ -15,6 +15,8 @@ const model = {
   edge: null,
   playbooks: null,
   daily: null,
+  calendar: null,
+  calendarMonth: null,
   dailyDraft: { mood: '' },
   fundingAccess: null,
   runtimeReadiness: null,
@@ -66,6 +68,7 @@ function persistUiState() {
       filters: model.filters,
       search: model.search,
       quickStartDismissed: model.quickStartDismissed,
+      calendarMonth: model.calendarMonth,
     }));
   } catch {}
 }
@@ -81,6 +84,7 @@ function restoreUiState() {
     if (saved.filters) model.filters = { ...model.filters, ...saved.filters };
     if (saved.search) model.search = { ...model.search, ...saved.search };
     if (saved.quickStartDismissed) model.quickStartDismissed = true;
+    if (saved.calendarMonth) model.calendarMonth = saved.calendarMonth;
   } catch {}
 }
 

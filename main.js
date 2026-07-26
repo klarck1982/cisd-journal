@@ -13,6 +13,7 @@ const { buildAccountAnalyticsSnapshot } = require('./lib/engines/analytics');
 const { buildEdgeSnapshot } = require('./lib/engines/edge');
 const { createPlaybook, buildPlaybookOverview } = require('./lib/engines/playbooks');
 const { buildDailyReviewSnapshot } = require('./lib/engines/daily-review');
+const { buildMonthCalendar, listTradedMonths } = require('./lib/engines/calendar');
 const { resolveLocale, getBundle } = require('./lib/locale');
 const { resolveFundingAccessMode, validateFundingAccess, buildFundingAccessView } = require('./lib/funding-access');
 const { parseFundingPipsSharedText } = require('./lib/funding-shared-parser');
@@ -431,6 +432,14 @@ function registerHandlers() {
   ipcMain.handle('runtime:readiness', () => buildRuntimeReadinessSnapshot({ app, isPackaged: app.isPackaged, currentDirname: __dirname, platform: process.platform }));
   ipcMain.handle('dashboard:snapshot', (_, accountId, options = {}) => buildAccountDashboardSnapshot(read(), accountId, options));
   ipcMain.handle('analytics:snapshot', (_, accountId, options = {}) => buildAccountAnalyticsSnapshot(read(), accountId, options));
+  ipcMain.handle('calendar:month', (_, accountId, options = {}) => {
+    const data = read();
+    return {
+      calendar: buildMonthCalendar(data, accountId, options),
+      months: listTradedMonths(data, accountId, options),
+    };
+  });
+
   ipcMain.handle('daily:snapshot', (_, accountId, options = {}) => buildDailyReviewSnapshot(read(), accountId, options));
 
   ipcMain.handle('playbooks:overview', (_, accountId, options = {}) => buildPlaybookOverview(read(), accountId, options));

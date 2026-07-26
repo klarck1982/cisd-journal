@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('cisd', {
   dashboardSnapshot: (accountId, options) => ipcRenderer.invoke('dashboard:snapshot', accountId, options),
   analyticsSnapshot: (accountId, options) => ipcRenderer.invoke('analytics:snapshot', accountId, options),
   edgeSnapshot: (accountId, options) => ipcRenderer.invoke('edge:snapshot', accountId, options),
+  calendarMonth: (accountId, options) => ipcRenderer.invoke('calendar:month', accountId, options),
   dailySnapshot: (accountId, options) => ipcRenderer.invoke('daily:snapshot', accountId, options),
   playbooksOverview: (accountId, options) => ipcRenderer.invoke('playbooks:overview', accountId, options),
   savePlaybook: (payload) => ipcRenderer.invoke('playbook:save', payload),

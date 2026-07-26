@@ -15,6 +15,7 @@ function render() {
   renderPlaybooks();
   renderEdge();
   renderAnalytics();
+  renderCalendar();
   renderData();
   renderSettings();
   renderReasonModal();
@@ -43,6 +44,7 @@ async function refreshSnapshots() {
   model.edge = await cisd.edgeSnapshot(model.accountId, { risk: { today: todayKey() } });
   model.playbooks = await cisd.playbooksOverview(model.accountId);
   model.daily = await cisd.dailySnapshot(model.accountId, { today: todayKey() });
+  model.calendar = await cisd.calendarMonth(model.accountId, model.calendarMonth ? { month: model.calendarMonth } : {});
 }
 
 async function refreshStateAndRender() {

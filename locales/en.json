@@ -343,7 +343,29 @@
     },
     "tradesCount": "events",
     "winRateShort": "WR",
-    "emptyCurve": "Add trades or replay results to generate the curve."
+    "emptyCurve": "Add trades or replay results to generate the curve.",
+    "calendar": {
+      "title": "Monthly P&L calendar",
+      "hint": "Spot which days actually work for you",
+      "net": "Month net",
+      "tradedDays": "Days traded",
+      "dayWinRate": "Green days",
+      "avgDay": "Average day",
+      "best": "Best day",
+      "worst": "Worst day",
+      "week": "Wk",
+      "noTrades": "No trades this month",
+      "weekdayTitle": "By weekday",
+      "weekdays": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      }
+    }
   },
   "data": {
     "kicker": "Import operations",

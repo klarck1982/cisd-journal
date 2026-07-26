@@ -600,6 +600,22 @@
 
           <section class="panel">
             <div class="panel-head">
+              <h3 id="calendarTitle"></h3>
+              <div class="calendar-controls">
+                <span class="panel-hint" id="calendarHint"></span>
+                <select id="calendarMonthSelect" class="calendar-month-select"></select>
+              </div>
+            </div>
+            <div id="calendarCards" class="metric-grid"></div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+            <div class="calendar-weekday-strip">
+              <span id="calendarWeekdayTitle"></span>
+              <div id="calendarWeekdays" class="weekday-bars"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
               <h3 id="analyticsSummaryTitle"></h3>
               <span id="analyticsSummaryHint" class="panel-hint"></span>
             </div>
@@ -1077,6 +1093,7 @@
   <script src="app/07-pages-playbooks.js"></script>
   <script src="app/08-pages-edge.js"></script>
   <script src="app/09-pages-rest.js"></script>
+  <script src="app/09a-calendar.js"></script>
   <script src="app/10-render.js"></script>
   <script src="app/11-actions.js"></script>
   <script src="app/12-bootstrap.js"></script>

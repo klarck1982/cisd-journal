@@ -20,6 +20,7 @@ function bindEvents() {
     renderQuickStart();
   };
 
+  $('#calendarMonthSelect').addEventListener('change', changeCalendarMonth);
   $('#saveMorningBtn').onclick = saveMorning;
   $('#saveEveningBtn').onclick = saveEvening;
 

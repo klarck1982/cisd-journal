@@ -179,6 +179,9 @@ function applyStaticText() {
   $('#restoreBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.restore'))}`;
   $('#openGuideBtn').innerHTML = `${icon('journal','button-icon')}${escapeHtml(t('settings.guide'))}`;
   $('#restartOnboardingBtn').innerHTML = `${icon('settings','button-icon')}${escapeHtml(t('settings.restartOnboarding'))}`;
+  $('#calendarTitle').textContent = t('analytics.calendar.title');
+  $('#calendarHint').textContent = t('analytics.calendar.hint');
+  $('#calendarWeekdayTitle').textContent = t('analytics.calendar.weekdayTitle');
   $('#dailyKicker').textContent = t('daily.kicker');
   $('#dailyTitle').textContent = t('daily.title');
   $('#dailyDescription').textContent = t('daily.description');
