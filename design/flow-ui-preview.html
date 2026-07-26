@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>CISD Journal — التدفقات الجديدة</title>
+<style>
+:root {
+  /* --- Surfaces: 4 explicit elevations, not 8 arbitrary white overlays ----- */
+  --s-base: #07111d;
+  --s-1: #0e1a2a;
+  --s-2: #16243a;
+  --s-3: #1d2e47;
+
+  /* --- Lines: 3 weights --------------------------------------------------- */
+  --line-subtle: rgba(148, 178, 214, 0.10);
+  --line: rgba(148, 178, 214, 0.18);
+  --line-strong: rgba(148, 178, 214, 0.30);
+
+  /* --- Ink: 3 levels ------------------------------------------------------ */
+  --text: #eef5ff;
+  --muted: #a3b4cc;
+  --ink-3: #7c8fa8;
+
+  /* --- Semantic hues. Each gets exactly 3 alphas: wash / edge / solid ------ */
+  --blue: #58a6ff;
+  --blue-wash: rgba(88, 166, 255, 0.10);
+  --blue-edge: rgba(88, 166, 255, 0.35);
+  --teal: #55d3c6;
+  --green: #4ee39a;
+  --green-wash: rgba(78, 227, 154, 0.10);
+  --green-edge: rgba(78, 227, 154, 0.35);
+  --yellow: #ffcf66;
+  --yellow-wash: rgba(255, 207, 102, 0.10);
+  --yellow-edge: rgba(255, 207, 102, 0.35);
+  --red: #ff7b8f;
+  --red-wash: rgba(255, 123, 143, 0.10);
+  --red-edge: rgba(255, 123, 143, 0.35);
+
+  /* --- Spacing: 4px grid -------------------------------------------------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* --- Type: 1.25 ratio, six steps ---------------------------------------- */
+  --t-xs: 12px;
+  --t-sm: 13px;
+  --t-md: 15px;
+  --t-lg: 19px;
+  --t-xl: 24px;
+  --t-2xl: 30px;
+
+  /* --- Radius: 3 values --------------------------------------------------- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius: 14px;
+
+  /* --- Elevation: 2 values ------------------------------------------------ */
+  --el-1: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --el-2: 0 8px 24px rgba(0, 0, 0, 0.36);
+  --shadow: var(--el-2);
+
+  /* --- Motion: one duration, one curve ------------------------------------ */
+  --motion: 140ms cubic-bezier(.2, .8, .3, 1);
+
+  /* --- Type families ------------------------------------------------------
+     Arabic first: Inter carries no Arabic glyphs at all, so an Arabic-first
+     product that leads with Inter silently renders its entire UI in Tahoma,
+     a 1999 low-DPI fallback nobody chose. Named Arabic faces are listed ahead
+     of the generic UI stack so a system that has one uses it.
+     --font-num is a separate stack for figures: currency columns need
+     consistent digit shapes and tabular alignment.                          */
+  --font: "IBM Plex Sans Arabic", "Noto Sans Arabic", "Dubai", "Segoe UI",
+          Tahoma, Arial, sans-serif;
+  --font-num: "IBM Plex Sans", Inter, "Segoe UI", system-ui, sans-serif;
+
+  /* Legacy aliases retained so no rule silently loses its colour. */
+  --bg: var(--s-base);
+  --bg-soft: var(--s-1);
+  --panel: var(--s-1);
+  --panel-2: var(--s-2);
+  --scrim: rgba(4, 11, 20, 0.78);
+  /* Ink used ON a saturated fill (primary buttons, badges) rather than on a surface. */
+  --on-accent: #04111c;
+  --on-danger: #2b0710;
+  /* Two lighter blue steps for gradient ramps and emphasis text. */
+  --blue-bright: #73b8ff;
+  --blue-pale: #bfe0ff;
+  --blue-glow: #d9f0ff;
+  /* Top-of-page ambient wash. */
+  --bg-glow: #13243d;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--s-base);color:var(--text);font-family:var(--font);
+ line-height:1.6;font-size:var(--t-md);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:var(--sp-7) var(--sp-5)}
+h1{font-size:var(--t-2xl);margin:0 0 var(--sp-2);letter-spacing:-.02em}
+h2{font-size:var(--t-lg);margin:var(--sp-7) 0 var(--sp-4);padding-bottom:var(--sp-3);
+ border-bottom:1px solid var(--line)}
+.lede{color:var(--muted);margin:0 0 var(--sp-6);max-width:70ch}
+.note{font-size:var(--t-sm);color:var(--ink-3);max-width:70ch}
+.stage{background:var(--s-1);border:1px solid var(--line);border-radius:var(--radius);
+ padding:var(--sp-5);margin-bottom:var(--sp-4)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3)}
+.card{padding:var(--sp-4);border-radius:var(--radius-md);background:var(--s-2);
+ border:1px solid var(--line-subtle);display:grid;gap:var(--sp-1);box-shadow:var(--el-1)}
+.card small{font-size:var(--t-xs);color:var(--ink-3)}
+.card strong{font-family:var(--font-num);font-size:var(--t-xl);font-weight:600;
+ font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.15}
+.card .hint{font-size:var(--t-xs);color:var(--ink-3)}
+.warnv strong{color:var(--yellow)} .negv strong{color:var(--red)} .posv strong{color:var(--green)}
+.risk-banner{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);
+ border-radius:var(--radius-md);border:1px solid var(--line);background:var(--s-2);margin-bottom:var(--sp-3)}
+.risk-banner.warn{border-color:var(--yellow-edge);background:var(--yellow-wash)}
+.risk-banner.critical{border-color:var(--red-edge);background:var(--red-wash)}
+.risk-banner.warn strong{color:var(--yellow)} .risk-banner.critical strong{color:var(--red)}
+.risk-banner-body{flex:1;display:flex;gap:var(--sp-3);flex-wrap:wrap}
+.risk-banner strong{font-size:var(--t-sm);font-weight:600}
+svg.ic{width:20px;height:20px;flex:none}
+.btn{font:inherit;font-size:var(--t-sm);font-weight:500;padding:var(--sp-2) var(--sp-4);
+ border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--line);
+ background:var(--s-3);color:var(--text);transition:border-color var(--motion)}
+.btn:hover{border-color:var(--line-strong)}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:var(--on-accent);font-weight:600}
+.btn.danger{color:var(--red);border-color:var(--red-edge)}
+.btn.small{font-size:var(--t-xs);padding:var(--sp-1) var(--sp-3)}
+.row{display:flex;gap:var(--sp-2);flex-wrap:wrap}
+.item{padding:var(--sp-4);border-radius:var(--radius-md);background:var(--s-2);
+ border:1px solid var(--line-subtle);display:grid;gap:var(--sp-2);margin-bottom:var(--sp-2)}
+.item-head{display:flex;justify-content:space-between;gap:var(--sp-3);align-items:flex-start}
+.item-title{font-weight:600;font-size:var(--t-sm)}
+.item-sub{font-size:var(--t-xs);color:var(--ink-3)}
+.chip{display:inline-flex;align-items:center;gap:var(--sp-1);font-size:var(--t-xs);
+ padding:2px var(--sp-2);border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.chip.safe{color:var(--green);border-color:var(--green-edge);background:var(--green-wash)}
+.chip.neutral{color:var(--ink-3)}
+.chip.blue{color:var(--blue);border-color:var(--blue-edge);background:var(--blue-wash)}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:600}
+.pos{color:var(--green)} .neg{color:var(--red)}
+.wizard{width:min(560px,100%);background:linear-gradient(180deg,var(--s-2),var(--s-1));
+ border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--el-2);overflow:hidden;margin:0 auto}
+.wz-head{padding:var(--sp-5) var(--sp-5) var(--sp-4);border-bottom:1px solid var(--line-subtle);display:grid;gap:var(--sp-2)}
+.wz-head h3{margin:0;font-size:var(--t-xl);letter-spacing:-.01em}
+.kicker{font-size:var(--t-xs);letter-spacing:.14em;color:var(--blue);font-weight:600}
+.wz-prog{height:3px;border-radius:999px;background:var(--s-3);overflow:hidden;margin-top:var(--sp-2)}
+.wz-prog i{display:block;height:100%;width:50%;background:var(--blue)}
+.wz-body{padding:var(--sp-5);display:grid;gap:var(--sp-3)}
+.wz-foot{padding:var(--sp-4) var(--sp-5);border-top:1px solid var(--line-subtle);
+ display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3)}
+label{display:grid;gap:var(--sp-1);font-size:var(--t-xs);color:var(--ink-3)}
+input{font:inherit;font-size:var(--t-sm);padding:var(--sp-2) var(--sp-3);border-radius:var(--radius-sm);
+ border:1px solid var(--line);background:var(--s-base);color:var(--text)}
+input:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-1)}
+.cal .dow{font-size:var(--t-xs);color:var(--ink-3);text-align:center;padding:var(--sp-1)}
+.cell{aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--line-subtle);
+ background:var(--s-2);padding:var(--sp-2);display:grid;align-content:space-between}
+.cell .d{font-size:10px;color:var(--ink-3);font-family:var(--font-num)}
+.cell .r{font-size:var(--t-xs);font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:600}
+.cell.win{background:var(--green-wash);border-color:var(--green-edge)}
+.cell.loss{background:var(--red-wash);border-color:var(--red-edge)}
+.cell.mute{opacity:.35}
+table{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+th,td{text-align:start;padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--line-subtle)}
+th{color:var(--ink-3);font-weight:500;font-size:var(--t-xs);letter-spacing:.08em}
+td.n{font-family:var(--font-num);font-variant-numeric:tabular-nums;text-align:end}
+.was{color:var(--red);font-weight:600} .now{color:var(--green);font-weight:600}
+</style></head><body><div class="wrap">
+
+<h1>ما تغيّر فعلياً</h1>
+<p class="lede">كل ما في هذه الصفحة مبني على <strong>رموز التصميم نفسها</strong> المستخدمة في التطبيق الآن
+(<code>renderer/style.css</code>). لا قيمة لونية واحدة مكتوبة يدوياً.</p>
+
+<h2>١. شريط المخاطرة — يتبعك في كل تبويب</h2>
+<div class="stage">
+  <div class="risk-banner critical">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.8"><path d="M12 3 4 7v5c0 5 3.4 8.7 8 9 4.6-.3 8-4 8-9V7l-8-4Z"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>
+    <div class="risk-banner-body"><strong>تم خرق حد الخسارة اليومية</strong></div>
+    <button class="btn small">نظرة عامة</button>
+  </div>
+  <div class="risk-banner warn">
+    <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="1.8"><path d="M12 2v5M12 17v5M4.9 4.9l3.5 3.5M15.6 15.6l3.5 3.5"/><circle cx="12" cy="12" r="4"/></svg>
+    <div class="risk-banner-body"><strong>اقتربت من حد التراجع الأقصى — المتبقي 880</strong></div>
+    <button class="btn small">نظرة عامة</button>
+  </div>
+</div>
+<p class="note">سابقاً كانت التحذيرات تُرسم داخل صفحة «نظرة عامة» فقط، فمغادرتها تخفي أن الحساب في حالة خرق.
+والآن يصلك أيضاً إشعار نظام — المؤقّت صار يجلب البيانات فعلاً بدل إعادة رسم لقطة قديمة.</p>
+
+<h2>٢. أرقام مصطفّة</h2>
+<div class="stage"><div class="metrics">
+  <div class="card"><small>الرصيد</small><strong>103,481.00</strong><div class="hint">‎+3.48%‎ عن البداية</div></div>
+  <div class="card warnv"><small>الحد اليومي المتبقي</small><strong>1,118.00</strong><div class="hint">من أصل 2,000.00</div></div>
+  <div class="card negv"><small>التراجع الحالي</small><strong>2,940.50</strong><div class="hint">من قمة 106,421.50</div></div>
+</div></div>
+<p class="note">الفواصل العشرية على خط رأسي واحد. <code>tabular-nums</code> كانت موجودة في الملف
+لكنها لم تشمل أرقام البطاقات الرئيسية.</p>
+
+<h2>٣. الصفقة صار لها تعديل وحذف</h2>
+<div class="stage">
+  <div class="item">
+    <div class="item-head">
+      <div><div class="item-title">XAUUSD · Buy</div><div class="item-sub">مستوردة · 24 يوليو</div></div>
+      <div class="num pos">+2.40R</div>
+    </div>
+    <div class="row"><span class="chip blue">مرتبطة بإشارة</span><span class="chip neutral">لندن</span></div>
+    <div class="row"><button class="btn small">تعديل</button><button class="btn small danger">حذف</button></div>
+  </div>
+  <div class="item">
+    <div class="item-head">
+      <div><div class="item-title">EURUSD · Sell</div><div class="item-sub">يدوية · 23 يوليو</div></div>
+      <div class="num neg">‎-1.00R</div>
+    </div>
+    <div class="row"><button class="btn small">تعديل</button><button class="btn small danger">حذف</button></div>
+  </div>
+</div>
+<p class="note">قبل هذا كان تصحيح <code>R</code> واحدة خاطئة يتطلب <strong>تصفير الحساب كاملاً</strong> —
+وهو ما كان يمسح حدود المخاطرة أيضاً.</p>
+
+<h2>٤. الباكتيست: حالة ظاهرة ومخرج</h2>
+<div class="stage">
+  <div class="item">
+    <div class="item-head">
+      <div><div class="item-title">مراجعة يوليو</div><div class="item-sub">2026-07-01 → 2026-07-20</div></div>
+      <div class="row"><span class="chip safe">نشطة</span><span class="chip blue">42</span></div>
+    </div>
+    <div class="row"><button class="btn small">فتح</button><button class="btn small">تحديث</button>
+      <button class="btn small">تصفير</button><button class="btn small">إنهاء الجلسة</button>
+      <button class="btn small danger">أرشفة</button></div>
+  </div>
+  <div class="item">
+    <div class="item-head">
+      <div><div class="item-title">اختبار لندن</div><div class="item-sub">2026-06-01 → 2026-06-30</div></div>
+      <div class="row"><span class="chip neutral">منتهية</span><span class="chip blue">18</span></div>
+    </div>
+    <div class="row"><button class="btn small">فتح</button><button class="btn small">تحديث</button>
+      <button class="btn small">تصفير</button><button class="btn small danger">أرشفة</button></div>
+  </div>
+</div>
+<p class="note">زرّا «إنهاء» و«أرشفة» كان لهما معالجان جاهزان في <code>main.js</code> بلا أي زر،
+والحالة لم تكن تُعرض إطلاقاً — فكل الجلسات تبدو متطابقة.</p>
+
+<h2>٥. شاشة الترحيب — لم تكن موجودة</h2>
+<div class="stage"><div class="wizard">
+  <div class="wz-head">
+    <div class="kicker">أهلاً بك</div>
+    <h3>لنجهّز CISD Journal في دقيقة</h3>
+    <p class="note" style="margin:0">أربع خطوات قصيرة. تستطيع تغيير كل شيء لاحقاً من الإعدادات.</p>
+    <div class="wz-prog"><i></i></div>
+    <div class="note">الخطة 2 من 4</div>
+  </div>
+  <div class="wz-body">
+    <h3 style="margin:0;font-size:var(--t-lg)">حسابك الأول</h3>
+    <p class="note" style="margin:0">اسم الشركة واسم الحساب يكفيان للبدء.</p>
+    <div class="grid2">
+      <label>شركة التمويل<input value="FundingPips"></label>
+      <label>اسم الحساب<input value="التحدي الأول"></label>
+      <label>رأس المال<input value="100000"></label>
+      <label>العملة<input value="USD"></label>
+    </div>
+  </div>
+  <div class="wz-foot">
+    <button class="btn small">تخطّي الآن</button>
+    <div class="row"><button class="btn">رجوع</button><button class="btn primary">التالي</button></div>
+  </div>
+</div></div>
+<p class="note">العلم <code>onboardingComplete</code> كان يُكتب مرتين ويُقرأ صفر مرة، فزر «إعادة التهيئة»
+يقول «تمت ✓» ولا يحدث شيء. الآن له شاشة تستهلكه — وتسأل عن حدود المخاطرة مبكراً،
+لأن حساباً بلا حدود يعني حارساً معطّلاً.</p>
+
+<h2>٦. التقويم الشهري — تبويب مستقل</h2>
+<div class="stage">
+  <div class="cal">
+    <div class="dow">ح</div><div class="dow">ن</div><div class="dow">ث</div><div class="dow">ر</div>
+    <div class="dow">خ</div><div class="dow">ج</div><div class="dow">س</div>
+    <div class="cell mute"><span class="d">28</span></div><div class="cell mute"><span class="d">29</span></div>
+    <div class="cell mute"><span class="d">30</span></div>
+    <div class="cell win"><span class="d">1</span><span class="r pos">+2.0R</span></div>
+    <div class="cell loss"><span class="d">2</span><span class="r neg">-1.0R</span></div>
+    <div class="cell win"><span class="d">3</span><span class="r pos">+3.0R</span></div>
+    <div class="cell"><span class="d">4</span></div>
+    <div class="cell win"><span class="d">5</span><span class="r pos">+1.0R</span></div>
+    <div class="cell"><span class="d">6</span></div>
+    <div class="cell win"><span class="d">7</span><span class="r pos">+4.0R</span></div>
+    <div class="cell loss"><span class="d">8</span><span class="r neg">-2.0R</span></div>
+    <div class="cell win"><span class="d">9</span><span class="r pos">+1.0R</span></div>
+    <div class="cell"><span class="d">10</span></div><div class="cell"><span class="d">11</span></div>
+  </div>
+</div>
+<p class="note">كان مدسوساً داخل صفحة «التحليلات». من يسأل «كيف كان شهري؟» لا يخطر له فتح التحليلات.</p>
+
+<h2>٧. الأرقام قبل وبعد</h2>
+<table>
+<tr><th>القياس</th><th class="n">قبل</th><th class="n">بعد</th></tr>
+<tr><td>ألوان مكتوبة يدوياً خارج <code>:root</code></td><td class="n was">218</td><td class="n now">0</td></tr>
+<tr><td>قيم لونية متمايزة</td><td class="n was">120</td><td class="n now">14</td></tr>
+<tr><td>مقاسات الخط</td><td class="n was">14</td><td class="n now">6</td></tr>
+<tr><td>قيم الظل</td><td class="n was">19</td><td class="n now">2</td></tr>
+<tr><td>قنوات IPC يتيمة</td><td class="n was">9</td><td class="n now">0</td></tr>
+<tr><td>قواعد <code>:focus-visible</code></td><td class="n was">0</td><td class="n now">شامل</td></tr>
+<tr><td>عمليات الصفقة (CRUD)</td><td class="n was">2/4</td><td class="n now">4/4</td></tr>
+<tr><td>مجموعات الاختبار</td><td class="n was">28</td><td class="n now">30</td></tr>
+</table>
+
+<h2>٨. ما لم يكتمل بعد</h2>
+<p class="note">
+<strong>ملف الخط العربي غير مضمَّن.</strong> حزمة الخطوط صارت تبدأ بعائلات عربية
+(IBM Plex Sans Arabic ثم Noto Sans Arabic)، لكن بيئة العمل هنا بلا شبكة فتعذّر تنزيل ملف
+<code>.woff2</code> وتضمينه. على جهاز فيه أحد هذه الخطوط سيظهر الفرق فوراً؛ ولضمان تطابق
+الشكل على كل أجهزة ويندوز يبقى تضمين الملف مطلوباً — وهو الخطوة التالية.
+<br><br>
+كذلك لم أنفّذ بعد إصلاحات <strong>دقة الأرقام</strong> الثلاثة (حارس الخسارة يفقد صفقات المساء،
+وتصنيف الجلسات، والمنطقة الزمنية في التحليلات) الموثّقة في <code>UPDATE_PLAN_2026-07.md</code>،
+ولا ترقية Electron. هذه الدفعة عالجت التدفقات والواجهة كما طلبت.
+</p>
+
+</div></body></html>
