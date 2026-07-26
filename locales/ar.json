@@ -19,7 +19,8 @@
     "backtest": "الباكتيست",
     "analytics": "التحليلات",
     "data": "مصادر البيانات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "edge": "الحافة"
   },
   "overview": {
     "kicker": "لوحة الانضباط الحية",
@@ -573,5 +574,71 @@
     "defaultTitle": "تأكيد الإجراء",
     "confirm": "تأكيد",
     "typeToConfirm": "اكتب {{word}} للتأكيد"
+  },
+  "edge": {
+    "kicker": "الحافة والسلوك",
+    "title": "أين تُكسب حافتك وأين تُفقد",
+    "description": "معظم اليوميات تقيس الصفقات التي دخلتها فقط. هذه الصفحة تحسب أيضاً ثمن التي تركتها.",
+    "hesitationTitle": "ضريبة التردد",
+    "hesitationHint": "الربح الذي أضاعه تخطّي الإشارات الصحيحة",
+    "hesitationHeadline": "التردد كلّفك {{value}} عبر {{count}} إشارة متروكة.",
+    "hesitationClean": "لا يوجد تردد مُكلف. كل إشارة تركتها كانت حماية للحساب.",
+    "hesitationEstimate": "يشمل {{count}} قيمة تقديرية — راجع تلك الإشارات لأرقام دقيقة.",
+    "protectedLabel": "خسائر تجنّبتها",
+    "protectedHint": "انضباط أثمر",
+    "taxLabel": "ربح ضائع",
+    "taxHint": "صفقات رابحة تركتها",
+    "netLabel": "الأثر الصافي",
+    "netHint": "المحصلة على الحساب",
+    "reasonsTitle": "كم يكلفك كل سبب فعلياً",
+    "reasonsHint": "يفصل التردد المُكلف عن الانضباط المُربح",
+    "reasonCostly": "مُكلف",
+    "reasonProtective": "حماك",
+    "reasonNeutral": "محايد",
+    "reasonEstimated": "تقديري",
+    "potentialTitle": "المحقق مقابل المتاح",
+    "potentialHint": "ما كانت ستعطيه الإشارات نفسها",
+    "realised": "المحقق",
+    "missed": "المتروك",
+    "potential": "المتاح",
+    "uplift": "كانت نتيجتك ستكون أكبر بـ {{value}} ضعف.",
+    "scoreTitle": "درجة الحافة",
+    "scoreHint": "موزونة على المنهجية لا على الحظ",
+    "grade": "التقدير",
+    "components": {
+      "execution": "التنفيذ",
+      "discipline": "الانضباط",
+      "expectancy": "التوقع",
+      "riskControl": "ضبط المخاطرة",
+      "consistency": "الثبات"
+    },
+    "statsTitle": "إحصاءات الصفقات",
+    "stats": {
+      "expectancy": "التوقع",
+      "expectancyHint": "متوسط النتيجة لكل صفقة",
+      "payoff": "نسبة العائد",
+      "payoffHint": "متوسط الربح ÷ متوسط الخسارة",
+      "profitFactor": "معامل الربح",
+      "profitFactorHint": "إجمالي الربح ÷ إجمالي الخسارة",
+      "kelly": "نسبة كيلي",
+      "kellyHint": "حجم المخاطرة الذي تبرره حافتك",
+      "winRate": "نسبة الربح",
+      "winRateHint": "نسبة الصفقات الرابحة",
+      "avgWin": "متوسط الربح",
+      "avgLoss": "متوسط الخسارة"
+    },
+    "distributionTitle": "توزيع مضاعفات R",
+    "distributionHint": "شكل نتائجك",
+    "insightsTitle": "ما الذي تفعله الآن",
+    "insights": {
+      "COSTLIEST_HESITATION": "«{{reason}}» أغلى عاداتك: {{value}} عبر {{count}} إشارة.",
+      "PROTECTIVE_DISCIPLINE": "تخطّيك بسبب «{{reason}}» وفّر عليك {{value}}. استمر.",
+      "UNREVIEWED_SIGNALS": "{{count}} إشارة بلا قرار. أرقامك ناقصة حتى تسجلها.",
+      "LOW_PAYOFF_RATIO": "متوسط ربحك أصغر من متوسط خسارتك ({{value}}). دع الرابحة تمتد أطول.",
+      "POSITIVE_EXPECTANCY": "حافتك المنفذة إيجابية بمقدار {{value}} لكل صفقة.",
+      "MISSING_TRADE_LINKS": "{{count}} إشارة منفذة بلا صفقة مرتبطة، لذا نتائجها غير مرئية."
+    },
+    "empty": "سجّل قرارات الإشارات والصفقات لتفعيل تحليل الحافة.",
+    "unitR": "R"
   }
 }

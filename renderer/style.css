@@ -961,3 +961,86 @@ button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .quick-step.done { opacity: .62; }
 .quick-step.done .quick-step-index { background: rgba(78,227,154,.16); color: var(--green); }
 .quick-step-label { flex: 1; min-width: 0; }
+
+/* ================= Edge page ================= */
+.edge-score-badge {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 12px 22px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.edge-score-badge small { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.edge-score-badge strong { font-size: 32px; line-height: 1; }
+
+.hesitation-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 20px;
+  align-items: center;
+  border-color: rgba(255,123,143,.18);
+  position: relative;
+  overflow: hidden;
+}
+.hesitation-hero::after {
+  content: '';
+  position: absolute;
+  inset: -60px -60px auto auto;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(255,123,143,.12), rgba(255,123,143,0));
+  pointer-events: none;
+}
+.hesitation-main { min-width: 0; }
+.hesitation-headline {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin-top: 10px;
+}
+.hesitation-note { margin-top: 10px; color: var(--muted); font-size: 12px; }
+
+.reason-card { border-inline-start: 3px solid rgba(255,255,255,.12); }
+.reason-card.bad { border-inline-start-color: rgba(255,123,143,.65); }
+.reason-card.safe { border-inline-start-color: rgba(78,227,154,.65); }
+
+.potential-bars { display: grid; gap: 12px; }
+.potential-row { display: grid; grid-template-columns: 110px 1fr 90px; gap: 12px; align-items: center; }
+.potential-label { color: var(--muted); font-size: 12px; }
+.potential-track { height: 12px; border-radius: 999px; background: rgba(255,255,255,.05); overflow: hidden; }
+.potential-track i { display: block; height: 100%; border-radius: inherit; }
+.potential-track i.realised { background: linear-gradient(90deg, var(--blue), var(--teal)); }
+.potential-track i.missed { background: linear-gradient(90deg, rgba(255,123,143,.85), rgba(255,159,120,.75)); }
+.potential-track i.potential { background: linear-gradient(90deg, var(--green), var(--teal)); }
+.potential-value { text-align: end; font-weight: 700; font-size: 13px; }
+
+.r-distribution { display: grid; gap: 8px; }
+.r-bucket { display: grid; grid-template-columns: 92px 1fr 34px; gap: 10px; align-items: center; }
+.r-bucket-label { color: var(--muted); font-size: 12px; }
+.r-bucket-track { height: 16px; border-radius: 6px; background: rgba(255,255,255,.04); overflow: hidden; }
+.r-bucket-track i { display: block; height: 100%; border-radius: inherit; min-width: 2px; }
+.r-bucket-track i.neg { background: linear-gradient(90deg, rgba(255,123,143,.75), rgba(255,123,143,.45)); }
+.r-bucket-track i.pos { background: linear-gradient(90deg, rgba(78,227,154,.75), rgba(85,211,198,.5)); }
+.r-bucket-count { text-align: end; font-size: 12px; color: var(--muted); }
+
+.score-components { display: grid; gap: 12px; }
+.score-row { display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center; }
+.score-label { color: var(--muted); font-size: 12px; }
+.score-track { height: 10px; border-radius: 999px; background: rgba(255,255,255,.05); overflow: hidden; }
+.score-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--teal)); }
+.score-value { text-align: end; font-weight: 700; font-size: 12px; }
+
+.insight-card { border-inline-start: 3px solid rgba(255,255,255,.12); }
+.insight-card.bad { border-inline-start-color: rgba(255,123,143,.65); }
+.insight-card.warn { border-inline-start-color: rgba(255,207,102,.65); }
+.insight-card.safe { border-inline-start-color: rgba(78,227,154,.65); }
+.insight-text { font-weight: 500; line-height: 1.6; }
+
+@media (max-width: 1280px) {
+  .hesitation-hero { grid-template-columns: 1fr; }
+}
+@media (max-width: 980px) {
+  .potential-row, .r-bucket, .score-row { grid-template-columns: 84px 1fr 54px; }
+}

@@ -37,6 +37,7 @@
           <button class="nav-link" data-page="signals" id="navSignals"></button>
           <button class="nav-link" data-page="journal" id="navJournal"></button>
           <button class="nav-link" data-page="backtest" id="navBacktest"></button>
+          <button class="nav-link" data-page="edge" id="navEdge"></button>
           <button class="nav-link" data-page="analytics" id="navAnalytics"></button>
           <button class="nav-link" data-page="data" id="navData"></button>
           <button class="nav-link" data-page="settings" id="navSettings"></button>
@@ -387,6 +388,79 @@
               <input id="backtestSearch" class="search-input" type="search" placeholder="Search backtest signals">
             </div>
             <div id="backtestReviewList" class="list"></div>
+          </section>
+        </section>
+
+        <section class="page" data-page="edge">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="edgeKicker"></div>
+              <h1 id="edgeTitle"></h1>
+              <p id="edgeDescription"></p>
+            </div>
+            <div class="head-actions">
+              <div class="edge-score-badge">
+                <small id="edgeScoreLabel"></small>
+                <strong id="edgeScoreValue">—</strong>
+                <span id="edgeScoreGrade" class="chip"></span>
+              </div>
+            </div>
+          </div>
+
+          <section class="panel spotlight hesitation-hero">
+            <div class="hesitation-main">
+              <div class="section-kicker" id="edgeHesitationKicker"></div>
+              <div id="edgeHesitationHeadline" class="hesitation-headline"></div>
+              <div id="edgeHesitationNote" class="hesitation-note"></div>
+            </div>
+            <div id="edgeHesitationCards" class="metric-grid compact"></div>
+          </section>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="edgeReasonsTitle"></h3>
+                <span class="panel-hint" id="edgeReasonsHint"></span>
+              </div>
+              <div id="edgeReasonsList" class="list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="edgePotentialTitle"></h3>
+                <span class="panel-hint" id="edgePotentialHint"></span>
+              </div>
+              <div id="edgePotentialBars" class="potential-bars"></div>
+              <div id="edgeUplift" class="inline-note"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><h3 id="edgeStatsTitle"></h3></div>
+            <div id="edgeStatsCards" class="metric-grid large"></div>
+          </section>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="edgeDistributionTitle"></h3>
+                <span class="panel-hint" id="edgeDistributionHint"></span>
+              </div>
+              <div id="edgeDistribution" class="r-distribution"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="edgeScoreTitle"></h3>
+                <span class="panel-hint" id="edgeScoreHint"></span>
+              </div>
+              <div id="edgeScoreComponents" class="score-components"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><h3 id="edgeInsightsTitle"></h3></div>
+            <div id="edgeInsightsList" class="list"></div>
           </section>
         </section>
 

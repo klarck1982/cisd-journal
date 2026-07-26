@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('cisd', {
   runtimeReadiness: () => ipcRenderer.invoke('runtime:readiness'),
   dashboardSnapshot: (accountId, options) => ipcRenderer.invoke('dashboard:snapshot', accountId, options),
   analyticsSnapshot: (accountId, options) => ipcRenderer.invoke('analytics:snapshot', accountId, options),
+  edgeSnapshot: (accountId, options) => ipcRenderer.invoke('edge:snapshot', accountId, options),
   archiveAccount: (id) => ipcRenderer.invoke('account:archive', id),
   saveAccount: (account) => ipcRenderer.invoke('account:save', account),
   startBacktest: (backtest) => ipcRenderer.invoke('backtest:start', backtest),

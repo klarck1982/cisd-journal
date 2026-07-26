@@ -19,7 +19,8 @@
     "backtest": "Backtest",
     "analytics": "Analytics",
     "data": "Data Sources",
-    "settings": "Settings"
+    "settings": "Settings",
+    "edge": "Edge"
   },
   "overview": {
     "kicker": "Live discipline cockpit",
@@ -573,5 +574,71 @@
     "defaultTitle": "Please confirm",
     "confirm": "Confirm",
     "typeToConfirm": "Type {{word}} to confirm"
+  },
+  "edge": {
+    "kicker": "Edge & behaviour",
+    "title": "Where your edge is won and lost",
+    "description": "Most journals only measure the trades you took. This page also prices the ones you skipped.",
+    "hesitationTitle": "Hesitation Tax",
+    "hesitationHint": "Profit destroyed by skipping valid signals",
+    "hesitationHeadline": "Hesitation cost you {{value}} across {{count}} skipped signals.",
+    "hesitationClean": "No costly hesitation recorded. Every skipped signal protected the account.",
+    "hesitationEstimate": "Includes {{count}} estimated values — review those signals for exact figures.",
+    "protectedLabel": "Losses avoided",
+    "protectedHint": "Discipline that paid off",
+    "taxLabel": "Profit destroyed",
+    "taxHint": "Winners you skipped",
+    "netLabel": "Net impact",
+    "netHint": "Combined effect on the account",
+    "reasonsTitle": "What each reason actually costs",
+    "reasonsHint": "Separates costly hesitation from profitable discipline",
+    "reasonCostly": "Costly",
+    "reasonProtective": "Protected you",
+    "reasonNeutral": "Neutral",
+    "reasonEstimated": "estimated",
+    "potentialTitle": "Realised vs available",
+    "potentialHint": "What the same signals could have returned",
+    "realised": "Realised",
+    "missed": "Left on the table",
+    "potential": "Potential",
+    "uplift": "Your result could have been {{value}}x larger.",
+    "scoreTitle": "Edge Score",
+    "scoreHint": "Weighted toward process, not luck",
+    "grade": "Grade",
+    "components": {
+      "execution": "Execution",
+      "discipline": "Discipline",
+      "expectancy": "Expectancy",
+      "riskControl": "Risk control",
+      "consistency": "Consistency"
+    },
+    "statsTitle": "Trade statistics",
+    "stats": {
+      "expectancy": "Expectancy",
+      "expectancyHint": "Average result per trade",
+      "payoff": "Payoff ratio",
+      "payoffHint": "Average win ÷ average loss",
+      "profitFactor": "Profit factor",
+      "profitFactorHint": "Gross win ÷ gross loss",
+      "kelly": "Kelly %",
+      "kellyHint": "Risk size the edge justifies",
+      "winRate": "Win rate",
+      "winRateHint": "Share of profitable trades",
+      "avgWin": "Average win",
+      "avgLoss": "Average loss"
+    },
+    "distributionTitle": "R-multiple distribution",
+    "distributionHint": "The shape of your results",
+    "insightsTitle": "What to act on",
+    "insights": {
+      "COSTLIEST_HESITATION": "“{{reason}}” is your most expensive habit: {{value}} across {{count}} signals.",
+      "PROTECTIVE_DISCIPLINE": "Skipping for “{{reason}}” saved you {{value}}. Keep doing it.",
+      "UNREVIEWED_SIGNALS": "{{count}} signals still have no decision. Your numbers are incomplete until they do.",
+      "LOW_PAYOFF_RATIO": "Your average win is smaller than your average loss ({{value}}). Let winners run longer.",
+      "POSITIVE_EXPECTANCY": "Your executed edge is positive at {{value}} per trade.",
+      "MISSING_TRADE_LINKS": "{{count}} executed signals have no linked trade, so their results are invisible."
+    },
+    "empty": "Record signal decisions and trades to unlock edge analysis.",
+    "unitR": "R"
   }
 }

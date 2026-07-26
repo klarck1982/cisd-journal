@@ -10,6 +10,7 @@ const { fetchCalendar } = require('./lib/news-providers');
 const { importFundedNextText, importMT5Text, importCisdSignalsText, importBacktestSignalsText } = require('./lib/import-engine');
 const { buildAccountDashboardSnapshot } = require('./lib/engines/account-dashboard');
 const { buildAccountAnalyticsSnapshot } = require('./lib/engines/analytics');
+const { buildEdgeSnapshot } = require('./lib/engines/edge');
 const { resolveLocale, getBundle } = require('./lib/locale');
 const { resolveFundingAccessMode, validateFundingAccess, buildFundingAccessView } = require('./lib/funding-access');
 const { parseFundingPipsSharedText } = require('./lib/funding-shared-parser');
@@ -428,6 +429,11 @@ function registerHandlers() {
   ipcMain.handle('runtime:readiness', () => buildRuntimeReadinessSnapshot({ app, isPackaged: app.isPackaged, currentDirname: __dirname, platform: process.platform }));
   ipcMain.handle('dashboard:snapshot', (_, accountId, options = {}) => buildAccountDashboardSnapshot(read(), accountId, options));
   ipcMain.handle('analytics:snapshot', (_, accountId, options = {}) => buildAccountAnalyticsSnapshot(read(), accountId, options));
+  ipcMain.handle('edge:snapshot', (_, accountId, options = {}) => {
+    const data = read();
+    const risk = buildAccountDashboardSnapshot(data, accountId, options).risk;
+    return buildEdgeSnapshot(data, accountId, { ...options, risk });
+  });
   ipcMain.handle('locale:get', () => read().settings.locale || 'ar');
   ipcMain.handle('locale:bundle', () => getBundle(read().settings.locale));
   ipcMain.handle('locale:set', (_, locale) => updateSettings({ locale }).settings.locale);
