@@ -52,5 +52,8 @@
     ]
   },
   "description": "Private trading performance and discipline journal",
-  "author": "CISD Journal"
+  "author": "CISD Journal",
+  "engines": {
+    "node": ">=20"
+  }
 }

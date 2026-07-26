@@ -167,6 +167,7 @@ CISD Journal ليس مجرد trading journal عام.
 ## 13) ماذا أنجزت الدفعة الخامسة؟
 هذه الدفعة تركّز على **Phase 5 — New UI**:
 - إعادة بناء الواجهة من الصفر تقريبًا في `renderer/index.html` و `renderer/style.css` و `renderer/app.js`.
+  > **تحديث لاحق:** `renderer/app.js` لم يعد موجوداً — قُسّم إلى `renderer/app/*.js` (16 وحدة).
 - اعتماد واجهة dashboard حديثة bilingual (`AR/EN`) مع `RTL/LTR` نظيف.
 - جعل الواجهة الجديدة تستهلك فقط snapshots الجاهزة من النواة:
   - `dashboard:snapshot`

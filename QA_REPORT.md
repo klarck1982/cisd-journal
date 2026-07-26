@@ -3,7 +3,7 @@
 ## Static verification
 - `main.js`: syntax valid (`node --check`).
 - `preload.js`: syntax valid.
-- `renderer/app.js`: syntax valid.
+- `renderer/app/*.js`: syntax valid (16 modules, checked by `tools/check_renderer_syntax.js`).
 - `package.json` dependencies resolve with `npm install`.
 
 ## FundedNext data verification
@@ -39,7 +39,7 @@ Synthetic automated tests now cover:
 
 ## Latest quality gate result
 - `npm test`: PASS
-- `main.js`, `preload.js`, `renderer/app.js`: syntax PASS
+- `main.js`, `preload.js`, `renderer/app/*.js`: syntax PASS
 - `lib/store.js`, `lib/importers.js`, `lib/news-providers.js`: syntax PASS
 
 ## Store module tests
