@@ -160,14 +160,23 @@ function renderJournal() {
         ${trade.signalId ? `<span class="tag blue">${escapeHtml(t('journal.recentTrades.linked'))}</span>` : ''}
         ${(trade.tags || '').split(',').filter(Boolean).slice(0, 3).map((tag) => `<span class="tag neutral">${escapeHtml(tag.trim())}</span>`).join('')}
       </div>
+      <div class="item-actions">
+        <button class="ghost small" data-trade-edit="${escapeHtml(trade.id || '')}">${escapeHtml(t('journal.edit'))}</button>
+        <button class="ghost small danger" data-trade-delete="${escapeHtml(trade.id || '')}">${escapeHtml(t('journal.delete'))}</button>
+      </div>
     </article>
   `, tradeQuery
     ? { key: 'tradesFiltered', action: 'clearJournalSearch' }
     : { key: 'trades', action: 'importReport' });
+
+  bindTradeRowActions();
 }
 
+
 function backtestsForAccount() {
-  return (model.state?.backtests || []).filter((item) => item.accountId === model.accountId);
+  return (model.state?.backtests || [])
+    .filter((item) => item.accountId === model.accountId)
+    .filter((item) => !item.archived);
 }
 
 function selectedBacktest() {
@@ -233,7 +242,10 @@ function renderBacktest() {
             <div class="item-title">${escapeHtml(session.name || t('backtest.create.defaultName'))}</div>
             <div class="item-subtitle">${escapeHtml(session.filters?.start || '')} → ${escapeHtml(session.filters?.end || '')}</div>
           </div>
-          <span class="chip blue">${signals.length}</span>
+          <div class="playbook-actions">
+            <span class="chip ${session.status === 'FINISHED' ? 'neutral' : 'safe'}">${escapeHtml(session.status === 'FINISHED' ? t('backtest.status.finished') : t('backtest.status.active'))}</span>
+            <span class="chip blue">${signals.length}</span>
+          </div>
         </div>
         <div class="item-meta">
           ${session.filters?.session ? `<span class="tag neutral">${escapeHtml(session.filters.session)}</span>` : ''}
@@ -245,6 +257,8 @@ function renderBacktest() {
           <button class="ghost" data-backtest-open="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.open'))}</button>
           <button class="ghost" data-backtest-refresh="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.refresh'))}</button>
           <button class="ghost" data-backtest-reset="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.reset'))}</button>
+          ${session.status === 'FINISHED' ? '' : `<button class="ghost" data-backtest-stop="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.stop'))}</button>`}
+          <button class="ghost danger" data-backtest-archive="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.archive'))}</button>
         </div>
       </article>
     `;
@@ -306,6 +320,39 @@ function renderBacktest() {
       persistUiState();
       await refreshStateAndRender();
       toast(t('messages.backtestReset'), 'success');
+    };
+  });
+
+  // Finish and archive: both handlers existed in main.js and preload.js but had
+  // no control anywhere, so sessions accumulated with no way to close them and
+  // no visible status to tell one from another.
+  $$('[data-backtest-stop]').forEach((button) => {
+    button.onclick = async () => {
+      const ok = await openConfirm({
+        title: t('backtest.library.stop'),
+        text: t('backtest.library.stopConfirm'),
+        confirmLabel: t('backtest.library.stop'),
+      });
+      if (!ok) return;
+      await runBusy(t('ui.loading'), () => cisd.stopBacktest());
+      await refreshStateAndRender();
+      toast(t('backtest.library.stopped'), 'success');
+    };
+  });
+
+  $$('[data-backtest-archive]').forEach((button) => {
+    button.onclick = async () => {
+      const ok = await openConfirm({
+        title: t('backtest.library.archive'),
+        text: t('backtest.library.archiveConfirm'),
+        confirmLabel: t('backtest.library.archive'),
+      });
+      if (!ok) return;
+      await runBusy(t('ui.loading'), () => cisd.archiveBacktest(button.dataset.backtestArchive));
+      if (model.selectedBacktestId === button.dataset.backtestArchive) model.selectedBacktestId = null;
+      persistUiState();
+      await refreshStateAndRender();
+      toast(t('backtest.library.archived'), 'success');
     };
   });
   $$('[data-backtest-review]').forEach((button) => {

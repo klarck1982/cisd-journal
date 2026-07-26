@@ -20,6 +20,9 @@ function render() {
   renderSettings();
   renderReasonModal();
   renderBacktestReviewModal();
+  renderRiskBanner();
+  renderArchivedAccounts();
+  renderWelcome();
   renderActivePage();
   bindEmptyStateActions();
 }

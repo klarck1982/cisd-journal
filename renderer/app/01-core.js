@@ -33,6 +33,10 @@ const model = {
   tradeCharts: { beforeImage: '', afterImage: '' },
   quickStartDismissed: false,
   busy: false,
+  editingTradeId: null,
+  editingPlaybookId: null,
+  welcomeStep: 0,
+  welcomeCsvPath: '',
   search: {
     signals: '',
     journal: '',
@@ -324,6 +328,7 @@ function navLabelForPage(page) {
     journal: t('nav.journal'),
     backtest: t('nav.backtest'),
     daily: t('nav.daily'),
+    calendar: t('nav.calendar'),
     playbooks: t('nav.playbooks'),
     edge: t('nav.edge'),
     analytics: t('nav.analytics'),

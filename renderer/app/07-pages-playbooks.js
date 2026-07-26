@@ -8,20 +8,36 @@ function visiblePlaybooks() {
   );
 }
 
-function openPlaybookModal() {
-  $('#playbookName').value = '';
-  $('#playbookDescription').value = '';
-  $('#playbookRules').value = '';
-  $('#playbookMaxRisk').value = '1';
-  $('#playbookMaxTrades').value = '';
-  $('#playbookSymbol').value = '';
-  $('#playbookSession').value = '';
-  $('#playbookTimeframe').value = '';
+/**
+ * Opens the playbook modal, optionally seeded with an existing playbook.
+ *
+ * The modal used to always clear its fields, so there was no edit path at all:
+ * fixing one rule meant deleting the playbook and losing every trade already
+ * linked to it. `playbook:save` already merged by id — only the UI never
+ * supplied one.
+ */
+function openPlaybookModal(playbookId = null) {
+  const playbook = playbookId
+    ? (model.state?.playbooks || []).find((item) => item.id === playbookId)
+    : null;
+
+  model.editingPlaybookId = playbook?.id || null;
+
+  $('#playbookName').value = playbook?.name || '';
+  $('#playbookDescription').value = playbook?.description || '';
+  $('#playbookRules').value = (playbook?.rules || []).map((rule) => rule.text || rule).join('\n');
+  $('#playbookMaxRisk').value = playbook ? String(playbook.maxRiskPercent ?? '') : '1';
+  $('#playbookMaxTrades').value = playbook?.maxTradesPerDay ? String(playbook.maxTradesPerDay) : '';
+  $('#playbookSymbol').value = playbook?.match?.symbol || '';
+  $('#playbookSession').value = playbook?.match?.session || '';
+  $('#playbookTimeframe').value = playbook?.match?.timeframe || '';
+  $('#playbookModalTitle').textContent = playbook ? t('playbooks.editTitle') : t('playbooks.form.title');
   $('#playbookModal').classList.remove('hidden');
   $('#playbookName').focus();
 }
 
 function closePlaybookModal() {
+  model.editingPlaybookId = null;
   $('#playbookModal').classList.add('hidden');
 }
 
@@ -41,7 +57,9 @@ async function savePlaybook(event) {
     return;
   }
 
+  const editing = !!model.editingPlaybookId;
   model.state = await runBusy(t('ui.loading'), () => cisd.savePlaybook({
+    id: model.editingPlaybookId || undefined,
     accountId: model.accountId,
     name,
     description: $('#playbookDescription').value.trim(),
@@ -58,7 +76,7 @@ async function savePlaybook(event) {
   closePlaybookModal();
   await refreshSnapshots();
   render();
-  toast(t('playbooks.card.saved'), 'success');
+  toast(editing ? t('playbooks.updated') : t('playbooks.card.saved'), 'success');
 }
 
 async function deletePlaybook(id) {
@@ -122,6 +140,7 @@ function renderPlaybooks() {
             <span class="chip ${adherence === null ? 'neutral' : adherence >= 0.8 ? 'safe' : adherence >= 0.5 ? 'warn' : 'bad'}">
               ${escapeHtml(t('playbooks.card.adherence'))}: ${adherence === null ? '—' : escapeHtml(formatPercent(adherence, 0))}
             </span>
+            <button class="ghost small" data-playbook-edit="${escapeHtml(report.playbookId)}">${escapeHtml(t('playbooks.edit'))}</button>
             <button class="ghost small danger" data-playbook-delete="${escapeHtml(report.playbookId)}">${escapeHtml(t('playbooks.card.delete'))}</button>
           </div>
         </div>
@@ -170,6 +189,9 @@ function renderPlaybooks() {
 
   $$('[data-playbook-delete]').forEach((button) => {
     button.onclick = () => deletePlaybook(button.dataset.playbookDelete);
+  });
+  $$('[data-playbook-edit]').forEach((button) => {
+    button.onclick = () => openPlaybookModal(button.dataset.playbookEdit);
   });
 }
 

@@ -22,7 +22,8 @@
     "settings": "Settings",
     "edge": "Edge",
     "playbooks": "Playbooks",
-    "daily": "Daily"
+    "daily": "Daily",
+    "calendar": "Calendar"
   },
   "overview": {
     "kicker": "Live discipline cockpit",
@@ -199,7 +200,17 @@
     },
     "export": "Export trades CSV",
     "exported": "Trades exported ✓",
-    "exportEmpty": "There are no trades to export for this account."
+    "exportEmpty": "There are no trades to export for this account.",
+    "edit": "Edit",
+    "delete": "Delete",
+    "editTitle": "Edit trade",
+    "editHint": "Correct wrong values instead of resetting the whole account.",
+    "deleteConfirmTitle": "Delete this trade?",
+    "deleteConfirmText": "The trade will be removed permanently and every figure derived from it will change.",
+    "updated": "Trade updated ✓",
+    "deleted": "Trade deleted ✓",
+    "saveEdit": "Save changes",
+    "cancelEdit": "Cancel"
   },
   "backtest": {
     "kicker": "Historical discipline replay",
@@ -224,7 +235,13 @@
       "open": "Open",
       "refresh": "Re-import",
       "reset": "Reset",
-      "resetConfirm": "This backtest session and all its reviewed signals will be deleted. Continue?"
+      "resetConfirm": "This backtest session and all its reviewed signals will be deleted. Continue?",
+      "stop": "Finish session",
+      "stopConfirm": "This session will be marked finished. Its data is kept.",
+      "archive": "Archive",
+      "archiveConfirm": "The session will be hidden from the library but its reviewed signals are kept.",
+      "stopped": "Session finished ✓",
+      "archived": "Session archived ✓"
     },
     "review": {
       "title": "Review matched signals",
@@ -261,7 +278,11 @@
       "avg": "Avg",
       "avgHint": "Average result per scored signal"
     },
-    "searchPlaceholder": "Search backtest signals"
+    "searchPlaceholder": "Search backtest signals",
+    "status": {
+      "active": "Active",
+      "finished": "Finished"
+    }
   },
   "analytics": {
     "kicker": "Performance intelligence",
@@ -451,7 +472,19 @@
     "resetAccount": "Reset current account",
     "resetConfirmTitle": "Reset this account?",
     "resetConfirmText": "All trades, open positions, backtests, and daily notes for this account will be permanently deleted. Export a backup first.",
-    "resetDone": "Account data reset ✓"
+    "resetDone": "Account data reset ✓",
+    "archiveAccount": "Archive this account",
+    "archiveConfirmTitle": "Archive this account?",
+    "archiveConfirmText": "The account will be hidden from the sidebar but all its data is kept. It can be restored later.",
+    "archiveDone": "Account archived ✓",
+    "deleteAccount": "Delete this account permanently",
+    "deleteConfirmTitle": "Delete the account permanently?",
+    "deleteConfirmText": "The account and all of its trades, positions, backtest sessions, notes and playbooks will be removed. This cannot be undone. Export a backup first.",
+    "deleteDone": "Account deleted ✓",
+    "lastAccountBlocked": "The last account cannot be deleted. Create another account first.",
+    "resetKeepsLimits": "Your risk limits (target, daily loss, drawdown) are preserved.",
+    "archivedTitle": "Archived accounts",
+    "restoreAccount": "Restore"
   },
   "warnings": {
     "ALL_CLEAR": "No active risk warnings.",
@@ -603,7 +636,8 @@
     "importEmptyCsv": "The CSV file is empty.",
     "importNotFundedNext": "This is not a FundedNext CSV in the expected format.",
     "importNoMt5Table": "No MT5 trade table was found in this report.",
-    "importMt5ColumnsMissing": "Required MT5 columns are missing from this report."
+    "importMt5ColumnsMissing": "Required MT5 columns are missing from this report.",
+    "tradeNotFound": "Trade not found"
   },
   "funding": {
     "title": "Funding access",
@@ -802,7 +836,10 @@
     },
     "linkTitle": "Strategy",
     "linkNone": "No playbook",
-    "rulesFollowed": "Rules followed"
+    "rulesFollowed": "Rules followed",
+    "edit": "Edit",
+    "editTitle": "Edit playbook",
+    "updated": "Playbook updated ✓"
   },
   "daily": {
     "kicker": "Daily routine",
@@ -865,5 +902,45 @@
     "weeklyDeclined": "Declining",
     "weeklyFlat": "Unchanged",
     "noReviewYet": "No review written for today yet."
+  },
+  "welcome": {
+    "kicker": "Welcome",
+    "title": "Let us set up CISD Journal in a minute",
+    "subtitle": "Four short steps. Everything can be changed later in Settings.",
+    "skip": "Skip for now",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Start using the app",
+    "stepOf": "Step {{current}} of {{total}}",
+    "language": {
+      "title": "Language",
+      "hint": "Applied immediately across the whole interface."
+    },
+    "account": {
+      "title": "Your first account",
+      "hint": "A firm name and an account name are enough to start."
+    },
+    "risk": {
+      "title": "Risk limits",
+      "hint": "These limits are what the app guards on your behalf. Leave them empty if you do not know them yet."
+    },
+    "csv": {
+      "title": "CISD signals file",
+      "hint": "Optional. You can link it later from the Signals page.",
+      "none": "No file selected"
+    },
+    "done": "Setup complete ✓"
+  },
+  "alerts": {
+    "nearDailyLoss": "Approaching the daily loss limit — {{remaining}} left",
+    "dailyLossBreached": "Daily loss limit breached",
+    "nearDrawdown": "Approaching the maximum drawdown — {{remaining}} left",
+    "drawdownBreached": "Maximum drawdown breached",
+    "title": "Risk alert"
+  },
+  "calendar": {
+    "pageTitle": "Monthly calendar",
+    "pageDescription": "A single monthly view showing which days work for you and how you behave after a win or a loss.",
+    "openDay": "Open day review"
   }
 }

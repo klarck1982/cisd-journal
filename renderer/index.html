@@ -18,9 +18,9 @@
         </div>
       </div>
       <div class="titlebar-actions">
-        <button id="minimizeBtn" class="ghost icon">—</button>
-        <button id="maximizeBtn" class="ghost icon">□</button>
-        <button id="closeBtn" class="ghost icon danger">×</button>
+        <button id="minimizeBtn" class="ghost icon" aria-label="Minimize">—</button>
+        <button id="maximizeBtn" class="ghost icon" aria-label="Maximize">□</button>
+        <button id="closeBtn" class="ghost icon danger" aria-label="Close">×</button>
       </div>
     </header>
 
@@ -38,6 +38,7 @@
           <button class="nav-link" data-page="journal" id="navJournal"></button>
           <button class="nav-link" data-page="backtest" id="navBacktest"></button>
           <button class="nav-link" data-page="daily" id="navDaily"></button>
+          <button class="nav-link" data-page="calendar" id="navCalendar"></button>
           <button class="nav-link" data-page="playbooks" id="navPlaybooks"></button>
           <button class="nav-link" data-page="edge" id="navEdge"></button>
           <button class="nav-link" data-page="analytics" id="navAnalytics"></button>
@@ -49,6 +50,11 @@
       </aside>
 
       <main class="content">
+        <!-- Risk state follows the trader across every tab. The engine already
+             produced these warnings, but they only rendered on Overview, so
+             leaving that page hid them. -->
+        <div id="riskBanner" class="risk-banner hidden" role="status" aria-live="polite"></div>
+
         <section class="status-dock panel slim">
           <div class="status-pill">
             <span class="status-label" id="statusAccountLabel"></span>
@@ -485,6 +491,32 @@
           </section>
         </section>
 
+        <section class="page" data-page="calendar">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="calendarKicker"></div>
+              <h1 id="calendarPageTitle"></h1>
+              <p id="calendarPageDescription"></p>
+            </div>
+            <div class="head-actions">
+              <select id="calendarMonthSelect" class="calendar-month-select"></select>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3 id="calendarTitle"></h3>
+              <span class="panel-hint" id="calendarHint"></span>
+            </div>
+            <div id="calendarCards" class="metric-grid"></div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+            <div class="calendar-weekday-strip">
+              <span id="calendarWeekdayTitle"></span>
+              <div id="calendarWeekdays" class="weekday-bars"></div>
+            </div>
+          </section>
+        </section>
+
         <section class="page" data-page="playbooks">
           <div class="page-head">
             <div>
@@ -610,22 +642,6 @@
               <span class="panel-hint" id="analyticsFilterHint"></span>
             </div>
             <div id="analyticsFilterChips" class="tag-cloud"></div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h3 id="calendarTitle"></h3>
-              <div class="calendar-controls">
-                <span class="panel-hint" id="calendarHint"></span>
-                <select id="calendarMonthSelect" class="calendar-month-select"></select>
-              </div>
-            </div>
-            <div id="calendarCards" class="metric-grid"></div>
-            <div id="calendarGrid" class="calendar-grid"></div>
-            <div class="calendar-weekday-strip">
-              <span id="calendarWeekdayTitle"></span>
-              <div id="calendarWeekdays" class="weekday-bars"></div>
-            </div>
           </section>
 
           <section class="panel">
@@ -913,20 +929,28 @@
           <section class="panel danger-zone">
             <div class="panel-head"><h3 id="dangerZoneTitle"></h3></div>
             <p class="muted" id="dangerZoneDescription"></p>
+            <p class="panel-hint" id="resetKeepsLimitsHint"></p>
             <div class="button-row">
               <button id="resetAccountBtn" class="ghost danger"></button>
+              <button id="archiveAccountBtn" class="ghost"></button>
+              <button id="deleteAccountBtn" class="ghost danger"></button>
             </div>
+          </section>
+
+          <section class="panel" id="archivedAccountsPanel">
+            <div class="panel-head"><h3 id="archivedAccountsTitle"></h3></div>
+            <div id="archivedAccountsList" class="list"></div>
           </section>
         </section>
       </main>
     </div>
   </div>
 
-  <div id="accountModal" class="modal hidden">
+  <div id="accountModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
     <div class="modal-card">
       <div class="panel-head">
         <h3 id="accountModalTitle"></h3>
-        <button id="closeAccountModal" class="ghost icon">×</button>
+        <button id="closeAccountModal" class="ghost icon" aria-label="Close">×</button>
       </div>
       <p id="accountModalDescription" class="muted"></p>
       <form id="accountModalForm" class="form-grid compact-form">
@@ -980,11 +1004,11 @@
     </div>
   </div>
 
-  <div id="playbookModal" class="modal hidden">
+  <div id="playbookModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="playbookModalTitle">
     <div class="modal-card">
       <div class="panel-head">
         <h3 id="playbookModalTitle"></h3>
-        <button id="closePlaybookModal" class="ghost icon">×</button>
+        <button id="closePlaybookModal" class="ghost icon" aria-label="Close">×</button>
       </div>
       <form id="playbookForm" class="form-grid compact-form">
         <label class="full">
@@ -1031,11 +1055,11 @@
     </div>
   </div>
 
-  <div id="confirmModal" class="modal hidden">
+  <div id="confirmModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
     <div class="modal-card confirm-modal-card">
       <div class="panel-head">
         <h3 id="confirmModalTitle"></h3>
-        <button id="closeConfirmModal" class="ghost icon">×</button>
+        <button id="closeConfirmModal" class="ghost icon" aria-label="Close">×</button>
       </div>
       <p id="confirmModalText" class="muted"></p>
       <label class="full hidden" id="confirmModalTypeWrap">
@@ -1049,11 +1073,11 @@
     </div>
   </div>
 
-  <div id="reasonModal" class="modal hidden">
+  <div id="reasonModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="reasonModalTitle">
     <div class="modal-card">
       <div class="panel-head">
         <h3 id="reasonModalTitle"></h3>
-        <button id="closeReasonModal" class="ghost icon">×</button>
+        <button id="closeReasonModal" class="ghost icon" aria-label="Close">×</button>
       </div>
       <p id="reasonModalDescription" class="muted"></p>
       <div id="reasonPresets" class="preset-grid"></div>
@@ -1067,11 +1091,11 @@
     </div>
   </div>
 
-  <div id="backtestReviewModal" class="modal hidden">
+  <div id="backtestReviewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="backtestReviewModalTitle">
     <div class="modal-card review-modal-card">
       <div class="panel-head">
         <h3 id="backtestReviewModalTitle"></h3>
-        <button id="closeBacktestReviewModal" class="ghost icon">×</button>
+        <button id="closeBacktestReviewModal" class="ghost icon" aria-label="Close">×</button>
       </div>
       <p id="backtestReviewModalDescription" class="muted"></p>
       <div id="backtestReviewSignalSummary" class="review-signal-summary"></div>
@@ -1100,6 +1124,135 @@
     </div>
   </div>
 
+  <div id="tradeEditModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tradeEditTitle">
+    <div class="modal-card">
+      <div class="panel-head">
+        <h3 id="tradeEditTitle"></h3>
+        <button id="closeTradeEditModal" class="ghost icon" aria-label="Close">×</button>
+      </div>
+      <p id="tradeEditHint" class="muted"></p>
+      <form id="tradeEditForm" class="form-grid compact-form">
+        <label>
+          <span id="tradeEditInstrumentLabel"></span>
+          <input id="tradeEditInstrument" autocomplete="off">
+        </label>
+        <label>
+          <span id="tradeEditSideLabel"></span>
+          <select id="tradeEditSide">
+            <option value="Buy">Buy</option>
+            <option value="Sell">Sell</option>
+          </select>
+        </label>
+        <label>
+          <span id="tradeEditDateLabel"></span>
+          <input id="tradeEditDate" type="date">
+        </label>
+        <label>
+          <span id="tradeEditResultLabel"></span>
+          <input id="tradeEditResult" type="number" step="0.01">
+        </label>
+        <label>
+          <span id="tradeEditProfitLabel"></span>
+          <input id="tradeEditProfit" type="number" step="0.01">
+        </label>
+        <label class="span-two">
+          <span id="tradeEditNoteLabel"></span>
+          <textarea id="tradeEditNote" rows="3"></textarea>
+        </label>
+        <div class="form-actions span-two">
+          <button type="submit" id="saveTradeEditBtn" class="primary"></button>
+          <button type="button" id="cancelTradeEditBtn" class="ghost"></button>
+          <button type="button" id="deleteTradeBtn" class="ghost danger"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- First-run setup. The onboardingComplete flag existed and was written by
+       two IPC handlers, but nothing ever read it and no screen consumed it, so
+       "Restart onboarding" reported success and showed nothing. -->
+  <div id="welcomeOverlay" class="welcome-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <div class="welcome-card">
+      <div class="welcome-head">
+        <div class="section-kicker" id="welcomeKicker"></div>
+        <h2 id="welcomeTitle"></h2>
+        <p class="muted" id="welcomeSubtitle"></p>
+        <div class="welcome-progress"><i id="welcomeProgressBar"></i></div>
+        <div class="panel-hint" id="welcomeStepCounter"></div>
+      </div>
+
+      <div class="welcome-body">
+        <section class="welcome-step" data-step="0">
+          <h3 id="welcomeLanguageTitle"></h3>
+          <p class="muted" id="welcomeLanguageHint"></p>
+          <div class="button-row">
+            <button type="button" class="ghost" data-welcome-locale="ar">العربية</button>
+            <button type="button" class="ghost" data-welcome-locale="en">English</button>
+          </div>
+        </section>
+
+        <section class="welcome-step hidden" data-step="1">
+          <h3 id="welcomeAccountTitle"></h3>
+          <p class="muted" id="welcomeAccountHint"></p>
+          <div class="form-grid compact-form">
+            <label>
+              <span id="welcomeFirmLabel"></span>
+              <input id="welcomeFirm" autocomplete="off">
+            </label>
+            <label>
+              <span id="welcomeNameLabel"></span>
+              <input id="welcomeName" autocomplete="off">
+            </label>
+            <label>
+              <span id="welcomeCapitalLabel"></span>
+              <input id="welcomeCapital" type="number" min="0" step="100">
+            </label>
+            <label>
+              <span id="welcomeCurrencyLabel"></span>
+              <input id="welcomeCurrency" value="USD">
+            </label>
+          </div>
+        </section>
+
+        <section class="welcome-step hidden" data-step="2">
+          <h3 id="welcomeRiskTitle"></h3>
+          <p class="muted" id="welcomeRiskHint"></p>
+          <div class="form-grid compact-form">
+            <label>
+              <span id="welcomeTargetLabel"></span>
+              <input id="welcomeTarget" type="number" min="0" step="0.5">
+            </label>
+            <label>
+              <span id="welcomeDailyLossLabel"></span>
+              <input id="welcomeDailyLoss" type="number" min="0" step="0.5">
+            </label>
+            <label>
+              <span id="welcomeDrawdownLabel"></span>
+              <input id="welcomeDrawdown" type="number" min="0" step="0.5">
+            </label>
+          </div>
+        </section>
+
+        <section class="welcome-step hidden" data-step="3">
+          <h3 id="welcomeCsvTitle"></h3>
+          <p class="muted" id="welcomeCsvHint"></p>
+          <div class="button-row">
+            <button type="button" id="welcomeChooseCsv" class="ghost"></button>
+          </div>
+          <div class="panel-hint" id="welcomeCsvPath"></div>
+        </section>
+      </div>
+
+      <div class="welcome-foot">
+        <button type="button" id="welcomeSkip" class="ghost small"></button>
+        <div class="button-row">
+          <button type="button" id="welcomeBack" class="ghost"></button>
+          <button type="button" id="welcomeNext" class="primary"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast"></div>
   <script src="app/01-core.js"></script>
   <script src="app/01a-ui-kit.js"></script>
@@ -1107,11 +1260,13 @@
   <script src="app/03-static-text.js"></script>
   <script src="app/04-pages-overview.js"></script>
   <script src="app/05-pages-trading.js"></script>
+  <script src="app/05a-trade-edit.js"></script>
   <script src="app/06-pages-daily.js"></script>
   <script src="app/07-pages-playbooks.js"></script>
   <script src="app/08-pages-edge.js"></script>
   <script src="app/09-pages-rest.js"></script>
   <script src="app/09a-calendar.js"></script>
+  <script src="app/09b-welcome.js"></script>
   <script src="app/10-render.js"></script>
   <script src="app/11-actions.js"></script>
   <script src="app/12-bootstrap.js"></script>

@@ -152,6 +152,54 @@ function watchSignalsFile() {
   syncSignalsFromFile();
 }
 
+/**
+ * Desktop notifications for risk-limit warnings.
+ *
+ * The risk engine already produced NEAR_DAILY_LOSS_LIMIT / *_BREACHED codes, but
+ * nothing ever told the trader — the warning was only visible to someone already
+ * looking at the Overview page. A discipline guard has to interrupt.
+ *
+ * State is kept per account+code so a breach notifies once rather than on every
+ * snapshot, and re-arms only after the account returns to a safe state.
+ */
+const notifiedRiskCodes = new Map();
+
+function notifyRiskWarnings(data, accountId, snapshot) {
+  if (!snapshot || data.settings?.notifications === false) return;
+  if (!Notification.isSupported || !Notification.isSupported()) return;
+
+  const bundle = getBundle(data.settings?.locale);
+  const account = (data.accounts || []).find((item) => item.id === accountId);
+  const previous = notifiedRiskCodes.get(accountId) || new Set();
+  const current = new Set();
+
+  const messages = {
+    NEAR_DAILY_LOSS_LIMIT: bundle.alerts?.nearDailyLoss,
+    DAILY_LOSS_LIMIT_BREACHED: bundle.alerts?.dailyLossBreached,
+    NEAR_MAX_DRAWDOWN: bundle.alerts?.nearDrawdown,
+    MAX_DRAWDOWN_BREACHED: bundle.alerts?.drawdownBreached,
+  };
+
+  for (const warning of snapshot.warnings || []) {
+    current.add(warning.code);
+    const template = messages[warning.code];
+    if (!template || previous.has(warning.code)) continue;
+
+    const remaining = Number.isFinite(warning.remaining) ? Math.round(warning.remaining).toLocaleString('en-US') : '';
+    try {
+      new Notification({
+        title: `${bundle.alerts?.title || 'Risk alert'} — ${account?.name || ''}`.trim(),
+        body: String(template).replace('{{remaining}}', remaining),
+        urgency: warning.severity === 'critical' ? 'critical' : 'normal',
+      }).show();
+    } catch (error) {
+      logError('notifyRiskWarnings', error);
+    }
+  }
+
+  notifiedRiskCodes.set(accountId, current);
+}
+
 function closeFundedNextWatcher(accountId) {
   if (!fundedNextWatchers[accountId]) return;
   try {
@@ -431,7 +479,12 @@ function updateSettings(patch) {
 function registerHandlers() {
   ipcMain.handle('state:get', () => read());
   ipcMain.handle('runtime:readiness', () => buildRuntimeReadinessSnapshot({ app, isPackaged: app.isPackaged, currentDirname: __dirname, platform: process.platform }));
-  ipcMain.handle('dashboard:snapshot', (_, accountId, options = {}) => buildAccountDashboardSnapshot(read(), accountId, options));
+  ipcMain.handle('dashboard:snapshot', (_, accountId, options = {}) => {
+    const data = read();
+    const snapshot = buildAccountDashboardSnapshot(data, accountId, options);
+    notifyRiskWarnings(data, accountId, snapshot.risk);
+    return snapshot;
+  });
   ipcMain.handle('analytics:snapshot', (_, accountId, options = {}) => buildAccountAnalyticsSnapshot(read(), accountId, options));
   ipcMain.handle('calendar:month', (_, accountId, options = {}) => {
     const data = read();
@@ -462,14 +515,6 @@ function registerHandlers() {
     return data;
   });
 
-  ipcMain.handle('playbook:archive', (_, id) => {
-    const data = read();
-    const playbook = (data.playbooks || []).find((item) => item.id === id);
-    if (playbook) playbook.archived = true;
-    save(data);
-    return data;
-  });
-
   ipcMain.handle('playbook:delete', (_, id) => {
     const data = read();
     data.playbooks = (data.playbooks || []).filter((item) => item.id !== id);
@@ -492,10 +537,7 @@ function registerHandlers() {
       exitQuality: buildExitQualitySnapshot(data, accountId, options),
     };
   });
-  ipcMain.handle('locale:get', () => read().settings.locale || 'ar');
   ipcMain.handle('locale:bundle', () => getBundle(read().settings.locale));
-  ipcMain.handle('locale:set', (_, locale) => updateSettings({ locale }).settings.locale);
-
   ipcMain.handle('settings:update', (_, patch) => updateSettings(patch));
   ipcMain.handle('onboarding:reset', () => {
     const data = read();
@@ -600,21 +642,6 @@ function registerHandlers() {
 
   ipcMain.handle('funding:access:sync', (_, accountId) => syncFundingAccess(accountId));
 
-  ipcMain.handle('funding:url', (_, accountId, url) => {
-    const data = read();
-    const account = ensureAccount(data, accountId);
-
-    if (url) {
-      const parsed = new URL(url);
-      if (parsed.protocol !== 'https:') throw new Error(getBundle(data.settings.locale).errors.httpsOnly);
-    }
-
-    account.sharedDashboardUrl = url || '';
-    account.fundingAccessMode = account.sharedDashboardUrl ? 'shared_url' : account.fundingAccessMode || 'none';
-    save(data);
-    return data;
-  });
-
   ipcMain.handle('funding:open', (_, accountId) => {
     const data = read();
     const account = ensureAccount(data, accountId);
@@ -694,6 +721,16 @@ function registerHandlers() {
     return result.canceled ? '' : result.filePath;
   });
 
+  /**
+   * Clears the trading history of an account.
+   *
+   * Deliberately preserves profitTarget / dailyLoss / maxDrawdown / phase.
+   * These are the account's risk configuration, not its history, and the
+   * confirmation text only warns about trades, positions, backtests and notes.
+   * Zeroing dailyLoss additionally made buildRiskSnapshot() return a null
+   * dailyLossLimit, which silently disarms the guard the product exists to
+   * provide. Clearing history must never disable protection.
+   */
   ipcMain.handle('account:reset', (_, accountId) => {
     const data = read();
     data.trades = data.trades.filter((item) => item.accountId !== accountId);
@@ -706,11 +743,9 @@ function registerHandlers() {
 
     const account = data.accounts.find((item) => item.id === accountId);
     if (account) {
+      // Balance returns to the starting capital because the history that moved
+      // it away is gone. Risk limits and phase are configuration and stay.
       account.currentBalance = account.capital;
-      account.profitTarget = 0;
-      account.dailyLoss = 0;
-      account.maxDrawdown = 0;
-      account.phase = 'Challenge';
     }
 
     save(data);
@@ -740,6 +775,57 @@ function registerHandlers() {
     const data = read();
     const account = data.accounts.find((item) => item.id === id);
     if (account) account.archived = true;
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('account:unarchive', (_, id) => {
+    const data = read();
+    const account = data.accounts.find((item) => item.id === id);
+    if (account) account.archived = false;
+    save(data);
+    return data;
+  });
+
+  /**
+   * Permanently removes an account and everything belonging to it.
+   *
+   * Archiving hides an account but keeps its rows, which is the right default.
+   * Deletion exists for the account created by mistake. It also stops the
+   * folder watcher and removes the encrypted investor-pass secret, so no
+   * orphaned watcher or credential file outlives the account.
+   */
+  ipcMain.handle('account:delete', (_, id) => {
+    const data = read();
+    const account = data.accounts.find((item) => item.id === id);
+    if (!account) throw new Error(getBundle(data.settings?.locale).errors.accountNotFound);
+
+    closeFundedNextWatcher(id);
+
+    const backtestIds = (data.backtests || []).filter((item) => item.accountId === id).map((item) => item.id);
+    data.backtests = (data.backtests || []).filter((item) => item.accountId !== id);
+    data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    data.trades = (data.trades || []).filter((item) => item.accountId !== id);
+    data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== id);
+    data.daily = (data.daily || []).filter((item) => item.accountId !== id);
+    data.playbooks = (data.playbooks || []).filter((item) => item.accountId !== id);
+    data.importHistory = (data.importHistory || []).filter((item) => item.accountId !== id);
+    data.accounts = data.accounts.filter((item) => item.id !== id);
+
+    // Per-account signal decisions live inside each signal record.
+    for (const signal of data.signals || []) {
+      if (signal.decisions && signal.decisions[id]) delete signal.decisions[id];
+    }
+
+    for (const kind of ['investor-pass']) {
+      try {
+        const file = accountSecretFile(id, kind);
+        if (fs.existsSync(file)) fs.unlinkSync(file);
+      } catch (error) {
+        logError('account:delete:secret', error);
+      }
+    }
+
     save(data);
     return data;
   });
@@ -827,6 +913,42 @@ function registerHandlers() {
     return data;
   });
 
+  /**
+   * Corrects a previously logged trade.
+   *
+   * Without this, a mistyped R could only be fixed by resetting the whole
+   * account — destroying every other trade to repair one. Identity fields
+   * (id, accountId, createdAt) are pinned so an edit can never move a trade
+   * to another account or forge its creation time.
+   */
+  ipcMain.handle('trade:update', (_, tradeId, patch = {}) => {
+    const data = read();
+    const index = data.trades.findIndex((item) => item.id === tradeId);
+    if (index < 0) throw new Error(getBundle(data.settings?.locale).errors?.tradeNotFound || 'Trade not found');
+
+    const existing = data.trades[index];
+    data.trades[index] = {
+      ...existing,
+      ...patch,
+      id: existing.id,
+      accountId: existing.accountId,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('trade:delete', (_, tradeId) => {
+    const data = read();
+    const index = data.trades.findIndex((item) => item.id === tradeId);
+    if (index < 0) throw new Error(getBundle(data.settings?.locale).errors?.tradeNotFound || 'Trade not found');
+    data.trades.splice(index, 1);
+    save(data);
+    return data;
+  });
+
   ipcMain.handle('mt5:choose', async (_, accountId) => {
     const result = await dialog.showOpenDialog(win, {
       properties: ['openFile'],
@@ -889,20 +1011,6 @@ function registerHandlers() {
     }
 
     return read();
-  });
-
-  ipcMain.handle('signal:result', (_, id, resultR) => {
-    const data = read();
-    const liveSignal = data.signals.find((item) => item.SignalID === id);
-    const backtestSignal = (data.backtestSignals || []).find((item) => item.id === id || item.SignalID === id);
-    const signal = liveSignal || backtestSignal;
-    if (signal) {
-      signal.resultR = Number(resultR) || 0;
-      signal.status = signal.resultR > 0 ? 'WIN' : signal.resultR < 0 ? 'LOSS' : 'BE';
-      if (backtestSignal) signal.reviewedAt = new Date().toISOString();
-      save(data);
-    }
-    return data;
   });
 
   ipcMain.handle('signal:status', (_, id, accountId, status, reason) => {
