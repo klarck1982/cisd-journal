@@ -1,0 +1,4 @@
+SignalID,Instrument,Direction,TF,Session,Grade,Score,SignalTimeNY,Note
+SIG-1001,XAUUSD,+CISD,15m,London,A,92,2026-07-24 08:15,"Valid long setup"
+SIG-1002,EURUSD,-CISD,5m,New York,B,84,2026-07-24 10:40,"Fear, skipped by trader"
+,US30,+CISD,1m,New York,C,76,2026-07-24 11:05,"Missing id should be flagged"

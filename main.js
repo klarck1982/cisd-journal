@@ -1,11 +1,833 @@
-const {app,BrowserWindow,ipcMain,dialog,safeStorage,Notification,shell}=require('electron');const fs=require('fs'),path=require('path');
-const {createStore}=require('./lib/store');
-const {fetchCalendar}=require('./lib/news-providers');
-const {fundedNext,mt5}=require('./lib/importers');let win,watchPath,signalsInitialized=false,folderWatchers={}; let newsCache=[];
-const {dataFile:file,initial,logError,read,save}=createStore(app);
-function csv(p){let a=fs.readFileSync(p,'utf8').replace(/^\uFEFF/,'').trim().split(/\r?\n/);if(a.length<2)return[];let h=a.shift().split(',');return a.map(l=>{let o={};l.split(',').forEach((v,i)=>o[h[i]]=v);return o}).filter(x=>x.SignalID)}function importFundedNext(p,accountId){const data=read(),result=fundedNext(data,fs.readFileSync(p,'utf8'),accountId,path.basename(p));save(data);return {state:data,...result}}function importMT5(p,accountId){const data=read(),result=mt5(data,fs.readFileSync(p,'utf8'),accountId,path.basename(p),/\.html?$/i.test(p));save(data);return {state:data,...result}}
-function watchFundedNextFolder(accountId,folder){if(folderWatchers[accountId]){try{folderWatchers[accountId].close()}catch{}}if(!folder||!fs.existsSync(folder))return;folderWatchers[accountId]=fs.watch(folder,(event,name)=>{if(!name||!name.toLowerCase().match(/\.(csv|txt)$/))return;setTimeout(()=>{try{let r=importFundedNext(path.join(folder,name),accountId);if(r.added)win?.webContents.send('state:changed',r.state)}catch{}},700)});for(const name of fs.readdirSync(folder)){if(name.toLowerCase().match(/\.(csv|txt)$/)){try{importFundedNext(path.join(folder,name),accountId)}catch{}}}}function watchAllFolders(){for(const a of read().accounts)if(a.fundedNextFolder)watchFundedNextFolder(a.id,a.fundedNextFolder)}
-function cleanHtml(v){return String(v||'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim()}function htmlRows(text){let rows=[];for(const tr of text.match(/<tr[\s\S]*?<\/tr>/gi)||[]){let c=[];for(const td of tr.match(/<(?:td|th)[^>]*>[\s\S]*?<\/(?:td|th)>/gi)||[])c.push(cleanHtml(td));if(c.length)rows.push(c)}return rows}function fieldIndex(headers,names){let h=headers.map(x=>x.toLowerCase().replace(/[^a-z]/g,''));for(const n of names){let i=h.indexOf(n.toLowerCase().replace(/[^a-z]/g,''));if(i>=0)return i}return -1}function importMT5(p,accountId){let raw=fs.readFileSync(p,'utf8'),rows=/\.html?$/i.test(p)?htmlRows(raw):csvRows(raw);let headerAt=rows.findIndex(r=>fieldIndex(r,['Symbol'])>=0&&fieldIndex(r,['Type'])>=0&&fieldIndex(r,['Profit'])>=0);if(headerAt<0)throw new Error('لم أجد جدول صفقات MT5 في التقرير');let h=rows[headerAt],ix=n=>fieldIndex(h,n),symbol=ix(['Symbol','Instrument']),type=ix(['Type','Side']),profit=ix(['Profit','P/L']),ticket=ix(['Ticket','Deal','Position']),openTime=ix(['Open Time','Time']),closeTime=ix(['Close Time','CloseTime']),openPrice=ix(['Open Price','Price Open']),closePrice=ix(['Close Price','Price Close']),lots=ix(['Volume','Lots']),commission=ix(['Commission']),swap=ix(['Swap']),sl=ix(['S/L','SL']),tp=ix(['T/P','TP']);if(symbol<0||type<0||profit<0)throw new Error('أعمدة MT5 الأساسية غير موجودة');let d=read(),added=0;for(const r of rows.slice(headerAt+1)){if(r.length<h.length*.55)continue;let sym=r[symbol],side=r[type];if(!sym||!side||!/buy|sell/i.test(side))continue;let id=(ticket>=0?r[ticket]:'')||`${sym}:${r[closeTime]||r[openTime]}:${r[profit]}`;if(d.trades.some(t=>t.importId==='mt5:'+id))continue;let pr=n(r[profit]),co=commission>=0?n(r[commission]):0,sw=swap>=0?n(r[swap]):0;d.trades.unshift({id:crypto.randomUUID(),importId:'mt5:'+id,accountId,source:'MT5 Report',ticket:id,openTime:openTime>=0?r[openTime]:'',closeTime:closeTime>=0?r[closeTime]:'',date:normalizeTradeDate(closeTime>=0?r[closeTime]:r[openTime]),entry:openPrice>=0?n(r[openPrice]):0,close:closePrice>=0?n(r[closePrice]):0,profit:pr,commission:co,swap:sw,netProfit:pr+co+sw,lots:lots>=0?n(r[lots]):0,symbol:sym,side:/buy/i.test(side)?'Buy':'Sell',sl:sl>=0?n(r[sl]):0,tp:tp>=0?n(r[tp]):0,resultR:null,note:'Imported from MT5 Report',tags:'MT5'});added++}let acc=d.accounts.find(x=>x.id===accountId);if(acc)acc.lastMT5Import=new Date().toISOString();d.importHistory=d.importHistory||[];d.importHistory.unshift({id:crypto.randomUUID(),source:'MT5 Report',accountId,file:path.basename(p),added,at:new Date().toISOString()});save(d);return {state:d,added,headers:h}}
-function sync(){let d=read(),added=[];try{if(d.settings.csvPath&&fs.existsSync(d.settings.csvPath)){for(const x of csv(d.settings.csvPath))if(!d.signals.some(s=>s.SignalID===x.SignalID)){let signal={...x,status:'NEW',decisions:{},mode:d.activeBacktestId?'BACKTEST':'LIVE',backtestId:d.activeBacktestId||null,importedAt:new Date().toISOString()};d.signals.push(signal);added.push(signal)}d.settings.lastSignalSync=new Date().toISOString();save(d)}}catch{}if(signalsInitialized&&added.length&&d.settings.notifications!==false){let x=added[0];new Notification({title:'CISD Journal — إشارة جديدة',body:`${x.Instrument} · ${x.Direction} · ${x.TF} · ${x.Session}`}).show()}signalsInitialized=true;win?.webContents.send('state:changed',d)}function watch(){if(watchPath)fs.unwatchFile(watchPath);watchPath=read().settings.csvPath;if(watchPath)fs.watchFile(watchPath,{interval:2000},sync);sync()}function newsKey(){try{let b=fs.readFileSync(secretFile());return safeStorage.isEncryptionAvailable()?safeStorage.decryptString(b):b.toString()}catch{return ''}}function setNewsKey(k){if(!k){try{fs.unlinkSync(secretFile())}catch{};return}let b=safeStorage.isEncryptionAvailable()?safeStorage.encryptString(k):Buffer.from(k);fs.writeFileSync(secretFile(),b)}async function fetchNews(){let d=read();newsCache=await fetchCalendar(d.settings.newsProvider||'FMP',newsKey());return newsCache}
-function create(){win=new BrowserWindow({width:1440,height:900,minWidth:1100,minHeight:720,frame:false,backgroundColor:'#09111d',webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true}});win.loadFile('renderer/index.html')}
-app.whenReady().then(()=>{create();watch();watchAllFolders();ipcMain.handle('state:get',()=>read());ipcMain.handle('settings:update',(_,patch)=>{let d=read();d.settings={...d.settings,...patch};save(d);return d});ipcMain.handle('onboarding:reset',()=>{let d=read();d.settings.onboardingComplete=false;save(d);return d});ipcMain.handle('help:open-guide',()=>{const guide=app.isPackaged?path.join(process.resourcesPath,'docs','CISD_Journal_User_Guide.html'):path.join(__dirname,'docs','CISD_Journal_User_Guide.html');return shell.openPath(guide)});ipcMain.handle('onboarding:complete',()=>{let d=read();d.settings.onboardingComplete=true;save(d);return d});ipcMain.handle('news:status',()=>({configured:!!newsKey(),count:newsCache.length}));ipcMain.handle('news:provider',(_,provider)=>{let d=read();d.settings.newsProvider=provider;save(d);return d.settings});ipcMain.handle('news:key',(_,k)=>{setNewsKey(k);return {configured:!!newsKey()}});ipcMain.handle('news:fetch',async()=>{let n=await fetchNews();return n});ipcMain.handle('image:choose',async()=>{let r=await dialog.showOpenDialog(win,{properties:['openFile'],filters:[{name:'Chart Images',extensions:['png','jpg','jpeg','webp']} ]});if(r.canceled)return '';let dir=path.join(app.getPath('userData'),'charts');fs.mkdirSync(dir,{recursive:true});let ext=path.extname(r.filePaths[0]),dest=path.join(dir,crypto.randomUUID()+ext);fs.copyFileSync(r.filePaths[0],dest);return dest});ipcMain.handle('terminal:choose',async(_,accountId)=>{const r=await dialog.showOpenDialog(win,{properties:['openFile'],filters:[{name:'MT5 Terminal or Shortcut',extensions:['exe','lnk']}]});if(r.canceled)return {cancelled:true};const d=read(),a=d.accounts.find(x=>x.id===accountId);a.terminalPath=r.filePaths[0];save(d);return {state:d,path:a.terminalPath}});ipcMain.handle('terminal:open',(_,accountId)=>{const a=read().accounts.find(x=>x.id===accountId);if(!a?.terminalPath)throw new Error('لم يتم اختيار اختصار MT5 لهذا الحساب');return shell.openPath(a.terminalPath)});ipcMain.handle('funding:url',(_,accountId,url)=>{let d=read(),a=d.accounts.find(x=>x.id===accountId);if(!a)throw new Error('الحساب غير موجود');if(url){let u=new URL(url);if(u.protocol!=='https:')throw new Error('يجب أن يكون الرابط HTTPS')}a.sharedDashboardUrl=url||'';save(d);return d});ipcMain.handle('funding:open',(_,accountId)=>{let a=read().accounts.find(x=>x.id===accountId);if(!a?.sharedDashboardUrl)throw new Error('لم يتم إضافة رابط Shared Dashboard');return shell.openExternal(a.sharedDashboardUrl)});ipcMain.handle('data:restore',async()=>{let r=await dialog.showOpenDialog(win,{properties:['openFile'],filters:[{name:'CISD Journal Backup',extensions:['json']}]});if(r.canceled)return {cancelled:true};let incoming=JSON.parse(fs.readFileSync(r.filePaths[0],'utf8'));if(!incoming||!Array.isArray(incoming.accounts)||!Array.isArray(incoming.trades))throw new Error('ملف Backup غير صالح');let current=read();fs.writeFileSync(file()+'.before-restore-'+Date.now(),JSON.stringify(current,null,2));save({...initial(),...incoming,settings:{...initial().settings,...(incoming.settings||{})}});return {state:read(),file:r.filePaths[0]}});ipcMain.handle('trades:export',async(_,accountId)=>{let d=read(),rows=d.trades.filter(x=>x.accountId===accountId),r=await dialog.showSaveDialog(win,{defaultPath:'CISD-Journal-Trades.csv',filters:[{name:'CSV',extensions:['csv']}]});if(r.canceled)return '';let cols=['Ticket','Source','Symbol','Side','Open Time','Close Time','Entry','Close','SL','TP','Lots','Profit','Commission','Swap','Net P&L','Result R','Tags','Note'];let esc=x=>'"'+String(x??'').replace(/"/g,'""')+'"';let text=cols.join(',')+'\n'+rows.map(t=>[t.ticket||'',t.source,t.symbol,t.side,t.openTime||'',t.closeTime||'',t.entry||'',t.close||'',t.sl||'',t.tp||'',t.lots||'',t.profit??'',t.commission??'',t.swap??'',t.netProfit??'',t.resultR??'',t.tags||'',t.note||''].map(esc).join(',')).join('\n');fs.writeFileSync(r.filePath,text);return r.filePath});ipcMain.handle('data:backup',async()=>{let r=await dialog.showSaveDialog(win,{defaultPath:'CISD-Journal-Backup.json',filters:[{name:'JSON Backup',extensions:['json']}]});if(!r.canceled)fs.writeFileSync(r.filePath,JSON.stringify(read(),null,2));return r.canceled?'':r.filePath});ipcMain.handle('account:reset',(_,accountId)=>{let d=read();d.trades=d.trades.filter(x=>x.accountId!==accountId);d.openPositions=(d.openPositions||[]).filter(x=>x.accountId!==accountId);let ids=d.backtests.filter(x=>x.accountId===accountId).map(x=>x.id);d.backtests=d.backtests.filter(x=>x.accountId!==accountId);d.signals=d.signals.filter(x=>!ids.includes(x.backtestId));d.daily=d.daily.filter(x=>x.accountId!==accountId);let a=d.accounts.find(x=>x.id===accountId);if(a){a.currentBalance=a.capital;a.profitTarget=0;a.dailyLoss=0;a.maxDrawdown=0;a.phase='Challenge'}save(d);return d});ipcMain.handle('account:save',(_,a)=>{let d=read(),i=d.accounts.findIndex(x=>x.id===a.id);if(i>=0)d.accounts[i]={...d.accounts[i],...a};else d.accounts.push({...a,id:a.id||crypto.randomUUID(),currentBalance:a.currentBalance||a.capital||0,createdAt:new Date().toISOString()});save(d);return d});ipcMain.handle('account:archive',(_,id)=>{let d=read(),a=d.accounts.find(x=>x.id===id);if(a)a.archived=true;save(d);return d});ipcMain.handle('backtest:start',(_,b)=>{let d=read(),x={...b,id:crypto.randomUUID(),status:'ACTIVE',createdAt:new Date().toISOString(),accountId:b.accountId};d.backtests.unshift(x);d.activeBacktestId=x.id;save(d);return d});ipcMain.handle('backtest:archive',(_,id)=>{let d=read(),x=d.backtests.find(x=>x.id===id);if(x)x.status='ARCHIVED';save(d);return d});ipcMain.handle('backtest:reset',(_,id)=>{let d=read();d.signals=d.signals.filter(x=>x.backtestId!==id);d.backtests=d.backtests.filter(x=>x.id!==id);if(d.activeBacktestId===id)d.activeBacktestId=null;save(d);return d});ipcMain.handle('backtest:stop',()=>{let d=read(),x=d.backtests.find(x=>x.id===d.activeBacktestId);if(x)x.status='FINISHED';d.activeBacktestId=null;save(d);return d});ipcMain.handle('daily:save',(_,day,payload)=>{let d=read(),i=d.daily.findIndex(x=>x.accountId===payload.accountId&&x.day===day),v={accountId:payload.accountId,day,...payload};if(i>=0)d.daily[i]={...d.daily[i],...v};else d.daily.push(v);save(d);return d});ipcMain.handle('trade:add',(_,t)=>{let d=read();d.trades.unshift({...t,id:crypto.randomUUID(),createdAt:new Date().toISOString()});save(d);return d});ipcMain.handle('mt5:choose',async(_,accountId)=>{let r=await dialog.showOpenDialog(win,{properties:['openFile'],filters:[{name:'MT5 Detailed Report',extensions:['html','htm','csv','txt']}]});if(r.canceled)return {cancelled:true};try{return importMT5(r.filePaths[0],accountId)}catch(error){let d=read(),a=d.accounts.find(x=>x.id===accountId);if(a)a.lastMT5Error=error.message;save(d);throw error}});ipcMain.handle('fundednext:folder',async(_,accountId)=>{let r=await dialog.showOpenDialog(win,{properties:['openDirectory']});if(r.canceled)return {cancelled:true};let d=read(),a=d.accounts.find(x=>x.id===accountId);a.fundedNextFolder=r.filePaths[0];save(d);watchFundedNextFolder(accountId,a.fundedNextFolder);return {state:read(),folder:a.fundedNextFolder}});ipcMain.handle('fundednext:choose',async(_,accountId)=>{let r=await dialog.showOpenDialog(win,{properties:['openFile'],filters:[{name:'FundedNext CSV',extensions:['csv','txt']}]});if(r.canceled)return {cancelled:true};try{return importFundedNext(r.filePaths[0],accountId)}catch(error){let d=read(),a=d.accounts.find(x=>x.id===accountId);if(a)a.lastFundedNextError=error.message;save(d);throw error}});ipcMain.handle('csv:choose',async()=>{let r=await dialog.showOpenDialog(win,{properties:['openFile'],filters:[{name:'CISD CSV',extensions:['csv']}]});if(!r.canceled){let d=read();d.settings.csvPath=r.filePaths[0];save(d);watch()}return read()});ipcMain.handle('signal:result',(_,id,resultR)=>{let d=read(),x=d.signals.find(x=>x.SignalID===id);if(x){x.resultR=Number(resultR)||0;x.status=x.resultR>0?'WIN':x.resultR<0?'LOSS':'BE';save(d)}return d});ipcMain.handle('signal:status',(_,id,accountId,status,reason)=>{let d=read(),s=d.signals.find(x=>x.SignalID===id);if(s){s.decisions=s.decisions||{};s.decisions[accountId]={status,reason:reason||'',updatedAt:new Date().toISOString()};save(d)}return d});ipcMain.on('window:minimize',()=>win.minimize());ipcMain.on('window:maximize',()=>win.isMaximized()?win.unmaximize():win.maximize());ipcMain.on('window:close',()=>win.close())});app.on('window-all-closed',()=>app.quit());
+const { app, BrowserWindow, ipcMain, dialog, safeStorage, Notification, shell } = require('electron');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const { execFile } = require('child_process');
+const { promisify } = require('util');
+
+const { createStore } = require('./lib/store');
+const { fetchCalendar } = require('./lib/news-providers');
+const { importFundedNextText, importMT5Text, importCisdSignalsText, importBacktestSignalsText } = require('./lib/import-engine');
+const { buildAccountDashboardSnapshot } = require('./lib/engines/account-dashboard');
+const { buildAccountAnalyticsSnapshot } = require('./lib/engines/analytics');
+const { resolveLocale, getBundle } = require('./lib/locale');
+const { resolveFundingAccessMode, validateFundingAccess, buildFundingAccessView } = require('./lib/funding-access');
+const { parseFundingPipsSharedText } = require('./lib/funding-shared-parser');
+const { applyInvestorPassSnapshot } = require('./lib/investor-pass-sync');
+const { resolveMt5BridgeCandidates } = require('./lib/mt5-bridge');
+const { buildRuntimeReadinessSnapshot } = require('./lib/runtime-readiness');
+
+let win = null;
+let signalWatchPath = null;
+let signalsInitialized = false;
+let newsCache = [];
+const fundedNextWatchers = {};
+
+const store = createStore(app);
+const { dataFile, initial, logError, read, save } = store;
+const execFileAsync = promisify(execFile);
+
+function secretFile() {
+  return path.join(app.getPath('userData'), 'news-api-key.bin');
+}
+
+function accountSecretFile(accountId, kind) {
+  return path.join(app.getPath('userData'), `${kind}-${accountId}.bin`);
+}
+
+function sendStateChanged(state) {
+  win?.webContents.send('state:changed', state);
+}
+
+function ensureAccount(data, accountId) {
+  const account = data.accounts.find((item) => item.id === accountId);
+  if (!account) throw new Error(getBundle(data.settings?.locale).errors.accountNotFound);
+  return account;
+}
+
+function ensureCsvPath(data) {
+  if (!data.settings?.csvPath || !fs.existsSync(data.settings.csvPath)) {
+    throw new Error(getBundle(data.settings?.locale).errors.csvPathMissing || 'CISD CSV path is missing');
+  }
+  return data.settings.csvPath;
+}
+
+function isImportCandidate(fileName) {
+  return Boolean(fileName && /\.(csv|txt)$/i.test(fileName));
+}
+
+function importFundedNextFile(filePath, accountId, options = {}) {
+  const data = read();
+  const result = importFundedNextText(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), options);
+  save(data);
+  return { state: data, ...result };
+}
+
+function importMT5File(filePath, accountId, options = {}) {
+  const data = read();
+  const result = importMT5Text(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), /\.html?$/i.test(filePath), options);
+  save(data);
+  return { state: data, ...result };
+}
+
+function importBacktestSessionSignals(backtestId, options = {}) {
+  const data = read();
+  const csvPath = ensureCsvPath(data);
+  const backtest = data.backtests.find((item) => item.id === backtestId);
+  if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
+  const result = importBacktestSignalsText(data, fs.readFileSync(csvPath, 'utf8'), backtest, csvPath, options);
+  backtest.lastImportedAt = new Date().toISOString();
+  backtest.lastDiagnostics = result.diagnostics;
+  if (!backtest.sourceCsvPath) backtest.sourceCsvPath = csvPath;
+  save(data);
+  return { state: data, ...result };
+}
+
+function syncSignalsFromFile() {
+  const data = read();
+
+  try {
+    if (!data.settings.csvPath || !fs.existsSync(data.settings.csvPath)) {
+      sendStateChanged(data);
+      return;
+    }
+
+    const csvText = fs.readFileSync(data.settings.csvPath, 'utf8');
+    const { added, count } = importCisdSignalsText(data, csvText, data.settings.csvPath, {
+      recordNoop: false,
+    });
+    save(data);
+
+    if (signalsInitialized && count > 0 && data.settings.notifications !== false) {
+      const bundle = getBundle(data.settings.locale);
+      const signal = added[0];
+      const body = bundle.notifications.newSignalBody
+        .replace('{{instrument}}', signal.Instrument || '')
+        .replace('{{direction}}', signal.Direction || '')
+        .replace('{{timeframe}}', signal.TF || '')
+        .replace('{{session}}', signal.Session || '');
+
+      new Notification({
+        title: bundle.notifications.newSignalTitle,
+        body,
+      }).show();
+    }
+
+    signalsInitialized = true;
+    sendStateChanged(data);
+  } catch (error) {
+    logError('syncSignalsFromFile', error);
+  }
+}
+
+function watchSignalsFile() {
+  if (signalWatchPath) fs.unwatchFile(signalWatchPath);
+  signalWatchPath = read().settings.csvPath;
+  if (signalWatchPath) fs.watchFile(signalWatchPath, { interval: 2000 }, syncSignalsFromFile);
+  syncSignalsFromFile();
+}
+
+function closeFundedNextWatcher(accountId) {
+  if (!fundedNextWatchers[accountId]) return;
+  try {
+    fundedNextWatchers[accountId].close();
+  } catch (error) {
+    logError('closeFundedNextWatcher', error);
+  }
+  delete fundedNextWatchers[accountId];
+}
+
+function watchFundedNextFolder(accountId, folder) {
+  closeFundedNextWatcher(accountId);
+  if (!folder || !fs.existsSync(folder)) return;
+
+  fundedNextWatchers[accountId] = fs.watch(folder, (eventType, fileName) => {
+    if (!isImportCandidate(fileName)) return;
+    setTimeout(() => {
+      try {
+        const result = importFundedNextFile(path.join(folder, fileName), accountId, { recordNoop: false });
+        if (result.added) sendStateChanged(result.state);
+      } catch (error) {
+        logError('watchFundedNextFolder:event', error);
+      }
+    }, 700);
+  });
+
+  for (const fileName of fs.readdirSync(folder)) {
+    if (!isImportCandidate(fileName)) continue;
+    try {
+      importFundedNextFile(path.join(folder, fileName), accountId, { recordNoop: false });
+    } catch (error) {
+      logError('watchFundedNextFolder:bootstrap', error);
+    }
+  }
+}
+
+function watchAllFundedNextFolders() {
+  for (const account of read().accounts) {
+    if (account.fundedNextFolder) watchFundedNextFolder(account.id, account.fundedNextFolder);
+  }
+}
+
+function newsKey() {
+  try {
+    const encrypted = fs.readFileSync(secretFile());
+    return safeStorage.isEncryptionAvailable() ? safeStorage.decryptString(encrypted) : encrypted.toString();
+  } catch {
+    return '';
+  }
+}
+
+function setNewsKey(value) {
+  if (!value) {
+    try {
+      fs.unlinkSync(secretFile());
+    } catch {}
+    return;
+  }
+
+  const payload = safeStorage.isEncryptionAvailable()
+    ? safeStorage.encryptString(value)
+    : Buffer.from(value);
+
+  fs.writeFileSync(secretFile(), payload);
+}
+
+function readEncryptedSecret(filePath) {
+  try {
+    const encrypted = fs.readFileSync(filePath);
+    return safeStorage.isEncryptionAvailable() ? safeStorage.decryptString(encrypted) : encrypted.toString();
+  } catch {
+    return '';
+  }
+}
+
+function writeEncryptedSecret(filePath, value) {
+  if (!value) {
+    try { fs.unlinkSync(filePath); } catch {}
+    return;
+  }
+  const payload = safeStorage.isEncryptionAvailable() ? safeStorage.encryptString(value) : Buffer.from(value);
+  fs.writeFileSync(filePath, payload);
+}
+
+function getFundingAccessStatus(data, accountId) {
+  const account = ensureAccount(data, accountId);
+  return buildFundingAccessView(account, {
+    hasStoredPassword: !!readEncryptedSecret(accountSecretFile(accountId, 'investor-pass')),
+  });
+}
+
+async function loadSharedDashboardContent(url) {
+  const scraper = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      sandbox: true,
+      contextIsolation: true,
+      javascript: true,
+    },
+  });
+
+  try {
+    await scraper.loadURL(url, {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    });
+
+    const started = Date.now();
+    while (Date.now() - started < 18000) {
+      const payload = await scraper.webContents.executeJavaScript(`(() => ({ title: document.title || '', text: document.body?.innerText || '', tables: [...document.querySelectorAll('table')].map(table => [...table.querySelectorAll('tr')].map(tr => [...tr.querySelectorAll('th,td')].map(td => (td.innerText || '').trim())) ) }))()`);
+      if (payload?.text && /Trading Account|Account Size|Today's Profit|Balance/i.test(payload.text) && !/Security Checkpoint/i.test(payload.title || '')) {
+        return payload;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+
+    throw new Error('Shared dashboard content did not become available in time');
+  } finally {
+    if (!scraper.isDestroyed()) scraper.destroy();
+  }
+}
+
+async function runMt5ReadonlyBridge(payload) {
+  const plan = resolveMt5BridgeCandidates({
+    app,
+    isPackaged: app.isPackaged,
+    currentDirname: __dirname,
+    platform: process.platform,
+    preferExecutable: true,
+  });
+
+  let lastError = null;
+  for (const candidate of plan.candidates) {
+    try {
+      const args = [...candidate.args, JSON.stringify(payload)];
+      const { stdout } = await execFileAsync(candidate.command, args, {
+        timeout: 90000,
+        maxBuffer: 8 * 1024 * 1024,
+        windowsHide: true,
+      });
+      const parsed = JSON.parse(stdout || '{}');
+      if (!parsed.ok) throw new Error(parsed.error || 'Unknown MT5 bridge error');
+      return parsed;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  const fallback = app.isPackaged
+    ? 'Bundled MT5 bridge EXE was not found or failed to run. Build/ship bridges/mt5_readonly_sync.exe with the desktop app.'
+    : 'MT5 readonly bridge could not run. Build the helper EXE or make Python + MetaTrader5 available.';
+  throw lastError || new Error(fallback);
+}
+
+async function syncFundingAccess(accountId) {
+  const data = read();
+  const account = ensureAccount(data, accountId);
+  const access = getFundingAccessStatus(data, accountId);
+
+  try {
+    if (access.mode === 'shared_url') {
+      if (!access.sharedDashboardUrl) throw new Error(getBundle(data.settings.locale).errors.fundingUrlMissing);
+      const payload = await loadSharedDashboardContent(access.sharedDashboardUrl);
+      const snapshot = parseFundingPipsSharedText(payload.text, payload.tables);
+
+      account.lastFundingSync = new Date().toISOString();
+      account.lastFundingSource = 'FundingPips Shared Dashboard';
+      account.lastFundingError = '';
+      account.syncedAccountOwner = snapshot.owner || account.syncedAccountOwner || '';
+      account.syncedTodayProfit = snapshot.todayProfit;
+      account.syncedEquity = snapshot.equity;
+      account.syncedEquityMax = snapshot.equityMax;
+      account.syncedBalanceMax = snapshot.balanceMax;
+      account.syncedScore = snapshot.score;
+      account.syncedWinRatio = snapshot.winRatio;
+      account.syncedProfitFactor = snapshot.profitFactor;
+      account.syncedTotalTrades = snapshot.totalTrades;
+      account.syncedAverageWin = snapshot.averageWin;
+      account.syncedAverageLoss = snapshot.averageLoss;
+      account.syncedBiggestWin = snapshot.biggestWin;
+      account.syncedBiggestLoss = snapshot.biggestLoss;
+      account.syncedFundingSnapshot = snapshot;
+      if (!account.capital && snapshot.accountSize) account.capital = snapshot.accountSize;
+      if (snapshot.balance !== null && snapshot.balance !== undefined) account.currentBalance = snapshot.balance;
+      if (!account.phase && snapshot.phase) account.phase = snapshot.phase;
+
+      save(data);
+      return { state: data, snapshot, fundingAccess: getFundingAccessStatus(data, accountId) };
+    }
+
+    if (access.mode === 'investor_pass') {
+      const password = readEncryptedSecret(accountSecretFile(accountId, 'investor-pass'));
+      const bridgeResult = await runMt5ReadonlyBridge({
+        login: access.investorLogin,
+        server: access.investorServer,
+        password,
+        terminalPath: account.terminalPath || '',
+        syncScope: access.syncScope,
+        historyDays: 21,
+      });
+
+      const applied = applyInvestorPassSnapshot(data, accountId, bridgeResult, { syncScope: access.syncScope });
+      account.lastFundingError = '';
+      save(data);
+      return {
+        state: data,
+        snapshot: account.syncedFundingSnapshot,
+        fundingAccess: getFundingAccessStatus(data, accountId),
+        bridge: {
+          positions: applied.openPositions.length,
+          addedTrades: applied.addedTrades,
+        },
+      };
+    }
+
+    throw new Error(getBundle(data.settings.locale).errors.fundingAccessMissing || 'No funding access is configured');
+  } catch (error) {
+    account.lastFundingError = error.message;
+    save(data);
+    throw error;
+  }
+}
+
+async function fetchNews() {
+  const data = read();
+  newsCache = await fetchCalendar(data.settings.newsProvider || 'FMP', newsKey());
+  return newsCache;
+}
+
+function validateRestorePayload(payload, locale) {
+  if (!payload || typeof payload !== 'object') throw new Error(getBundle(locale).errors.invalidBackup);
+  if (!Array.isArray(payload.accounts) || !Array.isArray(payload.trades)) {
+    throw new Error(getBundle(locale).errors.invalidBackup);
+  }
+}
+
+function createWindow() {
+  win = new BrowserWindow({
+    width: 1440,
+    height: 900,
+    minWidth: 1100,
+    minHeight: 720,
+    frame: false,
+    backgroundColor: '#09111d',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+    },
+  });
+
+  win.loadFile('renderer/index.html');
+}
+
+function updateSettings(patch) {
+  const data = read();
+  const normalizedPatch = { ...patch };
+  if ('locale' in normalizedPatch) normalizedPatch.locale = resolveLocale(normalizedPatch.locale);
+  data.settings = { ...data.settings, ...normalizedPatch };
+  save(data);
+  return data;
+}
+
+function registerHandlers() {
+  ipcMain.handle('state:get', () => read());
+  ipcMain.handle('runtime:readiness', () => buildRuntimeReadinessSnapshot({ app, isPackaged: app.isPackaged, currentDirname: __dirname, platform: process.platform }));
+  ipcMain.handle('dashboard:snapshot', (_, accountId, options = {}) => buildAccountDashboardSnapshot(read(), accountId, options));
+  ipcMain.handle('analytics:snapshot', (_, accountId, options = {}) => buildAccountAnalyticsSnapshot(read(), accountId, options));
+  ipcMain.handle('locale:get', () => read().settings.locale || 'ar');
+  ipcMain.handle('locale:bundle', () => getBundle(read().settings.locale));
+  ipcMain.handle('locale:set', (_, locale) => updateSettings({ locale }).settings.locale);
+
+  ipcMain.handle('settings:update', (_, patch) => updateSettings(patch));
+  ipcMain.handle('onboarding:reset', () => {
+    const data = read();
+    data.settings.onboardingComplete = false;
+    save(data);
+    return data;
+  });
+  ipcMain.handle('help:open-guide', () => {
+    const guidePath = app.isPackaged
+      ? path.join(process.resourcesPath, 'docs', 'CISD_Journal_User_Guide.html')
+      : path.join(__dirname, 'docs', 'CISD_Journal_User_Guide.html');
+    return shell.openPath(guidePath);
+  });
+  ipcMain.handle('onboarding:complete', () => {
+    const data = read();
+    data.settings.onboardingComplete = true;
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('news:status', () => ({ configured: !!newsKey(), count: newsCache.length }));
+  ipcMain.handle('news:provider', (_, provider) => {
+    const data = read();
+    data.settings.newsProvider = provider;
+    save(data);
+    return data.settings;
+  });
+  ipcMain.handle('news:key', (_, key) => {
+    setNewsKey(key);
+    return { configured: !!newsKey() };
+  });
+  ipcMain.handle('news:fetch', async () => fetchNews());
+
+  ipcMain.handle('image:choose', async () => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'Chart Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+    });
+    if (result.canceled) return '';
+
+    const chartsDir = path.join(app.getPath('userData'), 'charts');
+    fs.mkdirSync(chartsDir, { recursive: true });
+    const extension = path.extname(result.filePaths[0]);
+    const destination = path.join(chartsDir, `${crypto.randomUUID()}${extension}`);
+    fs.copyFileSync(result.filePaths[0], destination);
+    return destination;
+  });
+
+  ipcMain.handle('terminal:choose', async (_, accountId) => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'MT5 Terminal or Shortcut', extensions: ['exe', 'lnk'] }],
+    });
+    if (result.canceled) return { cancelled: true };
+
+    const data = read();
+    const account = ensureAccount(data, accountId);
+    account.terminalPath = result.filePaths[0];
+    save(data);
+    return { state: data, path: account.terminalPath };
+  });
+
+  ipcMain.handle('terminal:open', (_, accountId) => {
+    const data = read();
+    const account = ensureAccount(data, accountId);
+    if (!account.terminalPath) throw new Error(getBundle(data.settings.locale).errors.terminalNotSelected);
+    return shell.openPath(account.terminalPath);
+  });
+
+  ipcMain.handle('funding:access:get', (_, accountId) => {
+    const data = read();
+    return getFundingAccessStatus(data, accountId);
+  });
+
+  ipcMain.handle('funding:access:save', (_, accountId, payload = {}) => {
+    const data = read();
+    const account = ensureAccount(data, accountId);
+    const validation = validateFundingAccess({
+      ...payload,
+      hasStoredPassword: !!readEncryptedSecret(accountSecretFile(accountId, 'investor-pass')),
+    });
+    if (!validation.valid) throw new Error(getBundle(data.settings.locale).errors[validation.code] || validation.code);
+
+    account.fundingAccessMode = resolveFundingAccessMode(payload.mode);
+    account.fundingSyncScope = payload.syncScope || account.fundingSyncScope || 'full_readonly';
+    account.investorLogin = String(payload.investorLogin || '').trim();
+    account.investorServer = String(payload.investorServer || '').trim();
+    account.sharedDashboardUrl = String(payload.sharedDashboardUrl || '').trim();
+
+    if (account.sharedDashboardUrl) {
+      const parsed = new URL(account.sharedDashboardUrl);
+      if (parsed.protocol !== 'https:') throw new Error(getBundle(data.settings.locale).errors.httpsOnly);
+    }
+
+    if (String(payload.investorPassword || '').trim()) {
+      writeEncryptedSecret(accountSecretFile(accountId, 'investor-pass'), String(payload.investorPassword || '').trim());
+    }
+
+    save(data);
+    return { state: data, fundingAccess: getFundingAccessStatus(data, accountId) };
+  });
+
+  ipcMain.handle('funding:access:sync', (_, accountId) => syncFundingAccess(accountId));
+
+  ipcMain.handle('funding:url', (_, accountId, url) => {
+    const data = read();
+    const account = ensureAccount(data, accountId);
+
+    if (url) {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:') throw new Error(getBundle(data.settings.locale).errors.httpsOnly);
+    }
+
+    account.sharedDashboardUrl = url || '';
+    account.fundingAccessMode = account.sharedDashboardUrl ? 'shared_url' : account.fundingAccessMode || 'none';
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('funding:open', (_, accountId) => {
+    const data = read();
+    const account = ensureAccount(data, accountId);
+    if (!account.sharedDashboardUrl) throw new Error(getBundle(data.settings.locale).errors.fundingUrlMissing);
+    return shell.openExternal(account.sharedDashboardUrl);
+  });
+
+  ipcMain.handle('data:restore', async () => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'CISD Journal Backup', extensions: ['json'] }],
+    });
+    if (result.canceled) return { cancelled: true };
+
+    const payload = JSON.parse(fs.readFileSync(result.filePaths[0], 'utf8'));
+    const current = read();
+    validateRestorePayload(payload, current.settings.locale);
+
+    fs.writeFileSync(`${dataFile()}.before-restore-${Date.now()}`, JSON.stringify(current, null, 2));
+    save({
+      ...initial(),
+      ...payload,
+      settings: {
+        ...initial().settings,
+        ...(payload.settings || {}),
+        locale: resolveLocale(payload.settings?.locale || current.settings.locale),
+      },
+    });
+
+    return { state: read(), file: result.filePaths[0] };
+  });
+
+  ipcMain.handle('trades:export', async (_, accountId) => {
+    const data = read();
+    const rows = data.trades.filter((item) => item.accountId === accountId);
+    const result = await dialog.showSaveDialog(win, {
+      defaultPath: 'CISD-Journal-Trades.csv',
+      filters: [{ name: 'CSV', extensions: ['csv'] }],
+    });
+    if (result.canceled) return '';
+
+    const columns = ['Ticket', 'Source', 'Symbol', 'Side', 'Open Time', 'Close Time', 'Entry', 'Close', 'SL', 'TP', 'Lots', 'Profit', 'Commission', 'Swap', 'Net P&L', 'Result R', 'Tags', 'Note'];
+    const escapeCell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const csvText = `${columns.join(',')}\n${rows
+      .map((trade) => [
+        trade.ticket || '',
+        trade.source,
+        trade.symbol,
+        trade.side,
+        trade.openTime || '',
+        trade.closeTime || '',
+        trade.entry || '',
+        trade.close || '',
+        trade.sl || '',
+        trade.tp || '',
+        trade.lots || '',
+        trade.profit ?? '',
+        trade.commission ?? '',
+        trade.swap ?? '',
+        trade.netProfit ?? '',
+        trade.resultR ?? '',
+        trade.tags || '',
+        trade.note || '',
+      ].map(escapeCell).join(','))
+      .join('\n')}`;
+
+    fs.writeFileSync(result.filePath, csvText);
+    return result.filePath;
+  });
+
+  ipcMain.handle('data:backup', async () => {
+    const result = await dialog.showSaveDialog(win, {
+      defaultPath: 'CISD-Journal-Backup.json',
+      filters: [{ name: 'JSON Backup', extensions: ['json'] }],
+    });
+    if (!result.canceled) fs.writeFileSync(result.filePath, JSON.stringify(read(), null, 2));
+    return result.canceled ? '' : result.filePath;
+  });
+
+  ipcMain.handle('account:reset', (_, accountId) => {
+    const data = read();
+    data.trades = data.trades.filter((item) => item.accountId !== accountId);
+    data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== accountId);
+
+    const backtestIds = data.backtests.filter((item) => item.accountId === accountId).map((item) => item.id);
+    data.backtests = data.backtests.filter((item) => item.accountId !== accountId);
+    data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    data.daily = data.daily.filter((item) => item.accountId !== accountId);
+
+    const account = data.accounts.find((item) => item.id === accountId);
+    if (account) {
+      account.currentBalance = account.capital;
+      account.profitTarget = 0;
+      account.dailyLoss = 0;
+      account.maxDrawdown = 0;
+      account.phase = 'Challenge';
+    }
+
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('account:save', (_, accountPayload) => {
+    const data = read();
+    const index = data.accounts.findIndex((item) => item.id === accountPayload.id);
+
+    if (index >= 0) {
+      data.accounts[index] = { ...data.accounts[index], ...accountPayload };
+    } else {
+      data.accounts.push({
+        ...accountPayload,
+        id: accountPayload.id || crypto.randomUUID(),
+        currentBalance: accountPayload.currentBalance || accountPayload.capital || 0,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('account:archive', (_, id) => {
+    const data = read();
+    const account = data.accounts.find((item) => item.id === id);
+    if (account) account.archived = true;
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('backtest:start', (_, payload) => {
+    const data = read();
+    const csvPath = ensureCsvPath(data);
+    const backtest = {
+      ...payload,
+      id: crypto.randomUUID(),
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+      accountId: payload.accountId,
+      sourceCsvPath: csvPath,
+      filters: {
+        start: payload.start || '',
+        end: payload.end || '',
+        session: payload.session || '',
+        symbol: payload.symbol || '',
+        tf: payload.tf || '',
+      },
+    };
+    data.backtests.unshift(backtest);
+    data.activeBacktestId = backtest.id;
+    save(data);
+    return importBacktestSessionSignals(backtest.id, { recordNoop: true });
+  });
+
+  ipcMain.handle('backtest:archive', (_, id) => {
+    const data = read();
+    const backtest = data.backtests.find((item) => item.id === id);
+    if (backtest) backtest.status = 'ARCHIVED';
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('backtest:reset', (_, id) => {
+    const data = read();
+    data.backtestSignals = (data.backtestSignals || []).filter((item) => item.backtestId !== id);
+    data.backtests = data.backtests.filter((item) => item.id !== id);
+    if (data.activeBacktestId === id) data.activeBacktestId = null;
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('backtest:stop', () => {
+    const data = read();
+    const active = data.backtests.find((item) => item.id === data.activeBacktestId);
+    if (active) active.status = 'FINISHED';
+    data.activeBacktestId = null;
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('backtest:refresh', (_, id) => importBacktestSessionSignals(id, { recordNoop: true }));
+  ipcMain.handle('backtest:review-signal', (_, signalId, payload = {}) => {
+    const data = read();
+    const signal = (data.backtestSignals || []).find((item) => item.id === signalId);
+    if (!signal) throw new Error(getBundle(data.settings?.locale).errors.backtestSignalNotFound || 'Backtest signal not found');
+    signal.status = payload.status || signal.status || 'NEW';
+    signal.resultR = payload.resultR !== undefined ? Number(payload.resultR) : signal.resultR;
+    signal.reviewNote = payload.note || '';
+    signal.reviewedAt = new Date().toISOString();
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('daily:save', (_, day, payload) => {
+    const data = read();
+    const index = data.daily.findIndex((item) => item.accountId === payload.accountId && item.day === day);
+    const value = { accountId: payload.accountId, day, ...payload };
+    if (index >= 0) data.daily[index] = { ...data.daily[index], ...value };
+    else data.daily.push(value);
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('trade:add', (_, trade) => {
+    const data = read();
+    data.trades.unshift({ ...trade, id: crypto.randomUUID(), createdAt: new Date().toISOString() });
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('mt5:choose', async (_, accountId) => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'MT5 Detailed Report', extensions: ['html', 'htm', 'csv', 'txt'] }],
+    });
+    if (result.canceled) return { cancelled: true };
+
+    try {
+      return importMT5File(result.filePaths[0], accountId);
+    } catch (error) {
+      const data = read();
+      const account = data.accounts.find((item) => item.id === accountId);
+      if (account) account.lastMT5Error = error.message;
+      save(data);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('fundednext:folder', async (_, accountId) => {
+    const result = await dialog.showOpenDialog(win, { properties: ['openDirectory'] });
+    if (result.canceled) return { cancelled: true };
+
+    const data = read();
+    const account = ensureAccount(data, accountId);
+    account.fundedNextFolder = result.filePaths[0];
+    save(data);
+    watchFundedNextFolder(accountId, account.fundedNextFolder);
+    return { state: read(), folder: account.fundedNextFolder };
+  });
+
+  ipcMain.handle('fundednext:choose', async (_, accountId) => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'FundedNext CSV', extensions: ['csv', 'txt'] }],
+    });
+    if (result.canceled) return { cancelled: true };
+
+    try {
+      return importFundedNextFile(result.filePaths[0], accountId);
+    } catch (error) {
+      const data = read();
+      const account = data.accounts.find((item) => item.id === accountId);
+      if (account) account.lastFundedNextError = error.message;
+      save(data);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('csv:choose', async () => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'CISD CSV', extensions: ['csv'] }],
+    });
+
+    if (!result.canceled) {
+      const data = read();
+      data.settings.csvPath = result.filePaths[0];
+      save(data);
+      watchSignalsFile();
+    }
+
+    return read();
+  });
+
+  ipcMain.handle('signal:result', (_, id, resultR) => {
+    const data = read();
+    const liveSignal = data.signals.find((item) => item.SignalID === id);
+    const backtestSignal = (data.backtestSignals || []).find((item) => item.id === id || item.SignalID === id);
+    const signal = liveSignal || backtestSignal;
+    if (signal) {
+      signal.resultR = Number(resultR) || 0;
+      signal.status = signal.resultR > 0 ? 'WIN' : signal.resultR < 0 ? 'LOSS' : 'BE';
+      if (backtestSignal) signal.reviewedAt = new Date().toISOString();
+      save(data);
+    }
+    return data;
+  });
+
+  ipcMain.handle('signal:status', (_, id, accountId, status, reason) => {
+    const data = read();
+    const signal = data.signals.find((item) => item.SignalID === id);
+    if (signal) {
+      signal.decisions = signal.decisions || {};
+      signal.decisions[accountId] = {
+        status,
+        reason: reason || '',
+        updatedAt: new Date().toISOString(),
+      };
+      save(data);
+    }
+    return data;
+  });
+
+  ipcMain.on('window:minimize', () => win?.minimize());
+  ipcMain.on('window:maximize', () => (win?.isMaximized() ? win.unmaximize() : win?.maximize()));
+  ipcMain.on('window:close', () => win?.close());
+}
+
+app.whenReady().then(() => {
+  createWindow();
+  watchSignalsFile();
+  watchAllFundedNextFolders();
+  registerHandlers();
+});
+
+app.on('window-all-closed', () => app.quit());

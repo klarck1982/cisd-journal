@@ -1,0 +1,514 @@
+{
+  "meta": {
+    "code": "ar",
+    "label": "العربية",
+    "dir": "rtl"
+  },
+  "app": {
+    "title": "CISD Journal",
+    "subtitle": "Trading Discipline OS",
+    "footer": "LOCAL · PRIVATE · NO EA",
+    "accounts": "الحسابات",
+    "newChallenge": "+ Challenge"
+  },
+  "nav": {
+    "overview": "الرئيسية",
+    "signals": "الإشارات",
+    "journal": "اليومية",
+    "backtest": "الباكتيست",
+    "analytics": "التحليلات",
+    "data": "مصادر البيانات",
+    "settings": "الإعدادات"
+  },
+  "overview": {
+    "kicker": "لوحة الانضباط الحية",
+    "title": "لوحة التنفيذ اليومية",
+    "description": "راقب تقدم حسابات البروب، راجع إشارات CISD، وقس كيف يؤثر التردد والخوف على انضباطك في التنفيذ.",
+    "actions": {
+      "openTerminal": "فتح MT5",
+      "refreshNews": "تحديث الأخبار",
+      "reviewSignals": "مراجعة الإشارات"
+    },
+    "health": {
+      "title": "صحة الحساب",
+      "capital": "رأس المال الابتدائي",
+      "balance": "الرصيد الحالي",
+      "balanceHint": "مستورد أو محدّث يدويًا",
+      "equity": "الإيكويتي الحي",
+      "equityHint": "الرصيد + الربح/الخسارة المفتوحة",
+      "openPnl": "الربح/الخسارة المفتوحة",
+      "positions": "مراكز مفتوحة"
+    },
+    "risk": {
+      "title": "حواجز المخاطرة",
+      "todayClosed": "نتيجة الصفقات المغلقة اليوم",
+      "dailyRemaining": "المتبقي من الحد اليومي",
+      "drawdownRemaining": "المتبقي من السحب الأقصى",
+      "lossStreak": "الخسائر المتتالية"
+    },
+    "discipline": {
+      "title": "درجة الانضباط",
+      "score": "الدرجة",
+      "coverage": "نسبة تغطية القرارات",
+      "executed": "الإشارات المنفذة",
+      "missed": "الإشارات الفائتة",
+      "linkRate": "نسبة ربط التنفيذ بالدليل"
+    },
+    "challenge": {
+      "title": "تقدم التحدي",
+      "gain": "الصافي المحقق",
+      "target": "قيمة الهدف",
+      "remaining": "المتبقي إلى الهدف"
+    },
+    "news": {
+      "title": "الأخبار عالية التأثير القادمة",
+      "live": "بث حي",
+      "notConfigured": "أضف مفتاح API من الإعدادات",
+      "empty": "لا توجد أخبار عالية التأثير في البيانات الحالية."
+    },
+    "latestSignals": {
+      "title": "أحدث إشارات CISD",
+      "hint": "اتخذ القرار بسرعة ثم سجّل التنفيذ أو التردد"
+    },
+    "hero": {
+      "kicker": "مركز قيادة التنفيذ",
+      "description": "هذا الحساب يجمع بين الانضباط الحي وسياق المخاطرة والقرار التالي الذي يجب أن تتخذه.",
+      "risk": "المخاطرة",
+      "discipline": "الانضباط",
+      "challenge": "التحدي",
+      "nextNews": "الخبر التالي",
+      "noNews": "لم يتم تحميل أخبار حية بعد",
+      "insightTitle": "ملاحظة التركيز",
+      "insightBreach": "حدود المخاطرة تحت ضغط. احمِ الحساب قبل فتح أي تعرض جديد.",
+      "insightMissed": "فاتتك {{count}} إشارات. راقب إن كان الخوف أو التردد أصبح نمطًا متكررًا.",
+      "insightStable": "سير العمل لديك مستقر الآن. واصل تحويل الإشارات إلى قرارات واضحة.",
+      "pending": "معلقة",
+      "reviewed": "تمت مراجعتها"
+    }
+  },
+  "signals": {
+    "kicker": "مراجعة تنفيذ الإشارات",
+    "title": "مركز إشارات CISD",
+    "description": "كل إشارة يجب أن تنتهي بقرار: دخلت، فاتتني، أو ما زالت معلقة. هذا هو قلب نظام الانضباط.",
+    "actions": {
+      "chooseCsv": "اختيار ملف CISD CSV",
+      "refresh": "تحديث اللقطات",
+      "entered": "دخلت",
+      "missed": "فاتتني",
+      "logTrade": "تسجيل صفقة"
+    },
+    "sourceTitle": "مصدر الإشارات",
+    "summaryTitle": "ملخص الانضباط",
+    "summaryHint": "التغطية، الصفقات الفائتة، واتساق التنفيذ",
+    "liveTitle": "الإشارات الحية الأخيرة",
+    "liveHint": "أحدث الإشارات من ملف CSV المراقَب",
+    "searchPlaceholder": "ابحث بالرمز أو الجلسة أو الفريم أو رقم الإشارة",
+    "noCsv": "لم يتم اختيار ملف CSV بعد",
+    "totalSignals": "إشارة",
+    "linkedTrade": "صفقة مسجلة",
+    "status": {
+      "pending": "معلقة",
+      "executed": "تم الدخول",
+      "missed": "فائتة"
+    },
+    "metrics": {
+      "total": "الإشارات",
+      "totalHint": "فرص CISD الحية",
+      "executed": "تم الدخول",
+      "executedHint": "الإشارات التي التزمت بها",
+      "missed": "فائتة",
+      "missedHint": "خوف / تردد / تعارض مع القواعد",
+      "coverage": "التغطية",
+      "coverageHint": "الإشارات التي لها قرار محفوظ",
+      "newSignals": "جديدة",
+      "duplicates": "مكررة"
+    },
+    "reasonModal": {
+      "title": "لماذا فاتتك هذه الصفقة؟",
+      "description": "سجّل السبب الحقيقي حتى تكشف اللوحة عن الأنماط المتكررة في الانضباط.",
+      "note": "ملاحظة اختيارية",
+      "save": "حفظ سبب الفوات",
+      "none": "لا توجد أسباب متكررة بعد",
+      "presets": {
+        "hesitation": "تردد",
+        "fear": "خوف",
+        "news": "خبر قريب",
+        "late": "تأخر في التنفيذ",
+        "rule-break": "تعارض مع القواعد"
+      }
+    }
+  },
+  "journal": {
+    "kicker": "يومية التنفيذ",
+    "title": "سجل الصفقات اليدوي",
+    "description": "سجّل الصفقة التي نفذتها واربطها بالإشارة الأصلية متى ما كان ذلك ممكنًا. كما يمكنك حفظ صفقات يدوية بالكامل بدون أي إشارة مرتبطة.",
+    "form": {
+      "title": "إدخال سريع للصفقة",
+      "hint": "ليكن هذا الإدخال سريعًا وبسيطًا أثناء الجلسة.",
+      "signal": "الإشارة المرتبطة",
+      "source": "مصدر الصفقة",
+      "symbol": "الأداة",
+      "side": "الاتجاه",
+      "date": "تاريخ الصفقة",
+      "resultR": "النتيجة (R)",
+      "tags": "الوسوم",
+      "note": "ملاحظة التنفيذ",
+      "save": "حفظ الصفقة",
+      "noSignal": "بدون إشارة مرتبطة",
+      "symbolRequired": "اكتب رمز الأداة أولاً."
+    },
+    "recentTrades": {
+      "title": "آخر الصفقات",
+      "hint": "أحدث الإدخالات للحساب الحالي",
+      "linked": "مرتبطة بإشارة"
+    },
+    "searchPlaceholder": "ابحث بالرمز أو المصدر أو الوسوم أو الملاحظات",
+    "guidance": {
+      "titleEntered": "تم تعليم الإشارة كمُنفذة",
+      "textEntered": "احتفظ بربط هذه الإشارة وسجّل الصفقة الآن حتى يبقى قياس الانضباط دقيقًا.",
+      "titleLinked": "سياق إشارة CISD المرتبطة",
+      "textLinked": "أنت على وشك تسجيل صفقة مرتبطة بإشارة CISD. هذا يساعدك على مقارنة التنفيذ بالفرص الفائتة.",
+      "backToSignals": "العودة إلى الإشارات",
+      "clear": "إلغاء التوجيه",
+      "enteredBadge": "إشارة تم الدخول عليها",
+      "linkBadge": "ربط الإشارة مفعّل"
+    }
+  },
+  "backtest": {
+    "kicker": "إعادة اختبار الانضباط تاريخيًا",
+    "title": "مختبر الباكتيست حسب الفترة الزمنية",
+    "description": "أنشئ جلسة باكتيست من نفس ملف CISD CSV باستخدام فلترة التاريخ والجلسة والأداة والفريم، ثم قيّم كل إشارة يدويًا.",
+    "create": {
+      "title": "إنشاء جلسة باكتيست",
+      "hint": "اسحب فقط الإشارات المطابقة لشروط التدريب التاريخي.",
+      "name": "اسم الجلسة",
+      "session": "فلتر الجلسة",
+      "start": "تاريخ البداية",
+      "end": "تاريخ النهاية",
+      "symbol": "فلتر الأداة",
+      "tf": "فلتر الفريم",
+      "save": "إنشاء واستيراد الإشارات",
+      "defaultName": "باكتيست بدون اسم"
+    },
+    "library": {
+      "title": "مكتبة الباكتيست",
+      "hint": "الجلسات التاريخية المحفوظة لهذا الحساب",
+      "reviewed": "تمت مراجعتها",
+      "open": "فتح",
+      "refresh": "إعادة الاستيراد",
+      "reset": "تصفير",
+      "resetConfirm": "سيتم حذف جلسة الباكتيست هذه وكل إشاراتها المراجعة. هل تريد المتابعة؟"
+    },
+    "review": {
+      "title": "مراجعة الإشارات المطابقة",
+      "hint": "قيّم كل فرصة تاريخية يدويًا",
+      "resultPrompt": "أدخل نتيجة R لهذه الإشارة المراجَعة:",
+      "missedPrompt": "لماذا كنت ستفوت هذه الإشارة؟",
+      "modalTitle": "مراجعة إشارة الباكتيست",
+      "modalDescription": "قيّم هذه الفرصة التاريخية من CISD عبر نموذج مراجعة أوضح من رسائل المتصفح التقليدية.",
+      "statusLabel": "نتيجة المراجعة",
+      "resultLabel": "النتيجة (R)",
+      "noteLabel": "ملاحظة المراجعة",
+      "save": "حفظ المراجعة",
+      "resultPlaceholder": "مثال: 1.0 أو -0.5",
+      "notePlaceholder": "ماذا ستكرر أو تتجنب أو تحسن في المرة القادمة؟",
+      "resultRequired": "أدخل نتيجة R قبل حفظ هذه المراجعة.",
+      "statuses": {
+        "win": "ربح",
+        "loss": "خسارة",
+        "be": "تعادل",
+        "missed": "فاتتني"
+      }
+    },
+    "spotlight": {
+      "title": "ملخص الجلسة",
+      "emptyHint": "اختر أو أنشئ جلسة باكتيست",
+      "empty": "أنشئ جلسة باكتيست لعرض الإشارات المطابقة وقياس تقدم المراجعة.",
+      "matched": "الإشارات المطابقة",
+      "matchedHint": "الإشارات المسحوبة من فلاتر CSV",
+      "reviewed": "المراجَع",
+      "reviewedHint": "الإشارات التي تم تقييمها يدويًا",
+      "winRate": "نسبة النجاح",
+      "winRateHint": "فقط نتائج Win/Loss/BE",
+      "net": "الصافي R",
+      "avg": "المتوسط",
+      "avgHint": "متوسط نتيجة كل إشارة مقيمة"
+    },
+    "searchPlaceholder": "ابحث داخل إشارات الباكتيست"
+  },
+  "analytics": {
+    "kicker": "ذكاء الأداء",
+    "title": "محرك التحليلات",
+    "description": "افهم ما يحدث عبر الصفقات الحية ونتائج الباكتيست حسب المصدر والجلسة والأداة وسياق الانضباط.",
+    "summaryTitle": "ملخص الأداء",
+    "summaryHint": "كل الأرقام صادرة من محرك التحليلات وليس من الواجهة.",
+    "filterTitle": "حالة الفلاتر النشطة",
+    "filterHint": "البطاقات والرسوم أدناه تتفاعل فورًا مع هذه الفلاتر.",
+    "filterNone": "لا توجد فلاتر إضافية مفعلة.",
+    "curveTitle": "منحنى الإيكويتي",
+    "curveHint": "التدفق التراكمي للـ R / النتائج المستوردة",
+    "backtestTitle": "مقارنة الباكتيست",
+    "backtestHint": "جلسات الريپلاي جنبًا إلى جنب",
+    "heatmapTitle": "خريطة اليوم × الجلسة",
+    "heatmapHint": "أين تتجمع نتائج الانضباط والأداء",
+    "breakdowns": {
+      "source": "حسب المصدر",
+      "session": "حسب الجلسة",
+      "side": "حسب الاتجاه",
+      "instrument": "حسب الأداة",
+      "tag": "حسب الوسم",
+      "month": "حسب الشهر"
+    },
+    "cards": {
+      "total": "إجمالي النتائج",
+      "totalHint": "الأحداث الحية + الباكتيست",
+      "winRate": "نسبة النجاح",
+      "net": "الصافي",
+      "netHint": "النتيجة الإجمالية بعد الفلاتر",
+      "expectancy": "التوقع",
+      "expectancyHint": "متوسط النتيجة لكل حدث",
+      "pf": "Profit Factor",
+      "pfHint": "مجموع الأرباح / مجموع الخسائر",
+      "payoff": "Payoff Ratio",
+      "payoffHint": "متوسط الربح / متوسط الخسارة",
+      "maxDd": "أقصى سحب",
+      "maxDdHint": "أسوأ هبوط في المنحنى ضمن الفلتر",
+      "currentStreak": "السلسلة الحالية",
+      "currentStreakHint": "السلسلة الحالية حسب ترتيب الأحداث"
+    },
+    "curveStats": {
+      "best": "أفضل حدث",
+      "worst": "أسوأ حدث",
+      "avgWin": "متوسط الربح",
+      "avgLoss": "متوسط الخسارة"
+    },
+    "sources": {
+      "manual": "يدوي",
+      "cisd": "مرتبط بـ CISD",
+      "imported": "مستورد",
+      "backtest": "باكتيست"
+    },
+    "streak": {
+      "win": "رابحة",
+      "loss": "خاسرة",
+      "flat": "محايدة"
+    },
+    "filters": {
+      "allTime": "كل الوقت",
+      "today": "اليوم",
+      "week": "آخر 7 أيام",
+      "month": "هذا الشهر",
+      "allSources": "كل المصادر",
+      "allInstruments": "كل الأدوات",
+      "allSides": "شراء + بيع",
+      "allSessions": "كل الجلسات",
+      "labelPeriod": "الفترة",
+      "labelSource": "المصدر",
+      "labelInstrument": "الأداة",
+      "labelSide": "الاتجاه",
+      "labelSession": "الجلسة"
+    },
+    "columns": {
+      "session": "الجلسة",
+      "reviewed": "المراجعة",
+      "winRate": "النجاح",
+      "avg": "المتوسط"
+    },
+    "tradesCount": "حدث",
+    "winRateShort": "WR",
+    "emptyCurve": "أضف صفقات أو نتائج ريبلاي لتوليد المنحنى."
+  },
+  "data": {
+    "kicker": "عمليات الاستيراد",
+    "title": "خط الإشارات والاستيراد",
+    "description": "تتبع ماذا استورد كل مصدر، ماذا تم تجاوزه، ماذا تكرر، وهل ما زال الحساب يحتاج إعدادًا.",
+    "actions": {
+      "importMt5": "استيراد تقرير MT5",
+      "importFundedNext": "استيراد CSV FundedNext",
+      "watchFolder": "مراقبة مجلد FundedNext"
+    },
+    "sourcesTitle": "حالة المصادر",
+    "importsTitle": "أحدث عمليات الاستيراد",
+    "importsHint": "تشخيصات من محرك الاستيراد الموحد",
+    "sources": {
+      "cisd": "ملف CISD CSV",
+      "mt5": "تقارير MT5",
+      "fundedNext": "CSV FundedNext",
+      "fundingAccess": "وصول بيانات التمويل"
+    },
+    "status": {
+      "ready": "جاهز",
+      "missing": "مفقود",
+      "noRuns": "لا توجد عمليات بعد",
+      "notConfigured": "غير مهيأ"
+    },
+    "labels": {
+      "added": "مضاف",
+      "openPositions": "مراكز مفتوحة",
+      "invalid": "صفوف غير صالحة"
+    }
+  },
+  "settings": {
+    "kicker": "تفضيلات مساحة العمل",
+    "title": "الإعدادات والتكاملات",
+    "description": "أبقِ التطبيق محليًا أولًا، ثنائي اللغة، ومتصلًا فقط بالملفات والـ APIs التي توافق عليها صراحةً.",
+    "preferencesTitle": "تفضيلات التطبيق",
+    "language": "اللغة",
+    "timezone": "المنطقة الزمنية",
+    "notifications": "إشعارات ويندوز",
+    "save": "حفظ التفضيلات",
+    "terminalTitle": "اختصار منصة MT5",
+    "terminalDescription": "اختر اختصار منصة الشركة لهذا الحساب. التطبيق يفتحها فقط ولا يضع أوامر أبدًا.",
+    "chooseTerminal": "اختيار الاختصار",
+    "openTerminal": "فتح المنصة",
+    "newsTitle": "مزود الأخبار",
+    "newsProvider": "المزود",
+    "newsKey": "مفتاح API",
+    "saveNews": "حفظ إعدادات الأخبار",
+    "testNews": "اختبار / تحميل الأخبار",
+    "maintenanceTitle": "الصيانة",
+    "backup": "تصدير نسخة احتياطية",
+    "restore": "استعادة نسخة احتياطية",
+    "guide": "فتح الدليل",
+    "restartOnboarding": "إعادة التهيئة الأولية",
+    "restoreConfirm": "سيتم استبدال البيانات المحلية الحالية بالنسخة المختارة. هل تريد المتابعة؟",
+    "noTerminal": "لم يتم اختيار اختصار للمنصة بعد.",
+    "newsConnected": "مزود الأخبار جاهز.",
+    "newsDisconnected": "مزود الأخبار غير مهيأ بعد.",
+    "newAccount": {
+      "prompts": {
+        "firm": "اسم الشركة:",
+        "name": "اسم الحساب / التحدي:",
+        "capital": "رأس المال الابتدائي:",
+        "phase": "المرحلة:"
+      }
+    },
+    "accountTitle": "إعدادات الحساب والمخاطرة",
+    "accountSave": "حفظ إعدادات الحساب",
+    "accountFields": {
+      "firm": "الشركة",
+      "name": "اسم الحساب",
+      "capital": "رأس المال الابتدائي",
+      "balance": "الرصيد الحالي",
+      "currency": "العملة",
+      "phase": "المرحلة",
+      "target": "هدف الربح %",
+      "dailyLoss": "حد الخسارة اليومية %",
+      "maxDrawdown": "أقصى سحب %"
+    }
+  },
+  "warnings": {
+    "ALL_CLEAR": "لا توجد تحذيرات مخاطرة نشطة.",
+    "CONSECUTIVE_LOSSES": "هناك خسارتان أو أكثر على التوالي.",
+    "NEAR_DAILY_LOSS_LIMIT": "أنت قريب من حد الخسارة اليومي.",
+    "DAILY_LOSS_LIMIT_BREACHED": "تم تجاوز حد الخسارة اليومي.",
+    "NEAR_MAX_DRAWDOWN": "أنت قريب من حد السحب الأقصى.",
+    "MAX_DRAWDOWN_BREACHED": "تم تجاوز حد السحب الأقصى."
+  },
+  "workspace": {
+    "account": "الحساب النشط",
+    "page": "الصفحة الحالية",
+    "language": "الواجهة",
+    "lastSignalSync": "آخر مزامنة للإشارات",
+    "notSynced": "لم تتم المزامنة بعد"
+  },
+  "session": {
+    "london": "جلسة لندن",
+    "newYork": "جلسة نيويورك",
+    "afterHours": "ما بعد الجلسة"
+  },
+  "ui": {
+    "status": {
+      "safe": "آمن",
+      "attention": "انتباه",
+      "breach": "تجاوز"
+    },
+    "noValue": "لا توجد بيانات",
+    "unknown": "غير معروف",
+    "empty": {
+      "noData": "لا توجد بيانات بعد."
+    },
+    "error": "خطأ",
+    "loading": "جارٍ تحميل مساحة العمل…"
+  },
+  "messages": {
+    "preferencesSaved": "تم حفظ التفضيلات ✓",
+    "newsLoaded": "تم تحميل الأخبار ✓",
+    "newsSettingsSaved": "تم حفظ إعدادات الأخبار ✓",
+    "signalEntered": "تم تعليم الإشارة كمُنفذة ✓",
+    "signalMissedSaved": "تم حفظ سبب فوات الإشارة ✓",
+    "tradeSaved": "تم حفظ الصفقة ✓",
+    "terminalSaved": "تم حفظ اختصار MT5 ✓",
+    "csvChosen": "تم اختيار ملف CISD CSV ومراقبته ✓",
+    "mt5Imported": "عدد صفقات MT5 المستوردة:",
+    "fundedNextImported": "عدد صفقات FundedNext المستوردة:",
+    "fundedNextWatchEnabled": "تم تفعيل مراقبة مجلد تقارير FundedNext ✓",
+    "backupSaved": "تم حفظ النسخة الاحتياطية ✓",
+    "backupRestored": "تمت استعادة النسخة الاحتياطية ✓",
+    "onboardingRestarted": "تمت إعادة التهيئة الأولية ✓",
+    "newSignalArrived": "وصلت إشارة CISD جديدة.",
+    "refreshed": "تم تحديث اللقطات ✓",
+    "backtestImported": "عدد إشارات الباكتيست المستوردة:",
+    "backtestReviewed": "تمت مراجعة إشارة الباكتيست ✓",
+    "backtestReset": "تم تصفير جلسة الباكتيست ✓",
+    "backtestRefreshed": "تم تحديث جلسة الباكتيست ✓",
+    "accountSettingsSaved": "تم حفظ إعدادات الحساب والمخاطرة ✓",
+    "fundingAccessSaved": "تم حفظ إعدادات الوصول لبيانات التمويل ✓",
+    "fundingSyncSuccess": "تمت مزامنة بيانات التمويل ✓",
+    "fundingSyncSharedSuccess": "تمت مزامنة بيانات Shared Dashboard ✓",
+    "fundingSyncInvestorSuccess": "تمت مزامنة بيانات MT5 عبر Investor Pass ✓"
+  },
+  "notifications": {
+    "newSignalTitle": "CISD Journal — إشارة جديدة",
+    "newSignalBody": "{{instrument}} · {{direction}} · {{timeframe}} · {{session}}"
+  },
+  "errors": {
+    "invalidBackup": "ملف النسخة الاحتياطية غير صالح",
+    "accountNotFound": "الحساب غير موجود",
+    "httpsOnly": "يجب أن يكون الرابط HTTPS",
+    "terminalNotSelected": "لم يتم اختيار اختصار MT5 لهذا الحساب",
+    "fundingUrlMissing": "لم يتم إضافة رابط Shared Dashboard",
+    "newsKeyRequired": "أدخل مفتاح أخبار من الإعدادات أولاً",
+    "csvPathMissing": "اختر ملف CISD CSV أولاً قبل إنشاء جلسة باكتيست",
+    "backtestNotFound": "جلسة الباكتيست غير موجودة",
+    "backtestSignalNotFound": "إشارة الباكتيست غير موجودة",
+    "investorLoginRequired": "رقم حساب Investor Login مطلوب",
+    "investorServerRequired": "اسم السيرفر مطلوب",
+    "investorPasswordRequired": "Investor Password مطلوبة ما لم تكن محفوظة مسبقًا",
+    "fundingAccessMissing": "لا يوجد مصدر وصول لبيانات التمويل مهيأ لهذا الحساب",
+    "investorNotImplemented": "المزامنة الحية عبر Investor Pass لم تُنفذ بعد. يمكن اختبار Shared Dashboard الآن.",
+    "fundingBridgeExeMissing": "ملف MT5 bridge التنفيذي غير موجود داخل الحزمة. ابنِ وأرفق bridges/mt5_readonly_sync.exe مع نسخة التطبيق."
+  },
+  "funding": {
+    "title": "وصول بيانات شركة التمويل",
+    "description": "هيّئ الوصول للقراءة فقط إما عبر بيانات MT5 Investor Pass أو عبر رابط Shared Dashboard. البيانات الحساسة تبقى محليًا ومشفرة.",
+    "modeLabel": "طريقة الوصول",
+    "syncScopeLabel": "نطاق المزامنة",
+    "investorLogin": "رقم الحساب / Investor Login",
+    "investorServer": "اسم السيرفر",
+    "investorPassword": "Investor Password",
+    "sharedUrl": "رابط Shared Dashboard",
+    "save": "حفظ إعدادات الوصول",
+    "open": "فتح لوحة الشركة",
+    "passwordStored": "تم حفظ كلمة المرور محليًا بشكل مشفر",
+    "statusManualOnly": "الوضع اليدوي فقط. لا يوجد مصدر تمويل خارجي مهيأ.",
+    "statusInvestorConfigured": "تمت تهيئة Investor Pass للوصول المحلي المشفر للقراءة فقط.",
+    "statusInvestorMissing": "تم اختيار Investor Pass لكن بعض الحقول ما زالت ناقصة.",
+    "statusUrlConfigured": "تمت تهيئة رابط Shared Dashboard وهو جاهز للفتح.",
+    "statusUrlMissing": "تم اختيار Shared Dashboard لكن الرابط غير موجود.",
+    "openNotAvailable": "إجراء الفتح متاح فقط عند تهيئة رابط Shared Dashboard.",
+    "modes": {
+      "none": "يدوي فقط",
+      "investor": "Investor Pass",
+      "sharedUrl": "رابط Shared Dashboard"
+    },
+    "scopes": {
+      "healthOnly": "حالة الحساب فقط",
+      "healthAndOpen": "الحساب + المراكز المفتوحة",
+      "fullReadonly": "كل ما يمكن قراءته"
+    },
+    "sync": "مزامنة بيانات التمويل",
+    "bridgeReady": "تم العثور على MT5 bridge التنفيذي داخل الحزمة",
+    "bridgeMissing": "ملف MT5 bridge التنفيذي غير موجود داخل الحزمة"
+  }
+}

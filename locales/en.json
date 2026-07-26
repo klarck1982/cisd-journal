@@ -1,0 +1,514 @@
+{
+  "meta": {
+    "code": "en",
+    "label": "English",
+    "dir": "ltr"
+  },
+  "app": {
+    "title": "CISD Journal",
+    "subtitle": "Trading Discipline OS",
+    "footer": "LOCAL · PRIVATE · NO EA",
+    "accounts": "Accounts",
+    "newChallenge": "+ Challenge"
+  },
+  "nav": {
+    "overview": "Overview",
+    "signals": "Signals",
+    "journal": "Journal",
+    "backtest": "Backtest",
+    "analytics": "Analytics",
+    "data": "Data Sources",
+    "settings": "Settings"
+  },
+  "overview": {
+    "kicker": "Live discipline cockpit",
+    "title": "Daily execution dashboard",
+    "description": "Monitor prop-firm progress, review CISD signals, and measure how hesitation affects your trading discipline.",
+    "actions": {
+      "openTerminal": "Open MT5",
+      "refreshNews": "Refresh news",
+      "reviewSignals": "Review signals"
+    },
+    "health": {
+      "title": "Account health",
+      "capital": "Initial capital",
+      "balance": "Current balance",
+      "balanceHint": "Imported or updated manually",
+      "equity": "Live equity",
+      "equityHint": "Balance + open P&L",
+      "openPnl": "Open P&L",
+      "positions": "open positions"
+    },
+    "risk": {
+      "title": "Risk guardrails",
+      "todayClosed": "Today closed P&L",
+      "dailyRemaining": "Daily loss remaining",
+      "drawdownRemaining": "Max drawdown remaining",
+      "lossStreak": "Consecutive losses"
+    },
+    "discipline": {
+      "title": "Discipline score",
+      "score": "Score",
+      "coverage": "Decision coverage",
+      "executed": "Executed signals",
+      "missed": "Missed signals",
+      "linkRate": "Evidence link rate"
+    },
+    "challenge": {
+      "title": "Challenge progress",
+      "gain": "Net gain",
+      "target": "Target amount",
+      "remaining": "Remaining to target"
+    },
+    "news": {
+      "title": "Upcoming high-impact news",
+      "live": "Live feed",
+      "notConfigured": "Add an API key in settings",
+      "empty": "No high-impact events are scheduled in the current feed."
+    },
+    "latestSignals": {
+      "title": "Latest CISD signals",
+      "hint": "Decide quickly, then log execution or hesitation"
+    },
+    "hero": {
+      "kicker": "Execution command center",
+      "description": "This account combines live discipline, risk context, and the next decision you need to make.",
+      "risk": "Risk",
+      "discipline": "Discipline",
+      "challenge": "Challenge",
+      "nextNews": "Next news",
+      "noNews": "No live news loaded",
+      "insightTitle": "Focus insight",
+      "insightBreach": "Risk limits are under pressure. Protect the account before taking new exposure.",
+      "insightMissed": "{{count}} signals were missed. Review whether fear or hesitation is becoming a pattern.",
+      "insightStable": "Your workflow is stable right now. Keep turning signals into clear decisions.",
+      "pending": "Pending",
+      "reviewed": "Reviewed"
+    }
+  },
+  "signals": {
+    "kicker": "Signal execution review",
+    "title": "CISD signal center",
+    "description": "Every signal should end with a decision: entered, missed, or still pending. This is the center of your discipline workflow.",
+    "actions": {
+      "chooseCsv": "Choose CISD CSV",
+      "refresh": "Refresh snapshots",
+      "entered": "Entered",
+      "missed": "Missed",
+      "logTrade": "Log trade"
+    },
+    "sourceTitle": "Signal source",
+    "summaryTitle": "Discipline snapshot",
+    "summaryHint": "Coverage, missed trades, and execution consistency",
+    "liveTitle": "Recent live signals",
+    "liveHint": "Newest signals from the watched CSV",
+    "searchPlaceholder": "Search by symbol, session, TF, or signal ID",
+    "noCsv": "No CSV selected yet",
+    "totalSignals": "signals",
+    "linkedTrade": "Trade logged",
+    "status": {
+      "pending": "Pending",
+      "executed": "Entered",
+      "missed": "Missed"
+    },
+    "metrics": {
+      "total": "Signals",
+      "totalHint": "Live CISD opportunities",
+      "executed": "Entered",
+      "executedHint": "Signals you committed to",
+      "missed": "Missed",
+      "missedHint": "Fear / hesitation / rule conflicts",
+      "coverage": "Coverage",
+      "coverageHint": "Signals with a recorded decision",
+      "newSignals": "new",
+      "duplicates": "duplicates"
+    },
+    "reasonModal": {
+      "title": "Why was this trade missed?",
+      "description": "Record the real reason so the dashboard can reveal recurring discipline patterns.",
+      "note": "Optional note",
+      "save": "Save missed reason",
+      "none": "No repeated reasons yet",
+      "presets": {
+        "hesitation": "Hesitation",
+        "fear": "Fear",
+        "news": "Nearby news event",
+        "late": "Late execution",
+        "rule-break": "Rule conflict"
+      }
+    }
+  },
+  "journal": {
+    "kicker": "Execution journal",
+    "title": "Manual trade log",
+    "description": "Record the trade you executed and link it back to the original signal whenever possible. Manual trades are fully supported even without a signal.",
+    "form": {
+      "title": "Quick trade entry",
+      "hint": "Keep this simple and fast during the session.",
+      "signal": "Linked signal",
+      "source": "Trade source",
+      "symbol": "Symbol",
+      "side": "Side",
+      "date": "Trade date",
+      "resultR": "Result (R)",
+      "tags": "Tags",
+      "note": "Execution note",
+      "save": "Save trade",
+      "noSignal": "No linked signal",
+      "symbolRequired": "Enter a symbol first."
+    },
+    "recentTrades": {
+      "title": "Recent trades",
+      "hint": "Latest entries for the active account",
+      "linked": "Linked to signal"
+    },
+    "searchPlaceholder": "Search by symbol, source, tags, or notes",
+    "guidance": {
+      "titleEntered": "Signal marked as entered",
+      "textEntered": "Keep this signal linked and log the trade now so discipline tracking stays accurate.",
+      "titleLinked": "Linked CISD signal context",
+      "textLinked": "You are about to log a trade with a linked CISD signal. This helps compare execution against missed opportunities.",
+      "backToSignals": "Back to signals",
+      "clear": "Clear guidance",
+      "enteredBadge": "Entered signal",
+      "linkBadge": "Signal link active"
+    }
+  },
+  "backtest": {
+    "kicker": "Historical discipline replay",
+    "title": "Time-range backtest lab",
+    "description": "Create a backtest session from the same CISD CSV using time range, session, symbol, and timeframe filters — then review each matched signal manually.",
+    "create": {
+      "title": "Create backtest session",
+      "hint": "Pull only the signals that match your historical drill criteria.",
+      "name": "Session name",
+      "session": "Session filter",
+      "start": "Start date",
+      "end": "End date",
+      "symbol": "Symbol filter",
+      "tf": "Timeframe filter",
+      "save": "Create & import signals",
+      "defaultName": "Untitled Backtest"
+    },
+    "library": {
+      "title": "Backtest library",
+      "hint": "Saved historical sessions for this account",
+      "reviewed": "reviewed",
+      "open": "Open",
+      "refresh": "Re-import",
+      "reset": "Reset",
+      "resetConfirm": "This backtest session and all its reviewed signals will be deleted. Continue?"
+    },
+    "review": {
+      "title": "Review matched signals",
+      "hint": "Score each historical opportunity manually",
+      "resultPrompt": "Enter the R result for this reviewed signal:",
+      "missedPrompt": "Why would you have missed this signal?",
+      "modalTitle": "Review backtest signal",
+      "modalDescription": "Score this historical CISD opportunity with a clearer review flow than browser prompts.",
+      "statusLabel": "Review outcome",
+      "resultLabel": "Result (R)",
+      "noteLabel": "Review note",
+      "save": "Save review",
+      "resultPlaceholder": "Example: 1.0 or -0.5",
+      "notePlaceholder": "What would you improve, avoid, or repeat next time?",
+      "resultRequired": "Enter an R result before saving this review.",
+      "statuses": {
+        "win": "Win",
+        "loss": "Loss",
+        "be": "BE",
+        "missed": "Missed"
+      }
+    },
+    "spotlight": {
+      "title": "Session spotlight",
+      "emptyHint": "Select or create a backtest session",
+      "empty": "Create a backtest session to inspect matched signals and review progress.",
+      "matched": "Matched signals",
+      "matchedHint": "Signals pulled from the CSV filters",
+      "reviewed": "Reviewed",
+      "reviewedHint": "Signals already scored manually",
+      "winRate": "Win rate",
+      "winRateHint": "Only scored Win/Loss/BE results",
+      "net": "Net R",
+      "avg": "Avg",
+      "avgHint": "Average result per scored signal"
+    },
+    "searchPlaceholder": "Search backtest signals"
+  },
+  "analytics": {
+    "kicker": "Performance intelligence",
+    "title": "Analytics engine",
+    "description": "Understand what happens across live trades and backtest results by source, session, symbol, and discipline context.",
+    "summaryTitle": "Performance summary",
+    "summaryHint": "All metrics are produced by the analytics engine, not by the UI.",
+    "filterTitle": "Active filter state",
+    "filterHint": "The cards and charts below react instantly to these filters.",
+    "filterNone": "No additional filters are applied.",
+    "curveTitle": "Equity curve",
+    "curveHint": "Cumulative R / imported result flow",
+    "backtestTitle": "Backtest comparison",
+    "backtestHint": "Replay sessions side by side",
+    "heatmapTitle": "Day × session heatmap",
+    "heatmapHint": "Where discipline and performance cluster",
+    "breakdowns": {
+      "source": "By source",
+      "session": "By session",
+      "side": "By side",
+      "instrument": "By instrument",
+      "tag": "By tag",
+      "month": "By month"
+    },
+    "cards": {
+      "total": "Total results",
+      "totalHint": "Live + backtest events",
+      "winRate": "Win rate",
+      "net": "Net result",
+      "netHint": "Aggregate result across filtered events",
+      "expectancy": "Expectancy",
+      "expectancyHint": "Average result per event",
+      "pf": "Profit factor",
+      "pfHint": "Gross wins / gross losses",
+      "payoff": "Payoff ratio",
+      "payoffHint": "Average win / average loss",
+      "maxDd": "Max drawdown",
+      "maxDdHint": "Worst equity dip in the filtered range",
+      "currentStreak": "Current streak",
+      "currentStreakHint": "Live streak based on event order"
+    },
+    "curveStats": {
+      "best": "Best event",
+      "worst": "Worst event",
+      "avgWin": "Average win",
+      "avgLoss": "Average loss"
+    },
+    "sources": {
+      "manual": "Manual",
+      "cisd": "CISD linked",
+      "imported": "Imported",
+      "backtest": "Backtest"
+    },
+    "streak": {
+      "win": "Winning",
+      "loss": "Losing",
+      "flat": "Flat"
+    },
+    "filters": {
+      "allTime": "All time",
+      "today": "Today",
+      "week": "Last 7 days",
+      "month": "This month",
+      "allSources": "All sources",
+      "allInstruments": "All instruments",
+      "allSides": "Buy + Sell",
+      "allSessions": "All sessions",
+      "labelPeriod": "Period",
+      "labelSource": "Source",
+      "labelInstrument": "Instrument",
+      "labelSide": "Side",
+      "labelSession": "Session"
+    },
+    "columns": {
+      "session": "Session",
+      "reviewed": "Reviewed",
+      "winRate": "Win rate",
+      "avg": "Avg"
+    },
+    "tradesCount": "events",
+    "winRateShort": "WR",
+    "emptyCurve": "Add trades or replay results to generate the curve."
+  },
+  "data": {
+    "kicker": "Import operations",
+    "title": "Signal & import pipeline",
+    "description": "Track what each source imported, what was skipped, what duplicated, and whether the account still needs configuration.",
+    "actions": {
+      "importMt5": "Import MT5 report",
+      "importFundedNext": "Import FundedNext CSV",
+      "watchFolder": "Watch FundedNext folder"
+    },
+    "sourcesTitle": "Source health",
+    "importsTitle": "Recent import jobs",
+    "importsHint": "Diagnostics from the unified import engine",
+    "sources": {
+      "cisd": "CISD CSV",
+      "mt5": "MT5 reports",
+      "fundedNext": "FundedNext CSV",
+      "fundingAccess": "Funding access"
+    },
+    "status": {
+      "ready": "Ready",
+      "missing": "Missing",
+      "noRuns": "No runs yet",
+      "notConfigured": "Not configured"
+    },
+    "labels": {
+      "added": "Added",
+      "openPositions": "Open positions",
+      "invalid": "Invalid rows"
+    }
+  },
+  "settings": {
+    "kicker": "Workspace preferences",
+    "title": "Settings & integrations",
+    "description": "Keep the app local-first, bilingual, and connected only to the files and APIs you explicitly approve.",
+    "preferencesTitle": "Application preferences",
+    "language": "Language",
+    "timezone": "Timezone",
+    "notifications": "Windows notifications",
+    "save": "Save preferences",
+    "terminalTitle": "MT5 terminal shortcut",
+    "terminalDescription": "Choose the prop-firm terminal shortcut for this account. The app only opens it and never places orders.",
+    "chooseTerminal": "Choose shortcut",
+    "openTerminal": "Open terminal",
+    "newsTitle": "News provider",
+    "newsProvider": "Provider",
+    "newsKey": "API key",
+    "saveNews": "Save news settings",
+    "testNews": "Test / load news",
+    "maintenanceTitle": "Maintenance",
+    "backup": "Export backup",
+    "restore": "Restore backup",
+    "guide": "Open guide",
+    "restartOnboarding": "Restart onboarding",
+    "restoreConfirm": "This will replace the current local data with the selected backup. Continue?",
+    "noTerminal": "No terminal shortcut selected yet.",
+    "newsConnected": "News provider ready.",
+    "newsDisconnected": "News provider not configured yet.",
+    "newAccount": {
+      "prompts": {
+        "firm": "Firm name:",
+        "name": "Account / challenge name:",
+        "capital": "Initial capital:",
+        "phase": "Phase:"
+      }
+    },
+    "accountTitle": "Account & risk settings",
+    "accountSave": "Save account settings",
+    "accountFields": {
+      "firm": "Firm",
+      "name": "Account name",
+      "capital": "Initial capital",
+      "balance": "Current balance",
+      "currency": "Currency",
+      "phase": "Phase",
+      "target": "Profit target %",
+      "dailyLoss": "Daily loss limit %",
+      "maxDrawdown": "Maximum drawdown %"
+    }
+  },
+  "warnings": {
+    "ALL_CLEAR": "No active risk warnings.",
+    "CONSECUTIVE_LOSSES": "Two or more losses in a row.",
+    "NEAR_DAILY_LOSS_LIMIT": "You are close to the daily loss limit.",
+    "DAILY_LOSS_LIMIT_BREACHED": "Daily loss limit breached.",
+    "NEAR_MAX_DRAWDOWN": "You are close to the max drawdown limit.",
+    "MAX_DRAWDOWN_BREACHED": "Max drawdown breached."
+  },
+  "workspace": {
+    "account": "Active account",
+    "page": "Current page",
+    "language": "Interface",
+    "lastSignalSync": "Last signal sync",
+    "notSynced": "Not synced yet"
+  },
+  "session": {
+    "london": "London session",
+    "newYork": "New York session",
+    "afterHours": "After hours"
+  },
+  "ui": {
+    "status": {
+      "safe": "SAFE",
+      "attention": "ATTENTION",
+      "breach": "BREACH"
+    },
+    "noValue": "No data",
+    "unknown": "Unknown",
+    "empty": {
+      "noData": "No data yet."
+    },
+    "error": "Error",
+    "loading": "Loading workspace…"
+  },
+  "messages": {
+    "preferencesSaved": "Preferences saved ✓",
+    "newsLoaded": "News loaded ✓",
+    "newsSettingsSaved": "News settings saved ✓",
+    "signalEntered": "Signal marked as entered ✓",
+    "signalMissedSaved": "Missed reason saved ✓",
+    "tradeSaved": "Trade saved ✓",
+    "terminalSaved": "MT5 shortcut saved ✓",
+    "csvChosen": "CISD CSV selected and watched ✓",
+    "mt5Imported": "MT5 trades imported:",
+    "fundedNextImported": "FundedNext trades imported:",
+    "fundedNextWatchEnabled": "FundedNext reports folder is now being watched ✓",
+    "backupSaved": "Backup saved ✓",
+    "backupRestored": "Backup restored ✓",
+    "onboardingRestarted": "Onboarding reset ✓",
+    "newSignalArrived": "A new CISD signal arrived.",
+    "refreshed": "Snapshots refreshed ✓",
+    "backtestImported": "Backtest signals imported:",
+    "backtestReviewed": "Backtest signal reviewed ✓",
+    "backtestReset": "Backtest session reset ✓",
+    "backtestRefreshed": "Backtest session refreshed ✓",
+    "accountSettingsSaved": "Account & risk settings saved ✓",
+    "fundingAccessSaved": "Funding access settings saved ✓",
+    "fundingSyncSuccess": "Funding data synced ✓",
+    "fundingSyncSharedSuccess": "Shared dashboard data synced ✓",
+    "fundingSyncInvestorSuccess": "Investor Pass MT5 data synced ✓"
+  },
+  "notifications": {
+    "newSignalTitle": "CISD Journal — New Signal",
+    "newSignalBody": "{{instrument}} · {{direction}} · {{timeframe}} · {{session}}"
+  },
+  "errors": {
+    "invalidBackup": "Invalid backup file",
+    "accountNotFound": "Account not found",
+    "httpsOnly": "URL must use HTTPS",
+    "terminalNotSelected": "No MT5 shortcut has been selected for this account",
+    "fundingUrlMissing": "Shared Dashboard URL has not been added",
+    "newsKeyRequired": "Enter a News API key from Settings first",
+    "csvPathMissing": "Choose a CISD CSV file first before creating a backtest session",
+    "backtestNotFound": "Backtest session not found",
+    "backtestSignalNotFound": "Backtest signal not found",
+    "investorLoginRequired": "Investor login is required",
+    "investorServerRequired": "Server name is required",
+    "investorPasswordRequired": "Investor password is required unless one is already stored",
+    "fundingAccessMissing": "No funding access is configured for this account",
+    "investorNotImplemented": "Investor Pass live sync is not implemented yet. Shared Dashboard sync can be tested now.",
+    "fundingBridgeExeMissing": "Bundled MT5 bridge EXE is missing. Build and ship bridges/mt5_readonly_sync.exe with the desktop app."
+  },
+  "funding": {
+    "title": "Funding access",
+    "description": "Configure read-only prop-firm access either through MT5 Investor Pass credentials or a shared dashboard URL. Credentials stay local and encrypted.",
+    "modeLabel": "Access method",
+    "syncScopeLabel": "Sync scope",
+    "investorLogin": "Investor login / account number",
+    "investorServer": "Server name",
+    "investorPassword": "Investor password",
+    "sharedUrl": "Shared dashboard URL",
+    "save": "Save funding access",
+    "open": "Open dashboard",
+    "passwordStored": "encrypted password stored locally",
+    "statusManualOnly": "Manual-only mode. No external funding source is configured.",
+    "statusInvestorConfigured": "Investor Pass is configured for encrypted local read-only access.",
+    "statusInvestorMissing": "Investor Pass mode selected, but one or more fields are missing.",
+    "statusUrlConfigured": "Shared dashboard URL is configured and ready to open.",
+    "statusUrlMissing": "Shared dashboard mode selected, but the URL is missing.",
+    "openNotAvailable": "Open action is available only when a shared dashboard URL is configured.",
+    "modes": {
+      "none": "Manual only",
+      "investor": "Investor Pass",
+      "sharedUrl": "Shared Dashboard URL"
+    },
+    "scopes": {
+      "healthOnly": "Account health only",
+      "healthAndOpen": "Account + open positions",
+      "fullReadonly": "Full read-only"
+    },
+    "sync": "Sync funding data",
+    "bridgeReady": "bundled MT5 bridge EXE detected",
+    "bridgeMissing": "bundled MT5 bridge EXE missing"
+  }
+}

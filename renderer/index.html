@@ -1,1 +1,724 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>CISD Journal</title><link rel="stylesheet" href="style.css"></head><body><div class="titlebar"><span>◈ &nbsp; CISD Journal <small>v1.0.0</small></span><div class="window"><button onclick="cisd.minimize()">—</button><button onclick="cisd.maximize()">□</button><button class="close" onclick="cisd.close()">×</button></div></div><div class="app"><aside><div class="brand"><span>◈</span><div>CISD Journal<small>TRADING PERFORMANCE OS</small></div></div><div class="accounts-head"><span>الحسابات</span><button onclick="newAccount()">+ Challenge</button></div><div id="accounts" class="accounts"></div><nav><button class="active" data-page="dashboard">الرئيسية <i>⌂</i></button><button data-page="trades">مركز التداول <i>⇄</i></button><button data-page="signals">إشارات CISD <i>◉</i></button><button data-page="backtest">Backtest <i>◷</i></button><button data-page="mt5">MT5 Import <i>⇩</i></button><button data-page="analytics">التحليلات <i>▤</i></button><button data-page="news">الأخبار والتقويم <i>◷</i></button><button data-page="journal">المراجعة <i>✦</i></button><button data-page="settings">الإعدادات <i>⚙</i></button><button data-page="help">Help <i>?</i></button></nav><div class="footer">LOCAL · PRIVATE · NO EA</div></aside><main><section id="dashboard" class="page active"><header><div><small class="blue">ACCOUNT OVERVIEW</small><h1 id="greeting">مرحباً، صديقي.</h1><p>هذه بداية حسابك. أضف الكابيتال وقوانين الـChallenge لتظهر Account Health بدقة.</p></div><div class="clock"><b id="date">—</b><span id="time">—</span></div></header><div id="setup" class="setup"><div><b id="setupTitle">إعداد الحساب</b><span id="setupText">جاري فحص إعدادات الحساب.</span></div><button onclick="go('settings')">فتح الإعدادات ←</button></div><div id="fundingQuick" class="funding-quick" style="display:none"><span>FundingPips Shared Dashboard متصل</span><button onclick="openFundingDashboard()">فتح Dashboard ↗</button></div><h3 class="section-title">Account Health <small id="accountLabel"></small></h3><div class="metrics"><article><small>Initial Capital</small><b id="capital">No data</b><span>أدخلها يدوياً</span></article><article><small>Current Balance</small><b id="balance">No data</b><span>تحديث يدوي أو MT5 لاحقاً</span></article><article><small>Daily Loss Remaining</small><b id="daily">—</b><span>يعتمد على حد الحساب</span></article><article><small>Max Drawdown Remaining</small><b id="drawdown">—</b><span>يعتمد على حد الحساب</span></article><article><small>Profit Target</small><b id="target">—</b><span>تقدم الـChallenge</span></article></div><div class="achievement-bar" id="achievements"></div><section class="terminal-quick"><div><b id="terminalTitle">MT5 Terminal</b><small id="terminalSubtitle">اختر اختصار MT5 للحساب</small></div><button onclick="openTerminal()">فتح MT5 ↗</button></section><section class="panel challenge-panel"><div class="head"><h3>Challenge Progress</h3><span id="challengePercent">—</span></div><div class="challenge-track"><i id="challengeBar"></i></div><div id="challengeText" class="muted"></div></section><section class="panel sources-panel"><div class="head"><h3>Data Sources Status</h3><span>Local & Read-only</span></div><div id="sourcesStatus" class="sources-grid"></div></section><section class="panel import-audit"><div class="head"><h3>Import History</h3><span>آخر 5 عمليات</span></div><div id="importHistory" class="list empty">لا توجد عمليات استيراد بعد.</div></section><section class="panel risk-panel"><div class="head"><h3>Risk & Challenge Status</h3><span id="riskState">—</span></div><div id="riskMetrics" class="risk-metrics"></div><div id="riskWarnings" class="risk-warnings"></div></section><section id="dashboardNews" class="panel dashboard-news"><div class="head"><h3>Upcoming High Impact News</h3><button onclick="go('news')">فتح التقويم</button></div><div id="dashboardNewsContent" class="muted">فعّل Trading Economics API لإظهار الأخبار الحية.</div></section><div class="grid"><section class="panel focus"><label>FOCUS MODE</label><h2>لا توجد بيانات تداول بعد</h2><p>ابدأ بإعداد الحساب. بعد ذلك ستظهر إشارات CISD والصفقات والـChecklist في هذا المكان.</p><button onclick="go('settings')">ابدأ إعداد الحساب</button></section><section class="panel"><div class="head"><h3>Performance Snapshot</h3><span>Live / Manual / Backtest</span></div><div class="stats"><div><b id="dTrades">0</b><small>Total Trades</small></div><div><b id="dWinRate">—</b><small>Win Rate</small></div><div><b id="dNetR">—</b><small>Net R</small></div><div><b id="dPF">—</b><small>Profit Factor</small></div></div><p id="dashInsight" class="muted">لن نعرض أرقاماً وهمية. تظهر النتائج بعد إضافة صفقات يدوية أو استيراد تقرير MT5.</p><div id="equityPreview" class="equity-preview"></div></section></div></section><section id="trades" class="page"><h2>مركز التداول</h2><section class="panel open-panel"><div class="head"><h3>Open Positions</h3><span id="openPositionCount">0</span></div><div id="openPositionList" class="list empty">لا توجد مراكز مفتوحة مستوردة.</div></section><div class="trade-tools"><input id="tradeSearch" oninput="setTradeFilter()" placeholder="بحث: Symbol / Tag / Note"><select id="sourceFilter" onchange="setTradeFilter()"><option value="ALL">كل المصادر</option><option value="Manual">Manual</option><option value="CISD">CISD</option><option value="FundedNext CSV">FundedNext CSV</option></select></div><div class="trade-grid"><form id="tradeForm" class="form"><label>نوع الصفقة<select id="tradeSource"><option>Manual</option><option>CISD</option></select></label><label>الرمز<input id="symbol" placeholder="XAUUSD"></label><label>الاتجاه<select id="side"><option>Buy</option><option>Sell</option></select></label><label>Entry<input id="entry" type="number" step="any"></label><label>Stop Loss<input id="sl" type="number" step="any"></label><label>Take Profit<input id="tp" type="number" step="any"></label><label>النتيجة R<input id="resultR" type="number" step="0.01"></label><label>تاريخ الصفقة<input id="tradeDate" type="date"></label><label>ربط اختياري بإشارة CISD<select id="linkedSignal"><option value="">بدون ربط</option></select></label><label>Tags<input id="tradeTags" placeholder="CISD, London, Followed Plan"></label><label>ملاحظة<input id="tradeNote" placeholder="سبب الدخول"></label><label>صور الشارت<div class="chart-actions"><button type="button" onclick="chooseChart('before')">صورة قبل الدخول</button><button type="button" onclick="chooseChart('after')">صورة بعد الخروج</button></div><small id="chartStatus">اختياري</small></label><button type="submit">حفظ صفقة يدوية</button><button type="button" onclick="importFundedNext()">Import FundedNext CSV</button><button type="button" onclick="watchFundedNext()">Watch FundedNext Reports Folder</button><button type="button" onclick="exportTrades()">Export Trades CSV</button></form><section class="panel"><div class="head"><h3>آخر الصفقات</h3><span id="tradeCount">0 Trades</span></div><div id="tradeList" class="list empty">لا توجد صفقات مسجلة.</div></section></div></section><section id="signals" class="page"><h2>إشارات CISD</h2><div class="toolbar"><button onclick="chooseCSV()">اختيار HigherTF_Signals.csv</button><span id="csvPath" class="muted">لم يتم اختيار ملف بعد</span></div><div id="signalList" class="list empty">لا توجد إشارات مستوردة.</div></section><section id="backtest" class="page"><h2>Backtest Replay Lab</h2><div class="backtest-grid"><section class="panel"><div class="head"><h3>Start New Backtest</h3><span id="backtestState">جاهز</span></div><form id="backtestForm" class="form compact"><label>اسم الباكتيست<input id="btName" placeholder="Gold London July"></label><label>نوع الأداة<select id="btType"><option>Gold</option><option>Forex</option><option>Indices</option><option>Custom</option></select></label><label>الرمز<input id="btSymbol" placeholder="XAUUSD"></label><label>TF<input id="btTF" value="15m"></label><label>تاريخ البداية<input id="btStart" type="date"></label><label>تاريخ النهاية<input id="btEnd" type="date"></label><button type="submit">بدء التقاط إشارات Backtest</button></form><button id="stopBacktest" onclick="stopBacktest()">إنهاء Backtest الحالي</button></section><section class="panel"><div class="head"><h3>Backtest Library</h3><span id="btCount">0 جلسة</span></div><div id="backtestList" class="list empty">لا توجد جلسات Backtest بعد.</div></section></div></section><section class="panel compare-panel"><div class="head"><h3>Backtest Comparison</h3><span>All sessions</span></div><div id="backtestCompare" class="list empty">أكمل جلسات Backtest لتظهر المقارنة.</div></section><section id="replayPanel" class="panel replay" style="display:none"><div class="head"><h3 id="replayTitle">Replay Session</h3><button onclick="closeReplay()">إغلاق Replay</button></div><div id="replayStats" class="muted"></div><div id="replaySignals" class="list"></div></section><section id="mt5" class="page"><div class="toolbar"><div><h2>MT5 Import Center</h2><p>استورد MT5 Detailed Report HTML أو CSV. لا EA ولا اتصال مباشر بالحساب.</p></div></div><section class="panel"><h3>MT5 Detailed Report</h3><p class="muted">اختر تقرير Account History من MT5، وسيستورد التطبيق الصفقات الجديدة فقط ويمنع تكرار Ticket/Deal ID.</p><button class="import-button" onclick="importMT5()">اختيار تقرير MT5</button><div id="mt5ImportStatus" class="muted" style="margin-top:14px">لا يوجد تقرير مستورد في هذه الجلسة.</div></section></section><section id="analytics" class="page"><div class="toolbar"><div><h2>التحليلات</h2><p>حلل الأداء حسب الفترة التي تختارها.</p></div><select id="analyticsPeriod" onchange="setAnalyticsPeriod()"><option value="all">كل الوقت</option><option value="today">اليوم</option><option value="week">آخر 7 أيام</option><option value="month">هذا الشهر</option></select><select id="analyticsSource" onchange="setAnalyticsSource()"><option value="all">كل المصادر</option><option value="manual">Manual</option><option value="cisd">CISD Linked</option><option value="imported">Imported</option><option value="backtest">Backtest</option></select><select id="analyticsInstrument" onchange="setAnalyticsInstrument()"><option value="all">كل الأدوات</option></select><select id="analyticsSide" onchange="setAnalyticsSide()"><option value="all">Buy + Sell</option><option value="Buy">Buy فقط</option><option value="Sell">Sell فقط</option></select><select id="analyticsSession" onchange="setAnalyticsSession()"><option value="all">كل الجلسات</option><option value="London">London</option><option value="New York">New York</option><option value="After">After Hours</option></select></div><div class="analytics-metrics"><article><small>Total Trades</small><b id="aTotal">0</b></article><article><small>Wins / Losses</small><b id="aWL">—</b></article><article><small>Win Rate</small><b id="aWR">—</b></article><article><small>Net R</small><b id="aR">—</b></article><article><small>Profit Factor</small><b id="aPF">—</b></article><article><small>Expectancy</small><b id="aEX">—</b></article><article><small>Max Drawdown</small><b id="aMaxDD">—</b></article><article><small>Current Drawdown</small><b id="aCurDD">—</b></article></div><div class="analytics-grid"><section class="panel"><h3>Performance Insight</h3><div id="insight" class="empty">أضف صفقات أو نتائج Replay لتظهر التحليلات.</div><div id="fullEquity" class="equity-full"></div></section><section class="panel"><div class="head"><h3>Calendar P&L / R</h3><span id="calendarMonth"></span></div><div id="calendar" class="calendar"></div></section></div><section class="panel" style="margin-top:15px"><div class="head"><h3>CISD vs Manual Performance</h3><span>حسب مصدر الصفقة</span></div><div id="sourceStats" class="list empty">لا توجد بيانات بعد.</div></section><section class="panel" style="margin-top:15px"><div class="head"><h3>Tags Performance</h3><span>من الصفقات اليدوية</span></div><div id="tagStats" class="list empty">أضف Tags للصفقات لتظهر المقارنة هنا.</div></section><div class="analytics-grid" style="margin-top:15px"><section class="panel"><div class="head"><h3>Instrument Analysis</h3><span>R / P&L</span></div><div id="instrumentStats" class="list empty">لا توجد بيانات بعد.</div></section><section class="panel"><div class="head"><h3>Long / Short Analysis</h3><span>حسب الاتجاه</span></div><div id="sideStats" class="list empty">لا توجد بيانات بعد.</div></section></div><section class="panel monthly-panel"><div class="head"><h3>Monthly Performance</h3><span>Closed trades</span></div><div id="monthlyStats" class="list empty">لا توجد بيانات شهرية بعد.</div></section><section class="panel heatmap-panel"><div class="head"><h3>Trading Heatmap</h3><span>Day × Session</span></div><div id="heatmap" class="heatmap"></div></section><section class="panel" style="margin-top:15px"><div class="head"><h3>Session Analysis</h3><span>من وقت الصفقات المستوردة</span></div><div id="sessionStats" class="list empty">لا توجد بيانات جلسات بعد.</div></section></section><section id="news" class="page"><div class="toolbar"><div><h2>Upcoming High Impact News</h2><p>تقويم اقتصادي للسياق والتنبيه، وليس توصية تداول.</p></div><button onclick="loadNews()">تحديث الأخبار</button></div><div id="newsWarning" class="setup" style="display:none"></div><div class="news-controls"><button onclick="loadNews()">High Impact فقط</button><span id="newsUpdated" class="muted">لم يتم التحديث</span></div><div id="newsList" class="list empty">قم بإضافة API Key لمزود الأخبار من الإعدادات.</div></section><section id="journal" class="page"><h2>المراجعة والتقدم</h2><div class="review-grid"><section class="panel"><div class="head"><h3>Daily Checklist</h3><span id="dailyScore">0 / 4</span></div><div id="checklist" class="checks"></div><div class="scorebox"><b id="discipline">0 XP</b><small>Discipline Score اليوم</small></div></section><section class="panel"><div class="head"><h3>ملاحظة اليوم</h3><span id="reviewDate"></span></div><textarea id="dailyNote" placeholder="اكتب ملاحظة قصيرة وصادقة عن تنفيذك اليوم..."></textarea><button onclick="saveDaily()">حفظ مراجعة اليوم</button><div id="weekReview" class="muted">سيظهر هنا تقدمك الأسبوعي.</div></section></div></section><section id="help" class="page"><div class="toolbar"><div><h2>CISD Journal Help Center</h2><p>كل ميزة: ما هي، لماذا تفيدك، ومثال واقعي مبسط.</p></div><button onclick="openFullGuide()">فتح الدليل الكامل</button></div><div class="help-grid"><article><h3>Account Health</h3><p><b>ما هي؟</b> ملخص صحة الحساب: Balance، Equity، Daily Loss، Max Drawdown، وProfit Target.</p><p><b>مثال:</b> حساب $100K وهدف 10% ورصيد $104,600 يعني تقدم 46% وباقي $5,400.</p></article><article><h3>CISD Signal Center</h3><p><b>ما هي؟</b> كل إشارات المؤشر القادمة من JForex CSV.</p><p><b>مثال:</b> يظهر +CISD على XAUUSD، فتقرر: وضعت أمراً أو لم أدخل مع السبب.</p></article><article><h3>Manual Trade</h3><p><b>ما هي؟</b> توثيق صفقة دخلتها بقرارك، حتى لو لم تأت من CSV.</p><p><b>مثال:</b> دخلت US30 بسبب تحليلك؛ تسجل Entry وSL ونتيجة وTags وصورة الشارت.</p></article><article><h3>Signal Link</h3><p><b>ما هي؟</b> ربط صفقة يدوية بإشارة CISD.</p><p><b>لماذا؟</b> يسمح بمقارنة أداء CISD مقابل التداول اليدوي المستقل لاحقاً.</p></article><article><h3>FundedNext CSV</h3><p><b>ما هي؟</b> استيراد CSV أو مراقبة مجلد التقارير.</p><p><b>مثال:</b> تحفظ ملفاً جديداً، فيستورد التطبيق Tickets الجديدة فقط ولا يكرر القديمة.</p></article><article><h3>MT5 Detailed Report</h3><p><b>ما هي؟</b> استيراد تقرير MT5 HTML أو CSV للصفقات المغلقة.</p><p><b>تنبيه:</b> لا EA ولا تنفيذ أوامر؛ قراءة وتحليل فقط.</p></article><article><h3>Backtest Replay</h3><p><b>ما هي؟</b> جلسة تدريب تلتقط إشارات JForex أثناء Backtest.</p><p><b>مثال:</b> تسجل Win أو Loss أو BE وR لكل فرصة أخذتها في الاختبار.</p></article><article><h3>Risk Status</h3><p><b>ما هي؟</b> تنبيهات Daily Loss وMax Drawdown والخسائر المتتالية.</p><p><b>مثال:</b> إذا اقتربت من حد الخسارة اليومي يظهر ATTENTION لتتوقف وتراجع.</p></article><article><h3>Calendar & Analytics</h3><p><b>ما هي؟</b> تقويم R/P&L وتحليلات الأسواق والجلسات والاتجاهات.</p><p><b>مثال:</b> تضغط على يوم أحمر فتشاهد صفقاته وملاحظاته.</p></article><article><h3>Upcoming News</h3><p><b>ما هي؟</b> أخبار اقتصادية High Impact مع Countdown.</p><p><b>مثال:</b> خبر USD بعد 15 دقيقة يظهر بجانب إشارات الذهب والمؤشرات.</p></article><article><h3>Backup & Reset</h3><p><b>Backup:</b> نسخة محلية من كل بيانات التطبيق.</p><p><b>Reset:</b> يمسح بيانات الحساب المختار فقط بعد تأكيد RESET.</p></article><article><h3>Installation</h3><p><b>Installer:</b> النسخة النهائية تضيف اختصار Desktop وStart Menu وأيقونة التطبيق.</p><p><b>Update:</b> تظهر التحديثات كإشعار، ولا تنزل تلقائياً بدون موافقتك.</p></article><article><h3>Data Sources Status</h3><p><b>ما هي؟</b> لوحة تبيّن آخر تحديث لـJForex وFundedNext وMT5 وFundingPips.</p><p><b>الفائدة:</b> تعرف فوراً إن كان أي مصدر يحتاج إعداداً أو تحديثاً.</p></article></div></section><section id="settings" class="page"><div class="settings-head"><div><h2>إعداد الحساب</h2><p>إدخال يدوي؛ لن يتصل التطبيق بالشركة أو MT5.</p></div></div><section class="panel terminal-settings"><h3>MT5 Terminal Shortcut</h3><p class="muted">اختر اختصار FundingPips أو FundedNext الموجود على سطح المكتب. التطبيق يفتحه فقط ولا ينفذ أي أوامر.</p><button onclick="chooseTerminal()">تحديد اختصار MT5</button><small id="terminalPathLabel">لم يتم اختيار اختصار</small></section><section class="panel preferences"><h3>App Preferences</h3><label>المنطقة الزمنية<select id="timezonePref"><option value="America/New_York">New York</option><option value="Asia/Damascus">Damascus</option><option value="GMT">GMT</option></select></label><label class="toggle"><input id="notificationsPref" type="checkbox"> Windows Notifications</label><button type="button" onclick="savePreferences()">حفظ Preferences</button><button type="button" onclick="restartOnboarding()">Restart Onboarding</button></section><form id="accountForm" class="form"><label>الشركة<input id="firm" readonly></label><label>اسم الحساب / Challenge<input id="name"></label><label>Initial Capital<input id="capitalInput" type="number" min="0" placeholder="100000"></label><label>Current Balance<input id="balanceInput" type="number" min="0" placeholder="100000"></label><label>العملة<select id="currency"><option>USD</option><option>EUR</option><option>GBP</option></select></label><label>المرحلة<select id="phase"><option>Challenge</option><option>Phase 1</option><option>Phase 2</option><option>Funded</option><option>Practice</option></select></label><label>Profit Target %<input id="profitTarget" type="number" min="0" step="0.1"></label><label>Daily Loss Limit %<input id="dailyLoss" type="number" min="0" step="0.1"></label><label>Maximum Drawdown %<input id="maxDrawdown" type="number" min="0" step="0.1"></label><button type="submit">حفظ إعداد الحساب</button></form><section id="fundingSettings" class="panel news-settings" style="display:none"><h3>FundingPips Shared Dashboard</h3><p class="muted">رابط Enable Sharing يحفظ محلياً فقط. لا يتم جلب البيانات دورياً قبل موافقة الشركة.</p><label>Shared Dashboard URL<input id="fundingUrl" type="url" placeholder="https://app.fundingpips.com/shared/trading-accounts/..." ></label><button onclick="saveFundingUrl()">حفظ الرابط</button><button onclick="openFundingDashboard()">فتح الرابط في المتصفح</button></section><section class="panel news-settings"><h3>Economic Calendar Provider</h3><p class="muted">Trading Economics API · المفتاح يحفظ محلياً ومشفراً على جهازك.</p><label>News Provider<select id="newsProvider"><option value="FMP">FMP Free — Recommended</option><option value="TE">Trading Economics — Premium Optional</option></select></label><label>News API Key<input id="newsKey" type="password" placeholder="أدخل API Key"></label><button onclick="saveNewsKey()">حفظ إعدادات الأخبار</button><button onclick="testNewsConnection()">اختبار اتصال الأخبار</button><small id="newsConnectionStatus">لم يتم اختبار الاتصال بعد</small></section><section class="danger"><div><b>Backup محلي</b><small>احفظ نسخة من جميع بيانات التطبيق على جهازك.</small></div><button type="button" onclick="backupData()">Export Backup</button><button type="button" onclick="restoreBackup()">Restore Backup</button></section><section class="danger red"><div><b>Danger Zone — Reset Account</b><small>يمسح الصفقات والـBacktests والمراجعات لهذا الحساب فقط. لا يمكن التراجع.</small></div><button type="button" onclick="resetAccount()">Reset Current Account</button></section></section></main></div><div id="onboarding" class="modal" style="display:none"><div class="modal-card onboarding"><h2 id="onboardTitle">مرحباً بك في CISD Journal</h2><p id="onboardText">سنجهز التطبيق خلال أقل من دقيقتين.</p><div id="onboardDots" class="dots"></div><button class="primary" onclick="nextOnboarding()">ابدأ ←</button><button class="ghost" onclick="finishOnboarding()">تخطي الآن</button></div></div><div id="tradeModal" class="modal" style="display:none"><div class="modal-card"><button class="modal-close" onclick="closeTradeModal()">×</button><h3 id="modalTitle"></h3><div id="modalInfo" class="modal-info"></div><div id="modalCharts" class="modal-charts"><img id="modalChartBefore" style="display:none"><img id="modalChartAfter" style="display:none"></div><div id="modalNoChart" class="muted">لا توجد صورة شارت لهذه الصفقة.</div></div></div><div id="toast"></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; connect-src https:; object-src 'none'; base-uri 'none'; frame-ancestors 'none';">
+  <title>CISD Journal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="titlebar">
+      <div class="titlebar-left">
+        <div class="app-badge">◈</div>
+        <div>
+          <strong id="appTitle">CISD Journal</strong>
+          <small id="appSubtitle">Trading Discipline OS</small>
+        </div>
+      </div>
+      <div class="titlebar-actions">
+        <button id="minimizeBtn" class="ghost icon">—</button>
+        <button id="maximizeBtn" class="ghost icon">□</button>
+        <button id="closeBtn" class="ghost icon danger">×</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <div class="section-kicker" id="accountsKicker">Accounts</div>
+          <button id="newAccountBtn" class="primary small">+ Challenge</button>
+        </div>
+        <div id="accountRail" class="account-rail"></div>
+
+        <nav class="nav">
+          <button class="nav-link active" data-page="overview" id="navOverview"></button>
+          <button class="nav-link" data-page="signals" id="navSignals"></button>
+          <button class="nav-link" data-page="journal" id="navJournal"></button>
+          <button class="nav-link" data-page="backtest" id="navBacktest"></button>
+          <button class="nav-link" data-page="analytics" id="navAnalytics"></button>
+          <button class="nav-link" data-page="data" id="navData"></button>
+          <button class="nav-link" data-page="settings" id="navSettings"></button>
+        </nav>
+
+        <div class="sidebar-foot" id="sidebarFooter">LOCAL · PRIVATE · NO EA</div>
+      </aside>
+
+      <main class="content">
+        <section class="status-dock panel slim">
+          <div class="status-pill">
+            <span class="status-label" id="statusAccountLabel"></span>
+            <strong id="statusAccountValue"></strong>
+          </div>
+          <div class="status-pill">
+            <span class="status-label" id="statusPageLabel"></span>
+            <strong id="statusPageValue"></strong>
+          </div>
+          <div class="status-pill">
+            <span class="status-label" id="statusLocaleLabel"></span>
+            <strong id="statusLocaleValue"></strong>
+          </div>
+          <div class="status-pill wide">
+            <span class="status-label" id="statusSyncLabel"></span>
+            <strong id="statusSyncValue"></strong>
+          </div>
+        </section>
+
+        <section class="page active" data-page="overview">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="overviewKicker"></div>
+              <h1 id="overviewTitle"></h1>
+              <p id="overviewDescription"></p>
+            </div>
+            <div class="head-actions">
+              <button id="overviewOpenTerminal" class="ghost"></button>
+              <button id="overviewLoadNews" class="ghost"></button>
+              <button id="overviewGoSignals" class="primary"></button>
+            </div>
+          </div>
+
+          <section class="panel spotlight overview-hero">
+            <div class="hero-main">
+              <div class="section-kicker" id="overviewHeroKicker"></div>
+              <h2 id="overviewHeroTitle"></h2>
+              <p id="overviewHeroText"></p>
+              <div id="overviewHeroTags" class="tag-cloud"></div>
+            </div>
+            <div class="hero-side">
+              <div class="hero-clock">
+                <small id="overviewHeroTimeLabel"></small>
+                <strong id="overviewHeroTimeValue"></strong>
+                <span id="overviewHeroSessionValue"></span>
+              </div>
+              <div id="overviewHeroInsight" class="hero-insight"></div>
+            </div>
+          </section>
+
+          <div class="grid three">
+            <section class="panel span-two">
+              <div class="panel-head">
+                <h3 id="overviewHealthTitle"></h3>
+                <span id="overviewAccountLabel" class="panel-hint"></span>
+              </div>
+              <div id="overviewHealthCards" class="metric-grid"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="overviewRiskTitle"></h3>
+                <span id="riskStateChip" class="chip"></span>
+              </div>
+              <div id="overviewRiskSummary" class="stack"></div>
+              <div id="overviewWarnings" class="warning-stack"></div>
+            </section>
+          </div>
+
+          <div class="grid three">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="overviewDisciplineTitle"></h3>
+                <span id="disciplineScoreChip" class="chip"></span>
+              </div>
+              <div id="overviewDisciplineSummary" class="stack"></div>
+              <div id="overviewReasons" class="tag-cloud"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="overviewChallengeTitle"></h3>
+                <span id="challengePercentChip" class="panel-hint"></span>
+              </div>
+              <div class="progress-track"><i id="challengeProgressBar"></i></div>
+              <div id="overviewChallengeSummary" class="stack"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="overviewNewsTitle"></h3>
+                <span id="overviewNewsStatus" class="panel-hint"></span>
+              </div>
+              <div id="overviewNewsList" class="list"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3 id="overviewSignalsTitle"></h3>
+              <span id="overviewSignalsHint" class="panel-hint"></span>
+            </div>
+            <div id="overviewSignalList" class="list"></div>
+          </section>
+        </section>
+
+        <section class="page" data-page="signals">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="signalsKicker"></div>
+              <h1 id="signalsTitle"></h1>
+              <p id="signalsDescription"></p>
+            </div>
+            <div class="head-actions">
+              <button id="chooseCsvBtn" class="ghost"></button>
+              <button id="refreshSnapshotsBtn" class="ghost"></button>
+            </div>
+          </div>
+
+          <div class="panel slim">
+            <div class="panel-head">
+              <h3 id="signalsSourceTitle"></h3>
+              <span id="signalsCsvPath" class="panel-hint"></span>
+            </div>
+          </div>
+
+          <div class="grid three">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="signalsSummaryTitle"></h3>
+                <span class="panel-hint" id="signalsSummaryHint"></span>
+              </div>
+              <div id="signalsSummaryCards" class="metric-grid compact"></div>
+            </section>
+
+            <section class="panel span-two">
+              <div class="panel-head">
+                <h3 id="signalsLiveTitle"></h3>
+                <span class="panel-hint" id="signalsLiveHint"></span>
+              </div>
+              <div class="toolbar-inline">
+                <input id="signalsSearch" class="search-input" type="search" placeholder="Search signals">
+              </div>
+              <div id="signalList" class="signal-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page" data-page="journal">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="journalKicker"></div>
+              <h1 id="journalTitle"></h1>
+              <p id="journalDescription"></p>
+            </div>
+          </div>
+
+          <section id="journalGuidancePanel" class="panel slim journal-guidance hidden">
+            <div class="panel-head">
+              <h3 id="journalGuidanceTitle"></h3>
+              <div class="button-row">
+                <button id="journalGuidanceBackBtn" class="ghost small"></button>
+                <button id="journalGuidanceClearBtn" class="ghost small"></button>
+              </div>
+            </div>
+            <p id="journalGuidanceText" class="muted"></p>
+            <div id="journalGuidanceTags" class="tag-cloud"></div>
+          </section>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="tradeFormTitle"></h3>
+                <span id="tradeFormHint" class="panel-hint"></span>
+              </div>
+              <form id="tradeForm" class="form-grid">
+                <label>
+                  <span id="tradeSignalLabel"></span>
+                  <select id="tradeSignal"></select>
+                </label>
+                <label>
+                  <span id="tradeSourceLabel"></span>
+                  <select id="tradeSource">
+                    <option value="Manual">Manual</option>
+                    <option value="CISD">CISD</option>
+                  </select>
+                </label>
+                <label>
+                  <span id="tradeSymbolLabel"></span>
+                  <input id="tradeSymbol" placeholder="XAUUSD">
+                </label>
+                <label>
+                  <span id="tradeSideLabel"></span>
+                  <select id="tradeSide">
+                    <option value="Buy">Buy</option>
+                    <option value="Sell">Sell</option>
+                  </select>
+                </label>
+                <label>
+                  <span id="tradeDateLabel"></span>
+                  <input id="tradeDate" type="date">
+                </label>
+                <label>
+                  <span id="tradeResultLabel"></span>
+                  <input id="tradeResult" type="number" step="0.01" placeholder="1.5">
+                </label>
+                <label class="full">
+                  <span id="tradeTagsLabel"></span>
+                  <input id="tradeTags" placeholder="CISD, London, Followed Plan">
+                </label>
+                <label class="full">
+                  <span id="tradeNoteLabel"></span>
+                  <textarea id="tradeNote" rows="4" placeholder="Why did you execute or hesitate?"></textarea>
+                </label>
+                <div class="form-actions full">
+                  <button type="submit" class="primary" id="saveTradeBtn"></button>
+                </div>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="recentTradesTitle"></h3>
+                <span id="recentTradesHint" class="panel-hint"></span>
+              </div>
+              <div class="toolbar-inline">
+                <input id="journalSearch" class="search-input" type="search" placeholder="Search trades">
+              </div>
+              <div id="recentTradesList" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page" data-page="backtest">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="backtestKicker"></div>
+              <h1 id="backtestTitle"></h1>
+              <p id="backtestDescription"></p>
+            </div>
+          </div>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="backtestCreateTitle"></h3>
+                <span id="backtestCreateHint" class="panel-hint"></span>
+              </div>
+              <form id="backtestForm" class="form-grid">
+                <label>
+                  <span id="backtestNameLabel"></span>
+                  <input id="backtestName" placeholder="London Gold Drill">
+                </label>
+                <label>
+                  <span id="backtestSessionLabel"></span>
+                  <select id="backtestSession">
+                    <option value="">All</option>
+                    <option value="London">London</option>
+                    <option value="New York">New York</option>
+                    <option value="After">After</option>
+                  </select>
+                </label>
+                <label>
+                  <span id="backtestStartLabel"></span>
+                  <input id="backtestStart" type="date">
+                </label>
+                <label>
+                  <span id="backtestEndLabel"></span>
+                  <input id="backtestEnd" type="date">
+                </label>
+                <label>
+                  <span id="backtestSymbolLabel"></span>
+                  <input id="backtestSymbol" placeholder="XAUUSD">
+                </label>
+                <label>
+                  <span id="backtestTfLabel"></span>
+                  <input id="backtestTf" placeholder="15m">
+                </label>
+                <div class="form-actions full">
+                  <button type="submit" class="primary" id="backtestStartBtn"></button>
+                </div>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="backtestLibraryTitle"></h3>
+                <span id="backtestLibraryHint" class="panel-hint"></span>
+              </div>
+              <div id="backtestLibrary" class="list"></div>
+            </section>
+          </div>
+
+          <section class="panel slim backtest-spotlight">
+            <div class="panel-head">
+              <h3 id="backtestSpotlightTitle"></h3>
+              <span id="backtestSpotlightHint" class="panel-hint"></span>
+            </div>
+            <div id="backtestSpotlightCards" class="metric-grid compact"></div>
+            <div id="backtestSpotlightTags" class="tag-cloud"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3 id="backtestReviewTitle"></h3>
+              <span id="backtestReviewHint" class="panel-hint"></span>
+            </div>
+            <div class="toolbar-inline">
+              <input id="backtestSearch" class="search-input" type="search" placeholder="Search backtest signals">
+            </div>
+            <div id="backtestReviewList" class="list"></div>
+          </section>
+        </section>
+
+        <section class="page" data-page="analytics">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="analyticsKicker"></div>
+              <h1 id="analyticsTitle"></h1>
+              <p id="analyticsDescription"></p>
+            </div>
+            <div class="filters">
+              <select id="filterPeriod"></select>
+              <select id="filterSource"></select>
+              <select id="filterInstrument"></select>
+              <select id="filterSide"></select>
+              <select id="filterSession"></select>
+            </div>
+          </div>
+
+          <section class="panel slim analytics-filter-panel">
+            <div class="panel-head">
+              <h3 id="analyticsFilterTitle"></h3>
+              <span class="panel-hint" id="analyticsFilterHint"></span>
+            </div>
+            <div id="analyticsFilterChips" class="tag-cloud"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3 id="analyticsSummaryTitle"></h3>
+              <span id="analyticsSummaryHint" class="panel-hint"></span>
+            </div>
+            <div id="analyticsSummaryCards" class="metric-grid large"></div>
+          </section>
+
+          <div class="grid three">
+            <section class="panel span-two">
+              <div class="panel-head">
+                <h3 id="analyticsCurveTitle"></h3>
+                <span class="panel-hint" id="analyticsCurveHint"></span>
+              </div>
+              <div id="analyticsCurve" class="chart-box"></div>
+              <div id="analyticsCurveMeta" class="micro-stats"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="analyticsBacktestTitle"></h3>
+                <span class="panel-hint" id="analyticsBacktestHint"></span>
+              </div>
+              <div id="analyticsBacktestComparison" class="list"></div>
+            </section>
+          </div>
+
+          <div class="grid three">
+            <section class="panel">
+              <div class="panel-head"><h3 id="analyticsSourceTitle"></h3></div>
+              <div id="analyticsBySource" class="list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><h3 id="analyticsSessionTitle"></h3></div>
+              <div id="analyticsBySession" class="list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><h3 id="analyticsSideTitle"></h3></div>
+              <div id="analyticsBySide" class="list"></div>
+            </section>
+          </div>
+
+          <div class="grid three">
+            <section class="panel">
+              <div class="panel-head"><h3 id="analyticsInstrumentTitle"></h3></div>
+              <div id="analyticsByInstrument" class="list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><h3 id="analyticsTagTitle"></h3></div>
+              <div id="analyticsByTag" class="list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head"><h3 id="analyticsMonthTitle"></h3></div>
+              <div id="analyticsByMonth" class="list"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3 id="analyticsHeatmapTitle"></h3>
+              <span class="panel-hint" id="analyticsHeatmapHint"></span>
+            </div>
+            <div id="analyticsHeatmap" class="heatmap"></div>
+          </section>
+        </section>
+
+        <section class="page" data-page="data">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="dataKicker"></div>
+              <h1 id="dataTitle"></h1>
+              <p id="dataDescription"></p>
+            </div>
+            <div class="head-actions">
+              <button id="importMt5Btn" class="ghost"></button>
+              <button id="importFundedNextBtn" class="ghost"></button>
+              <button id="watchFundedNextBtn" class="ghost"></button>
+            </div>
+          </div>
+
+          <div class="grid three">
+            <section class="panel">
+              <div class="panel-head"><h3 id="dataSourcesTitle"></h3></div>
+              <div id="dataSourcesList" class="list"></div>
+            </section>
+            <section class="panel span-two">
+              <div class="panel-head">
+                <h3 id="dataImportsTitle"></h3>
+                <span class="panel-hint" id="dataImportsHint"></span>
+              </div>
+              <div id="dataImportHistory" class="list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page" data-page="settings">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="settingsKicker"></div>
+              <h1 id="settingsTitle"></h1>
+              <p id="settingsDescription"></p>
+            </div>
+          </div>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head"><h3 id="accountSettingsTitle"></h3></div>
+              <form id="accountSettingsForm" class="form-grid compact-form">
+                <label>
+                  <span id="accountFirmLabel"></span>
+                  <input id="accountFirmInput">
+                </label>
+                <label>
+                  <span id="accountNameLabel"></span>
+                  <input id="accountNameInput">
+                </label>
+                <label>
+                  <span id="accountCapitalLabel"></span>
+                  <input id="accountCapitalInput" type="number" min="0" step="any">
+                </label>
+                <label>
+                  <span id="accountBalanceLabel"></span>
+                  <input id="accountBalanceInput" type="number" min="0" step="any">
+                </label>
+                <label>
+                  <span id="accountCurrencyLabel"></span>
+                  <select id="accountCurrencyInput">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                  </select>
+                </label>
+                <label>
+                  <span id="accountPhaseLabel"></span>
+                  <select id="accountPhaseInput">
+                    <option value="Challenge">Challenge</option>
+                    <option value="Phase 1">Phase 1</option>
+                    <option value="Phase 2">Phase 2</option>
+                    <option value="Funded">Funded</option>
+                    <option value="Practice">Practice</option>
+                  </select>
+                </label>
+                <label>
+                  <span id="accountTargetLabel"></span>
+                  <input id="accountTargetInput" type="number" min="0" step="0.1">
+                </label>
+                <label>
+                  <span id="accountDailyLossLabel"></span>
+                  <input id="accountDailyLossInput" type="number" min="0" step="0.1">
+                </label>
+                <label>
+                  <span id="accountMaxDrawdownLabel"></span>
+                  <input id="accountMaxDrawdownInput" type="number" min="0" step="0.1">
+                </label>
+                <div class="form-actions full">
+                  <button id="saveAccountSettingsBtn" type="submit" class="primary"></button>
+                </div>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><h3 id="fundingAccessTitle"></h3></div>
+              <p class="muted" id="fundingAccessDescription"></p>
+              <div class="form-grid compact-form">
+                <label>
+                  <span id="fundingAccessModeLabel"></span>
+                  <select id="fundingAccessModeInput">
+                    <option value="none">Manual only</option>
+                    <option value="investor_pass">Investor Pass</option>
+                    <option value="shared_url">Share Dashboard URL</option>
+                  </select>
+                </label>
+                <label>
+                  <span id="fundingSyncScopeLabel"></span>
+                  <select id="fundingSyncScopeInput">
+                    <option value="account_health_only">Account health only</option>
+                    <option value="account_and_open_positions">Account + open positions</option>
+                    <option value="full_readonly">Full read-only</option>
+                  </select>
+                </label>
+                <label class="full investor-field">
+                  <span id="investorLoginLabel"></span>
+                  <input id="investorLoginInput" placeholder="12345678">
+                </label>
+                <label class="full investor-field">
+                  <span id="investorServerLabel"></span>
+                  <input id="investorServerInput" placeholder="Broker-Server">
+                </label>
+                <label class="full investor-field">
+                  <span id="investorPasswordLabel"></span>
+                  <input id="investorPasswordInput" type="password" placeholder="Investor Password">
+                </label>
+                <label class="full shared-url-field">
+                  <span id="sharedUrlLabel"></span>
+                  <input id="sharedUrlInput" type="url" placeholder="https://...">
+                </label>
+                <div class="form-actions full">
+                  <button id="saveFundingAccessBtn" type="button" class="ghost"></button>
+                  <button id="syncFundingAccessBtn" type="button" class="primary"></button>
+                  <button id="openFundingAccessBtn" type="button" class="ghost"></button>
+                </div>
+                <div id="fundingAccessStatus" class="inline-note"></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head"><h3 id="preferencesTitle"></h3></div>
+              <div class="form-grid compact-form">
+                <label>
+                  <span id="settingsLanguageLabel"></span>
+                  <select id="settingsLanguage">
+                    <option value="ar">العربية</option>
+                    <option value="en">English</option>
+                  </select>
+                </label>
+                <label>
+                  <span id="settingsTimezoneLabel"></span>
+                  <select id="settingsTimezone">
+                    <option value="America/New_York">New York</option>
+                    <option value="Asia/Damascus">Damascus</option>
+                    <option value="GMT">GMT</option>
+                  </select>
+                </label>
+                <label class="toggle full">
+                  <input id="settingsNotifications" type="checkbox">
+                  <span id="settingsNotificationsLabel"></span>
+                </label>
+                <div class="form-actions full">
+                  <button id="savePreferencesBtn" class="primary"></button>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><h3 id="terminalTitle"></h3></div>
+              <p class="muted" id="terminalDescription"></p>
+              <div class="button-row">
+                <button id="chooseTerminalBtn" class="ghost"></button>
+                <button id="openTerminalBtn" class="ghost"></button>
+              </div>
+              <div id="terminalPathLabel" class="inline-note"></div>
+            </section>
+          </div>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head"><h3 id="newsSettingsTitle"></h3></div>
+              <div class="form-grid compact-form">
+                <label>
+                  <span id="newsProviderLabel"></span>
+                  <select id="newsProvider">
+                    <option value="FMP">FMP Free</option>
+                    <option value="TE">Trading Economics</option>
+                  </select>
+                </label>
+                <label class="full">
+                  <span id="newsKeyLabel"></span>
+                  <input id="newsKey" type="password" placeholder="API Key">
+                </label>
+                <div class="form-actions full">
+                  <button id="saveNewsSettingsBtn" class="ghost"></button>
+                  <button id="testNewsBtn" class="ghost"></button>
+                </div>
+                <div id="newsConnectionStatus" class="inline-note"></div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><h3 id="maintenanceTitle"></h3></div>
+              <div class="button-column">
+                <button id="backupBtn" class="ghost"></button>
+                <button id="restoreBtn" class="ghost"></button>
+                <button id="openGuideBtn" class="ghost"></button>
+                <button id="restartOnboardingBtn" class="ghost"></button>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="reasonModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="panel-head">
+        <h3 id="reasonModalTitle"></h3>
+        <button id="closeReasonModal" class="ghost icon">×</button>
+      </div>
+      <p id="reasonModalDescription" class="muted"></p>
+      <div id="reasonPresets" class="preset-grid"></div>
+      <label class="full">
+        <span id="reasonNoteLabel"></span>
+        <textarea id="reasonNote" rows="4"></textarea>
+      </label>
+      <div class="form-actions">
+        <button id="saveReasonBtn" class="primary"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="backtestReviewModal" class="modal hidden">
+    <div class="modal-card review-modal-card">
+      <div class="panel-head">
+        <h3 id="backtestReviewModalTitle"></h3>
+        <button id="closeBacktestReviewModal" class="ghost icon">×</button>
+      </div>
+      <p id="backtestReviewModalDescription" class="muted"></p>
+      <div id="backtestReviewSignalSummary" class="review-signal-summary"></div>
+      <label class="full">
+        <span id="backtestReviewStatusLabel"></span>
+        <div id="backtestReviewStatusButtons" class="preset-grid review-status-grid"></div>
+      </label>
+      <label class="full">
+        <span id="backtestReviewResultLabel"></span>
+        <input id="backtestReviewResultInput" type="number" step="0.01" placeholder="1.0">
+      </label>
+      <label class="full">
+        <span id="backtestReviewNoteLabel"></span>
+        <textarea id="backtestReviewNoteInput" rows="4"></textarea>
+      </label>
+      <div class="form-actions">
+        <button id="saveBacktestReviewBtn" class="primary"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="appLoading" class="loading-overlay hidden" aria-live="polite">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div id="loadingText">Loading…</div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

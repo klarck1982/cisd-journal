@@ -1,0 +1,4 @@
+Ticket,Open Time,Open Price,Close Time,Close Price,Profit,Volume,Commission,Swap,Symbol,Type,SL,TP
+MT-3001,2026-07-24 13:00,1.1000,2026-07-24 13:35,1.1012,18,0.2,-1,0,EURUSD,buy,1.0985,1.1025
+MT-3002,2026-07-24 14:10,3348,2026-07-24 14:55,3339,-11,0.1,-1,0,XAUUSD,sell,3354,3330
+Summary,Only,For,Footer

@@ -1,0 +1,59 @@
+# Maram M's Trading Account
+
+OngoingTwo StepPhase 1Meta Trader 5
+
+Account Size
+
+$25,000.00
+
+Start Date
+
+Mar 16, 2026
+
+Today's Profit
+
+-$33.87
+
+Score
+
+41.55
+
+Balance$24,966.13
+
+$25,005.24Max
+
+Equity$24,966.13
+
+$25,024.16Max
+
+Average Win
+
+$17.07
+
+Win Ratio
+
+48.0%
+
+Average Loss
+
+-$17.06
+
+Profit Factor
+
+0.93
+
+Total Trades Taken
+
+54
+
+Total Lots Used
+
+1.32
+
+Biggest Win
+
+$56.28
+
+Biggest Loss
+
+-$61.62

@@ -9,6 +9,7 @@ let state=store.read();
 assert.equal(state.settings.timezone,'GMT');
 assert.equal(state.settings.newsProvider,'FMP');
 assert.ok(Array.isArray(state.openPositions));
+assert.ok(Array.isArray(state.backtestSignals));
 assert.ok(Array.isArray(state.importHistory));
 state.trades.push({id:'trade-1'});store.save(state);
 state=store.read();assert.equal(state.trades.length,1);
