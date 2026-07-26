@@ -71,6 +71,43 @@ assert.ok(
   'Inter has no Arabic coverage and must not lead the UI font stack'
 );
 
+// --- 5b) The Arabic face is actually bundled, not merely named ---------------
+// Naming a font the user's machine may not have is how the previous stack
+// silently degraded to Tahoma. The files must exist, be real WOFF2, be shipped
+// by electron-builder, and be permitted by the CSP.
+{
+  const faces = [...css.matchAll(/@font-face\s*\{[^}]*\}/g)].map((match) => match[0]);
+  assert.ok(faces.length >= 2, 'the Arabic UI face must be bundled via @font-face');
+
+  const arabicFace = faces.find((face) => /unicode-range:[^;]*U\+0600/i.test(face));
+  assert.ok(arabicFace, 'a bundled face must cover the Arabic block (U+0600–06FF)');
+
+  const referenced = [...css.matchAll(/url\("(fonts\/[^"]+)"\)/g)].map((match) => match[1]);
+  assert.ok(referenced.length >= 2, '@font-face rules must reference bundled font files');
+
+  for (const relative of new Set(referenced)) {
+    const file = path.join(root, 'renderer', relative);
+    assert.ok(fs.existsSync(file), `${relative} is referenced but not bundled`);
+    // WOFF2 files begin with the ASCII signature "wOF2".
+    const signature = fs.readFileSync(file).subarray(0, 4).toString('latin1');
+    assert.equal(signature, 'wOF2', `${relative} must be a valid WOFF2 file`);
+  }
+
+  const license = path.join(root, 'renderer', 'fonts', 'LICENSE.txt');
+  assert.ok(fs.existsSync(license), 'a bundled typeface must ship its licence');
+
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const shipped = (pkg.build?.files || []).some((entry) => entry.startsWith('renderer'));
+  assert.ok(shipped, 'electron-builder must package the renderer directory, including fonts');
+
+  const csp = /Content-Security-Policy" content="([^"]+)"/.exec(html);
+  assert.ok(csp, 'the renderer must declare a CSP');
+  assert.ok(
+    /font-src[^;]*'self'/.test(csp[1]) || /default-src[^;]*'self'/.test(csp[1]),
+    'the CSP must allow self-hosted fonts'
+  );
+}
+
 // --- 6) Arabic needs vertical breathing room ---------------------------------
 assert.ok(
   /html,\s*body\s*\{[^}]*line-height:/s.test(css),
