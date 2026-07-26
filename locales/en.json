@@ -20,7 +20,8 @@
     "analytics": "Analytics",
     "data": "Data Sources",
     "settings": "Settings",
-    "edge": "Edge"
+    "edge": "Edge",
+    "playbooks": "Playbooks"
   },
   "overview": {
     "kicker": "Live discipline cockpit",
@@ -640,5 +641,59 @@
     },
     "empty": "Record signal decisions and trades to unlock edge analysis.",
     "unitR": "R"
+  },
+  "playbooks": {
+    "kicker": "Strategy rules",
+    "title": "Playbooks",
+    "description": "Define each setup once, then measure whether following your own rules actually pays.",
+    "newPlaybook": "+ New playbook",
+    "empty": "No playbooks yet. Define your first strategy to start measuring rule adherence.",
+    "emptyAction": "Create your first playbook",
+    "form": {
+      "title": "Define a strategy",
+      "name": "Strategy name",
+      "namePlaceholder": "London Gold Reversal",
+      "description": "Description",
+      "descriptionPlaceholder": "When and why you take this setup",
+      "rules": "Rules (one per line)",
+      "rulesPlaceholder": "London session only\nHigher timeframe bias aligned\nEntry after a pullback",
+      "maxRisk": "Max risk %",
+      "maxTrades": "Max trades / day",
+      "matchTitle": "Match signals by",
+      "matchHint": "Used to detect qualifying signals you skipped. Leave blank to match everything.",
+      "symbol": "Symbol",
+      "session": "Session",
+      "timeframe": "Timeframe",
+      "save": "Save playbook",
+      "nameRequired": "Enter a strategy name.",
+      "rulesRequired": "Add at least one rule."
+    },
+    "card": {
+      "adherence": "Rule adherence",
+      "followed": "When followed",
+      "broken": "When broken",
+      "edgeGap": "Cost per rule break",
+      "trades": "trades",
+      "noData": "No classified trades yet",
+      "missedTitle": "Qualifying signals you skipped",
+      "missedValue": "Left on the table",
+      "estimated": "includes estimates",
+      "archive": "Archive",
+      "delete": "Delete",
+      "deleteConfirm": "This playbook will be deleted and its trades unlinked. Continue?",
+      "deleted": "Playbook deleted ✓",
+      "saved": "Playbook saved ✓"
+    },
+    "breaksTitle": "Most expensive rule breaks",
+    "breakCount": "broken {{count}}x",
+    "summary": {
+      "best": "Best performing",
+      "worst": "Needs review",
+      "totalMissed": "Total left on the table",
+      "totalMissedHint": "Across every playbook"
+    },
+    "linkTitle": "Strategy",
+    "linkNone": "No playbook",
+    "rulesFollowed": "Rules followed"
   }
 }

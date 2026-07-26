@@ -37,6 +37,7 @@
           <button class="nav-link" data-page="signals" id="navSignals"></button>
           <button class="nav-link" data-page="journal" id="navJournal"></button>
           <button class="nav-link" data-page="backtest" id="navBacktest"></button>
+          <button class="nav-link" data-page="playbooks" id="navPlaybooks"></button>
           <button class="nav-link" data-page="edge" id="navEdge"></button>
           <button class="nav-link" data-page="analytics" id="navAnalytics"></button>
           <button class="nav-link" data-page="data" id="navData"></button>
@@ -243,6 +244,14 @@
                     <option value="CISD">CISD</option>
                   </select>
                 </label>
+                <label class="full">
+                  <span id="tradePlaybookLabel"></span>
+                  <select id="tradePlaybook"></select>
+                </label>
+                <div class="full hidden" id="tradeRulesWrap">
+                  <span class="chart-attach-title" id="tradeRulesLabel"></span>
+                  <div id="tradeRulesChecklist" class="rules-checklist"></div>
+                </div>
                 <label>
                   <span id="tradeSymbolLabel"></span>
                   <input id="tradeSymbol" placeholder="XAUUSD">
@@ -389,6 +398,22 @@
             </div>
             <div id="backtestReviewList" class="list"></div>
           </section>
+        </section>
+
+        <section class="page" data-page="playbooks">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="playbooksKicker"></div>
+              <h1 id="playbooksTitle"></h1>
+              <p id="playbooksDescription"></p>
+            </div>
+            <div class="head-actions">
+              <button id="newPlaybookBtn" class="primary"></button>
+            </div>
+          </div>
+
+          <div id="playbooksSummary" class="metric-grid"></div>
+          <div id="playbooksList" class="list playbook-list"></div>
         </section>
 
         <section class="page" data-page="edge">
@@ -832,6 +857,57 @@
         <div class="form-actions full">
           <button type="button" class="ghost" id="cancelAccountModal"></button>
           <button type="submit" class="primary" id="submitAccountModal"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="playbookModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="panel-head">
+        <h3 id="playbookModalTitle"></h3>
+        <button id="closePlaybookModal" class="ghost icon">×</button>
+      </div>
+      <form id="playbookForm" class="form-grid compact-form">
+        <label class="full">
+          <span id="playbookNameLabel"></span>
+          <input id="playbookName" autocomplete="off">
+        </label>
+        <label class="full">
+          <span id="playbookDescriptionLabel"></span>
+          <input id="playbookDescription" autocomplete="off">
+        </label>
+        <label class="full">
+          <span id="playbookRulesLabel"></span>
+          <textarea id="playbookRules" rows="5"></textarea>
+        </label>
+        <label>
+          <span id="playbookMaxRiskLabel"></span>
+          <input id="playbookMaxRisk" type="number" min="0" step="0.1">
+        </label>
+        <label>
+          <span id="playbookMaxTradesLabel"></span>
+          <input id="playbookMaxTrades" type="number" min="0" step="1">
+        </label>
+        <div class="full">
+          <span class="chart-attach-title" id="playbookMatchTitle"></span>
+          <p class="muted playbook-match-hint" id="playbookMatchHint"></p>
+        </div>
+        <label>
+          <span id="playbookSymbolLabel"></span>
+          <input id="playbookSymbol" autocomplete="off" placeholder="XAUUSD">
+        </label>
+        <label>
+          <span id="playbookSessionLabel"></span>
+          <input id="playbookSession" autocomplete="off" placeholder="London">
+        </label>
+        <label>
+          <span id="playbookTimeframeLabel"></span>
+          <input id="playbookTimeframe" autocomplete="off" placeholder="15m">
+        </label>
+        <div class="form-actions full">
+          <button type="button" class="ghost" id="cancelPlaybookModal"></button>
+          <button type="submit" class="primary" id="submitPlaybookModal"></button>
         </div>
       </form>
     </div>

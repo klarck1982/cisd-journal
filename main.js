@@ -11,6 +11,7 @@ const { importFundedNextText, importMT5Text, importCisdSignalsText, importBackte
 const { buildAccountDashboardSnapshot } = require('./lib/engines/account-dashboard');
 const { buildAccountAnalyticsSnapshot } = require('./lib/engines/analytics');
 const { buildEdgeSnapshot } = require('./lib/engines/edge');
+const { createPlaybook, buildPlaybookOverview } = require('./lib/engines/playbooks');
 const { resolveLocale, getBundle } = require('./lib/locale');
 const { resolveFundingAccessMode, validateFundingAccess, buildFundingAccessView } = require('./lib/funding-access');
 const { parseFundingPipsSharedText } = require('./lib/funding-shared-parser');
@@ -429,6 +430,47 @@ function registerHandlers() {
   ipcMain.handle('runtime:readiness', () => buildRuntimeReadinessSnapshot({ app, isPackaged: app.isPackaged, currentDirname: __dirname, platform: process.platform }));
   ipcMain.handle('dashboard:snapshot', (_, accountId, options = {}) => buildAccountDashboardSnapshot(read(), accountId, options));
   ipcMain.handle('analytics:snapshot', (_, accountId, options = {}) => buildAccountAnalyticsSnapshot(read(), accountId, options));
+  ipcMain.handle('playbooks:overview', (_, accountId, options = {}) => buildPlaybookOverview(read(), accountId, options));
+
+  ipcMain.handle('playbook:save', (_, payload = {}) => {
+    const data = read();
+    data.playbooks = data.playbooks || [];
+    const index = data.playbooks.findIndex((item) => item.id === payload.id);
+
+    if (index >= 0) {
+      const merged = createPlaybook({ ...data.playbooks[index], ...payload, id: data.playbooks[index].id });
+      merged.createdAt = data.playbooks[index].createdAt;
+      data.playbooks[index] = merged;
+    } else {
+      data.playbooks.push(createPlaybook(payload));
+    }
+
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('playbook:archive', (_, id) => {
+    const data = read();
+    const playbook = (data.playbooks || []).find((item) => item.id === id);
+    if (playbook) playbook.archived = true;
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('playbook:delete', (_, id) => {
+    const data = read();
+    data.playbooks = (data.playbooks || []).filter((item) => item.id !== id);
+    // Unlink trades so they are not orphaned against a playbook that no longer exists.
+    for (const trade of data.trades || []) {
+      if (trade.playbookId === id) {
+        delete trade.playbookId;
+        delete trade.followedRules;
+      }
+    }
+    save(data);
+    return data;
+  });
+
   ipcMain.handle('edge:snapshot', (_, accountId, options = {}) => {
     const data = read();
     const risk = buildAccountDashboardSnapshot(data, accountId, options).risk;

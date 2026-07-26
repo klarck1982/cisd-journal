@@ -36,11 +36,15 @@ assert.ok(main.includes('frame: false'), 'sanity: window is frameless');
 assert.ok(/-webkit-app-region:\s*drag/.test(css), 'titlebar must be draggable');
 assert.ok(/-webkit-app-region:\s*no-drag/.test(css), 'titlebar buttons must stay clickable');
 
-// --- 3) Every id the renderer queries must exist in the markup. -----------------------
+// --- 3) Every id the renderer queries must exist somewhere. ---------------------------
+// Ids can come from the static markup or be injected by the renderer itself
+// (e.g. a button inside an empty-state template), so both sources count.
 const htmlIds = new Set([...html.matchAll(/id="([A-Za-z0-9_-]+)"/g)].map((m) => m[1]));
+const injectedIds = new Set([...app.matchAll(/id="([A-Za-z0-9_-]+)"/g)].map((m) => m[1]));
+const availableIds = new Set([...htmlIds, ...injectedIds]);
 const queried = new Set([...app.matchAll(/\$\('#([A-Za-z0-9_-]+)'\)/g)].map((m) => m[1]));
-const missingIds = [...queried].filter((id) => !htmlIds.has(id)).sort();
-assert.deepEqual(missingIds, [], `renderer queries ids missing from index.html: ${missingIds.join(', ')}`);
+const missingIds = [...queried].filter((id) => !availableIds.has(id)).sort();
+assert.deepEqual(missingIds, [], `renderer queries ids that are never created: ${missingIds.join(', ')}`);
 
 // --- 4) Every t('...') key must resolve in BOTH locales. ------------------------------
 function lookup(bundle, dotted) {
