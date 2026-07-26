@@ -14,6 +14,7 @@ const { buildEdgeSnapshot } = require('./lib/engines/edge');
 const { createPlaybook, buildPlaybookOverview } = require('./lib/engines/playbooks');
 const { buildDailyReviewSnapshot } = require('./lib/engines/daily-review');
 const { buildMonthCalendar, listTradedMonths } = require('./lib/engines/calendar');
+const { buildExitQualitySnapshot } = require('./lib/engines/exit-quality');
 const { resolveLocale, getBundle } = require('./lib/locale');
 const { resolveFundingAccessMode, validateFundingAccess, buildFundingAccessView } = require('./lib/funding-access');
 const { parseFundingPipsSharedText } = require('./lib/funding-shared-parser');
@@ -486,7 +487,10 @@ function registerHandlers() {
   ipcMain.handle('edge:snapshot', (_, accountId, options = {}) => {
     const data = read();
     const risk = buildAccountDashboardSnapshot(data, accountId, options).risk;
-    return buildEdgeSnapshot(data, accountId, { ...options, risk });
+    return {
+      ...buildEdgeSnapshot(data, accountId, { ...options, risk }),
+      exitQuality: buildExitQualitySnapshot(data, accountId, options),
+    };
   });
   ipcMain.handle('locale:get', () => read().settings.locale || 'ar');
   ipcMain.handle('locale:bundle', () => getBundle(read().settings.locale));

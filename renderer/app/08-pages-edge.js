@@ -115,6 +115,8 @@ function renderEdge() {
     `;
   }).join('');
 
+  renderExitQuality();
+
   // --- Prioritised insights --------------------------------------------------
   $('#edgeInsightsList').innerHTML = renderListRows(edge.insights, (item) => {
     const cls = item.severity === 'critical' ? 'bad' : item.severity === 'good' ? 'safe' : 'warn';
@@ -137,4 +139,86 @@ function renderEdge() {
       </article>
     `;
   }, 'insights');
+}
+
+function renderExitQuality() {
+  const exit = model.edge?.exitQuality;
+  if (!exit) return;
+
+  const unit = model.edge.unit;
+  const insight = $('#edgeExitInsight');
+  const wrap = $('#edgeExitWorstWrap');
+
+  if (!exit.totals.classified) {
+    insight.className = 'hero-insight';
+    insight.innerHTML = `<p>${escapeHtml(t('edge.exit.empty'))}</p>`;
+    $('#edgeExitCards').innerHTML = '';
+    $('#edgeExitBreakdown').innerHTML = '';
+    wrap.classList.add('hidden');
+    return;
+  }
+
+  if (exit.cutsWinnersEarly) {
+    insight.className = 'hero-insight bad';
+    insight.innerHTML = `<p>${escapeHtml(t('edge.exit.cutsEarly', {
+      value: formatEdgeValue(-exit.leftOnTable, unit),
+    }))}</p>`;
+  } else if (exit.hasEvidence) {
+    insight.className = 'hero-insight good';
+    insight.innerHTML = `<p>${escapeHtml(t('edge.exit.healthy'))}</p>`;
+  } else {
+    insight.className = 'hero-insight';
+    insight.innerHTML = `<p>${escapeHtml(t('edge.exit.empty'))}</p>`;
+  }
+
+  $('#edgeExitCards').innerHTML = [
+    metricCard(
+      t('edge.exit.capture'),
+      exit.targetCapture === null ? '—' : formatPercent(exit.targetCapture, 0),
+      t('edge.exit.captureHint'),
+      exit.targetCapture === null ? '' : exit.targetCapture >= 0.8 ? 'good' : 'warn',
+      'challenge'
+    ),
+    metricCard(
+      t('edge.exit.leftOnTable'),
+      formatEdgeValue(-exit.leftOnTable, unit),
+      t('edge.exit.leftHint'),
+      exit.leftOnTable > 0 ? 'bad' : '',
+      'curve'
+    ),
+    metricCard(
+      t('edge.exit.avgShortfall'),
+      exit.averageShortfall ? formatEdgeValue(-exit.averageShortfall, unit) : '—',
+      t('edge.exit.avgShortfallHint'),
+      '',
+      'analytics'
+    ),
+  ].join('');
+
+  const order = ['target', 'beyondTarget', 'early', 'breakeven', 'smallLoss', 'stopped'];
+  const max = Math.max(1, ...order.map((key) => exit.breakdown[key] || 0));
+  $('#edgeExitBreakdown').innerHTML = order.map((key) => {
+    const count = exit.breakdown[key] || 0;
+    const good = key === 'target' || key === 'beyondTarget';
+    return `
+      <div class="exit-row">
+        <span class="exit-label">${escapeHtml(t(`edge.exit.breakdown.${key}`))}</span>
+        <div class="exit-track"><i class="${good ? 'pos' : key === 'early' ? 'warn' : 'neg'}" style="width:${(count / max) * 100}%"></i></div>
+        <span class="exit-count">${count}</span>
+      </div>
+    `;
+  }).join('');
+
+  wrap.classList.toggle('hidden', !exit.worstExits.length);
+  $('#edgeExitWorst').innerHTML = renderListRows(exit.worstExits, (item) => `
+    <article class="item">
+      <div class="item-head">
+        <div>
+          <div class="item-title">${escapeHtml(item.symbol || t('ui.unknown'))}</div>
+          <div class="item-subtitle">${escapeHtml(formatShortDate(item.date))} · ${escapeHtml(t('edge.exit.planned'))} ${formatNumber(item.planned, 2)}R · ${escapeHtml(t('edge.exit.captured'))} ${formatNumber(item.captured, 2)}R</div>
+        </div>
+        <div class="value-bad">${escapeHtml(formatEdgeValue(-item.shortfall, unit))}</div>
+      </div>
+    </article>
+  `);
 }

@@ -1263,3 +1263,26 @@ button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .curve-tooltip strong { font-size: 12px; font-weight: 600; }
 .curve-tooltip span { font-size: 13px; font-weight: 700; }
 .curve-tooltip .curve-tooltip-equity { font-size: 11px; font-weight: 500; color: var(--muted); }
+
+/* ---------- Exit quality ---------- */
+.exit-breakdown { display: grid; gap: 8px; margin-top: 16px; }
+.exit-row { display: grid; grid-template-columns: 110px 1fr 34px; gap: 10px; align-items: center; font-size: 12px; }
+.exit-label { color: var(--muted); }
+.exit-track { height: 12px; border-radius: 6px; background: rgba(255,255,255,.04); overflow: hidden; }
+.exit-track i { display: block; height: 100%; border-radius: inherit; min-width: 2px; }
+.exit-track i.pos { background: linear-gradient(90deg, var(--green), var(--teal)); }
+.exit-track i.warn { background: linear-gradient(90deg, var(--yellow), rgba(255,207,102,.5)); }
+.exit-track i.neg { background: linear-gradient(90deg, rgba(255,123,143,.85), rgba(255,123,143,.45)); }
+.exit-count { text-align: end; color: var(--muted); }
+.exit-worst { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); }
+.exit-worst > span {
+  display: block;
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+@media (max-width: 980px) {
+  .exit-row { grid-template-columns: 92px 1fr 28px; }
+}

@@ -240,6 +240,9 @@ function applyStaticText() {
   $('#edgeDistributionHint').textContent = t('edge.distributionHint');
   $('#edgeScoreTitle').textContent = t('edge.scoreTitle');
   $('#edgeScoreHint').textContent = t('edge.scoreHint');
+  $('#edgeExitTitle').textContent = t('edge.exit.title');
+  $('#edgeExitHint').textContent = t('edge.exit.hint');
+  $('#edgeExitWorstTitle').textContent = t('edge.exit.worstTitle');
   $('#edgeInsightsTitle').textContent = t('edge.insightsTitle');
   $('#quickStartTitle').textContent = t('overview.quickStart.title');
   $('#quickStartDescription').textContent = t('overview.quickStart.description');
