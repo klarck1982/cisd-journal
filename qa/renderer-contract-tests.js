@@ -10,7 +10,11 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
-const app = fs.readFileSync(path.join(root, 'renderer', 'app.js'), 'utf8');
+// The renderer is split into ordered modules; concatenate them so every check below
+// still sees the renderer as a whole.
+const rendererDir = path.join(root, 'renderer', 'app');
+const rendererFiles = fs.readdirSync(rendererDir).filter((name) => name.endsWith('.js')).sort();
+const app = rendererFiles.map((name) => fs.readFileSync(path.join(rendererDir, name), 'utf8')).join('\n');
 const html = fs.readFileSync(path.join(root, 'renderer', 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'renderer', 'style.css'), 'utf8');
 const main = fs.readFileSync(path.join(root, 'main.js'), 'utf8');
@@ -83,4 +87,19 @@ for (const api of ['chooseImage', 'exportTrades', 'resetAccount']) {
   assert.ok(app.includes(`cisd.${api}(`), `renderer must use the ${api} API`);
 }
 
-console.log('Renderer Contract QA: PASS (no blocking dialogs, drag region, ids, i18n, IPC wiring)');
+
+// --- 8) Every renderer module must be loaded by index.html, in sorted order. ----------
+const loaded = [...html.matchAll(/<script src="app\/([^"]+)"><\/script>/g)].map((m) => m[1]);
+assert.deepEqual(
+  loaded,
+  rendererFiles,
+  'index.html must load every renderer module in filename order (load order is significant)'
+);
+
+// No module may grow back into a monolith.
+for (const name of rendererFiles) {
+  const lineCount = fs.readFileSync(path.join(rendererDir, name), 'utf8').split('\n').length;
+  assert.ok(lineCount <= 450, `renderer/app/${name} has ${lineCount} lines; split it before it grows further`);
+}
+
+console.log(`Renderer Contract QA: PASS (${rendererFiles.length} modules, dialogs, drag region, ids, i18n, IPC wiring)`);
