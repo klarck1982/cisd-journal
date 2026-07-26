@@ -9,7 +9,8 @@
     "subtitle": "Trading Discipline OS",
     "footer": "LOCAL · PRIVATE · NO EA",
     "accounts": "Accounts",
-    "newChallenge": "+ Challenge"
+    "newChallenge": "+ Challenge",
+    "commandHint": "Ctrl+K"
   },
   "nav": {
     "overview": "Overview",
@@ -18,7 +19,10 @@
     "backtest": "Backtest",
     "analytics": "Analytics",
     "data": "Data Sources",
-    "settings": "Settings"
+    "settings": "Settings",
+    "edge": "Edge",
+    "playbooks": "Playbooks",
+    "daily": "Daily"
   },
   "overview": {
     "kicker": "Live discipline cockpit",
@@ -84,6 +88,18 @@
       "insightStable": "Your workflow is stable right now. Keep turning signals into clear decisions.",
       "pending": "Pending",
       "reviewed": "Reviewed"
+    },
+    "quickStart": {
+      "title": "Finish your setup",
+      "description": "Complete these steps to unlock the full dashboard.",
+      "capital": "Set initial capital and risk limits",
+      "capitalAction": "Open account settings",
+      "csv": "Select the JForex CISD CSV file",
+      "csvAction": "Choose CSV",
+      "news": "Connect a news provider (optional)",
+      "newsAction": "Open settings",
+      "done": "Setup complete",
+      "dismiss": "Hide this"
     }
   },
   "signals": {
@@ -172,7 +188,18 @@
       "clear": "Clear guidance",
       "enteredBadge": "Entered signal",
       "linkBadge": "Signal link active"
-    }
+    },
+    "charts": {
+      "title": "Chart screenshots",
+      "before": "Before entry",
+      "after": "After exit",
+      "choose": "Attach image",
+      "remove": "Remove",
+      "empty": "No image attached"
+    },
+    "export": "Export trades CSV",
+    "exported": "Trades exported ✓",
+    "exportEmpty": "There are no trades to export for this account."
   },
   "backtest": {
     "kicker": "Historical discipline replay",
@@ -316,7 +343,30 @@
     },
     "tradesCount": "events",
     "winRateShort": "WR",
-    "emptyCurve": "Add trades or replay results to generate the curve."
+    "emptyCurve": "Add trades or replay results to generate the curve.",
+    "calendar": {
+      "title": "Monthly P&L calendar",
+      "hint": "Spot which days actually work for you",
+      "net": "Month net",
+      "tradedDays": "Days traded",
+      "dayWinRate": "Green days",
+      "avgDay": "Average day",
+      "best": "Best day",
+      "worst": "Worst day",
+      "week": "Wk",
+      "noTrades": "No trades this month",
+      "weekdayTitle": "By weekday",
+      "weekdays": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      }
+    },
+    "curveEquity": "Running equity"
   },
   "data": {
     "kicker": "Import operations",
@@ -395,7 +445,13 @@
       "target": "Profit target %",
       "dailyLoss": "Daily loss limit %",
       "maxDrawdown": "Maximum drawdown %"
-    }
+    },
+    "dangerTitle": "Danger zone",
+    "dangerDescription": "These actions affect the active account only and cannot be undone without a backup.",
+    "resetAccount": "Reset current account",
+    "resetConfirmTitle": "Reset this account?",
+    "resetConfirmText": "All trades, open positions, backtests, and daily notes for this account will be permanently deleted. Export a backup first.",
+    "resetDone": "Account data reset ✓"
   },
   "warnings": {
     "ALL_CLEAR": "No active risk warnings.",
@@ -426,10 +482,76 @@
     "noValue": "No data",
     "unknown": "Unknown",
     "empty": {
-      "noData": "No data yet."
+      "noData": "No data yet.",
+      "signals": {
+        "title": "No CISD signals yet",
+        "text": "Select your JForex signals CSV and new signals will appear here automatically.",
+        "action": "Choose CSV file"
+      },
+      "signalsFiltered": {
+        "title": "No signals match your search",
+        "text": "Try a different symbol, session or timeframe.",
+        "action": "Clear search"
+      },
+      "trades": {
+        "title": "No trades logged yet",
+        "text": "Log your first trade, or import a report from FundedNext or MT5.",
+        "action": "Import a report"
+      },
+      "tradesFiltered": {
+        "title": "No trades match your search",
+        "text": "Try a different symbol, tag or note.",
+        "action": "Clear search"
+      },
+      "backtests": {
+        "title": "No backtest sessions yet",
+        "text": "Start a session before running a JForex backtest to capture its signals.",
+        "action": ""
+      },
+      "backtestSignals": {
+        "title": "No signals captured",
+        "text": "Refresh the session after your backtest finishes, or widen its filters.",
+        "action": ""
+      },
+      "playbooks": {
+        "title": "No playbooks yet",
+        "text": "Define your first strategy to start measuring whether following your rules pays.",
+        "action": "Create a playbook"
+      },
+      "reasons": {
+        "title": "No skipped signals recorded",
+        "text": "When you mark a signal as missed, its cost is priced and attributed here.",
+        "action": ""
+      },
+      "insights": {
+        "title": "Not enough data for insights",
+        "text": "Log a few trades and signal decisions, then come back.",
+        "action": ""
+      },
+      "imports": {
+        "title": "No imports yet",
+        "text": "Import a FundedNext or MT5 report and its diagnostics will appear here.",
+        "action": "Import a report"
+      },
+      "accounts": {
+        "title": "No accounts yet",
+        "text": "Create a challenge account to keep each prop firm separate.",
+        "action": "New account"
+      },
+      "news": {
+        "title": "No high-impact news",
+        "text": "Nothing scheduled, or the provider needs an API key in settings.",
+        "action": ""
+      }
     },
     "error": "Error",
-    "loading": "Loading workspace…"
+    "loading": "Loading workspace…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "close": "Close",
+    "required": "This field is required.",
+    "invalidNumber": "Enter a valid number."
   },
   "messages": {
     "preferencesSaved": "Preferences saved ✓",
@@ -477,7 +599,11 @@
     "investorPasswordRequired": "Investor password is required unless one is already stored",
     "fundingAccessMissing": "No funding access is configured for this account",
     "investorNotImplemented": "Investor Pass live sync is not implemented yet. Shared Dashboard sync can be tested now.",
-    "fundingBridgeExeMissing": "Bundled MT5 bridge EXE is missing. Build and ship bridges/mt5_readonly_sync.exe with the desktop app."
+    "fundingBridgeExeMissing": "Bundled MT5 bridge EXE is missing. Build and ship bridges/mt5_readonly_sync.exe with the desktop app.",
+    "importEmptyCsv": "The CSV file is empty.",
+    "importNotFundedNext": "This is not a FundedNext CSV in the expected format.",
+    "importNoMt5Table": "No MT5 trade table was found in this report.",
+    "importMt5ColumnsMissing": "Required MT5 columns are missing from this report."
   },
   "funding": {
     "title": "Funding access",
@@ -510,5 +636,234 @@
     "sync": "Sync funding data",
     "bridgeReady": "bundled MT5 bridge EXE detected",
     "bridgeMissing": "bundled MT5 bridge EXE missing"
+  },
+  "accountModal": {
+    "title": "New challenge account",
+    "description": "Create a separate account so trades, signals, and analytics never mix between prop firms.",
+    "firm": "Firm",
+    "firmPlaceholder": "FundingPips",
+    "name": "Account / challenge name",
+    "namePlaceholder": "Phase 1 — 100K",
+    "capital": "Initial capital",
+    "currency": "Currency",
+    "phase": "Phase",
+    "target": "Profit target %",
+    "dailyLoss": "Daily loss limit %",
+    "maxDrawdown": "Maximum drawdown %",
+    "submit": "Create account",
+    "created": "Account created ✓",
+    "firmRequired": "Enter the firm name.",
+    "nameRequired": "Enter an account name."
+  },
+  "confirmModal": {
+    "defaultTitle": "Please confirm",
+    "confirm": "Confirm",
+    "typeToConfirm": "Type {{word}} to confirm"
+  },
+  "edge": {
+    "kicker": "Edge & behaviour",
+    "title": "Where your edge is won and lost",
+    "description": "Most journals only measure the trades you took. This page also prices the ones you skipped.",
+    "hesitationTitle": "Hesitation Tax",
+    "hesitationHint": "Profit destroyed by skipping valid signals",
+    "hesitationHeadline": "Hesitation cost you {{value}} across {{count}} skipped signals.",
+    "hesitationClean": "No costly hesitation recorded. Every skipped signal protected the account.",
+    "hesitationEstimate": "Includes {{count}} estimated values — review those signals for exact figures.",
+    "protectedLabel": "Losses avoided",
+    "protectedHint": "Discipline that paid off",
+    "taxLabel": "Profit destroyed",
+    "taxHint": "Winners you skipped",
+    "netLabel": "Net impact",
+    "netHint": "Combined effect on the account",
+    "reasonsTitle": "What each reason actually costs",
+    "reasonsHint": "Separates costly hesitation from profitable discipline",
+    "reasonCostly": "Costly",
+    "reasonProtective": "Protected you",
+    "reasonNeutral": "Neutral",
+    "reasonEstimated": "estimated",
+    "potentialTitle": "Realised vs available",
+    "potentialHint": "What the same signals could have returned",
+    "realised": "Realised",
+    "missed": "Left on the table",
+    "potential": "Potential",
+    "uplift": "Your result could have been {{value}}x larger.",
+    "scoreTitle": "Edge Score",
+    "scoreHint": "Weighted toward process, not luck",
+    "grade": "Grade",
+    "components": {
+      "execution": "Execution",
+      "discipline": "Discipline",
+      "expectancy": "Expectancy",
+      "riskControl": "Risk control",
+      "consistency": "Consistency"
+    },
+    "statsTitle": "Trade statistics",
+    "stats": {
+      "expectancy": "Expectancy",
+      "expectancyHint": "Average result per trade",
+      "payoff": "Payoff ratio",
+      "payoffHint": "Average win ÷ average loss",
+      "profitFactor": "Profit factor",
+      "profitFactorHint": "Gross win ÷ gross loss",
+      "kelly": "Kelly %",
+      "kellyHint": "Risk size the edge justifies",
+      "winRate": "Win rate",
+      "winRateHint": "Share of profitable trades",
+      "avgWin": "Average win",
+      "avgLoss": "Average loss"
+    },
+    "distributionTitle": "R-multiple distribution",
+    "distributionHint": "The shape of your results",
+    "insightsTitle": "What to act on",
+    "insights": {
+      "COSTLIEST_HESITATION": "“{{reason}}” is your most expensive habit: {{value}} across {{count}} signals.",
+      "PROTECTIVE_DISCIPLINE": "Skipping for “{{reason}}” saved you {{value}}. Keep doing it.",
+      "UNREVIEWED_SIGNALS": "{{count}} signals still have no decision. Your numbers are incomplete until they do.",
+      "LOW_PAYOFF_RATIO": "Your average win is smaller than your average loss ({{value}}). Let winners run longer.",
+      "POSITIVE_EXPECTANCY": "Your executed edge is positive at {{value}} per trade.",
+      "MISSING_TRADE_LINKS": "{{count}} executed signals have no linked trade, so their results are invisible."
+    },
+    "empty": "Record signal decisions and trades to unlock edge analysis.",
+    "unitR": "R",
+    "exit": {
+      "title": "Exit quality",
+      "hint": "Are you capturing the trades you planned?",
+      "capture": "Target capture",
+      "captureHint": "Of planned reward, actually taken",
+      "leftOnTable": "Left on the table",
+      "leftHint": "By exiting before target",
+      "avgShortfall": "Average shortfall",
+      "avgShortfallHint": "Per early exit",
+      "cutsEarly": "You exit winners before target more often than you reach it. {{value}} left behind so far.",
+      "healthy": "You are holding winners to target. Keep it up.",
+      "empty": "Add stop-loss and take-profit levels to your trades to unlock exit analysis.",
+      "breakdown": {
+        "target": "Hit target",
+        "beyondTarget": "Beyond target",
+        "early": "Exited early",
+        "breakeven": "Breakeven",
+        "smallLoss": "Small loss",
+        "stopped": "Stopped out"
+      },
+      "worstTitle": "Biggest missed extensions",
+      "planned": "Planned",
+      "captured": "Taken"
+    }
+  },
+  "playbooks": {
+    "kicker": "Strategy rules",
+    "title": "Playbooks",
+    "description": "Define each setup once, then measure whether following your own rules actually pays.",
+    "newPlaybook": "+ New playbook",
+    "empty": "No playbooks yet. Define your first strategy to start measuring rule adherence.",
+    "emptyAction": "Create your first playbook",
+    "form": {
+      "title": "Define a strategy",
+      "name": "Strategy name",
+      "namePlaceholder": "London Gold Reversal",
+      "description": "Description",
+      "descriptionPlaceholder": "When and why you take this setup",
+      "rules": "Rules (one per line)",
+      "rulesPlaceholder": "London session only\nHigher timeframe bias aligned\nEntry after a pullback",
+      "maxRisk": "Max risk %",
+      "maxTrades": "Max trades / day",
+      "matchTitle": "Match signals by",
+      "matchHint": "Used to detect qualifying signals you skipped. Leave blank to match everything.",
+      "symbol": "Symbol",
+      "session": "Session",
+      "timeframe": "Timeframe",
+      "save": "Save playbook",
+      "nameRequired": "Enter a strategy name.",
+      "rulesRequired": "Add at least one rule."
+    },
+    "card": {
+      "adherence": "Rule adherence",
+      "followed": "When followed",
+      "broken": "When broken",
+      "edgeGap": "Cost per rule break",
+      "trades": "trades",
+      "noData": "No classified trades yet",
+      "missedTitle": "Qualifying signals you skipped",
+      "missedValue": "Left on the table",
+      "estimated": "includes estimates",
+      "archive": "Archive",
+      "delete": "Delete",
+      "deleteConfirm": "This playbook will be deleted and its trades unlinked. Continue?",
+      "deleted": "Playbook deleted ✓",
+      "saved": "Playbook saved ✓"
+    },
+    "breaksTitle": "Most expensive rule breaks",
+    "breakCount": "broken {{count}}x",
+    "summary": {
+      "best": "Best performing",
+      "worst": "Needs review",
+      "totalMissed": "Total left on the table",
+      "totalMissedHint": "Across every playbook"
+    },
+    "linkTitle": "Strategy",
+    "linkNone": "No playbook",
+    "rulesFollowed": "Rules followed"
+  },
+  "daily": {
+    "kicker": "Daily routine",
+    "title": "Plan the session, review the day",
+    "description": "Discipline is a daily habit. Declare your state before trading, then face the numbers afterwards.",
+    "morningTitle": "Before the session",
+    "morningHint": "Two minutes now saves a bad decision later",
+    "moodLabel": "How do you feel right now?",
+    "moods": {
+      "calm": "Calm",
+      "anxious": "Anxious",
+      "excited": "Excited",
+      "tired": "Tired",
+      "frustrated": "Frustrated"
+    },
+    "checklistLabel": "Pre-session checklist",
+    "checklist": {
+      "reviewedNews": "Reviewed high-impact news",
+      "markedLevels": "Marked key levels",
+      "knowDailyLimit": "Know my daily loss limit",
+      "reviewedPlan": "Reviewed my playbook rules"
+    },
+    "planLabel": "What I intend to do today",
+    "planPlaceholder": "Only London reversals on gold, maximum two trades",
+    "saveMorning": "Save session plan",
+    "morningSaved": "Session plan saved ✓",
+    "eveningTitle": "After the session",
+    "eveningHint": "What actually happened",
+    "wentWell": "What went well?",
+    "wentWellPlaceholder": "Waited for confirmation instead of chasing",
+    "toImprove": "What will I change tomorrow?",
+    "toImprovePlaceholder": "Stop trading after two losses",
+    "saveEvening": "Save review",
+    "eveningSaved": "Review saved ✓",
+    "todayTitle": "Today's numbers",
+    "metrics": {
+      "trades": "Trades",
+      "net": "Net result",
+      "executed": "Signals taken",
+      "missed": "Signals skipped",
+      "checklist": "Checklist"
+    },
+    "moodTitle": "Mood vs performance",
+    "moodHint": "Does your state predict your results?",
+    "moodDays": "{{count}} days",
+    "moodUnreliable": "Not enough days yet",
+    "moodInsight": "You average {{best}} on {{bestMood}} days and {{worst}} on {{worstMood}} days.",
+    "moodEmpty": "Log your mood for a few days to unlock this.",
+    "tiltTitle": "After consecutive losses",
+    "tiltHint": "The classic tilt pattern",
+    "tiltBaseline": "Normally",
+    "tiltAfter": "After {{count}} losses",
+    "tiltInsight": "Your performance drops {{value}} after {{count}} consecutive losses.",
+    "tiltEmpty": "Not enough trades to detect a pattern yet.",
+    "weeklyTitle": "This week vs last",
+    "weeklyNet": "Net result",
+    "weeklyAverage": "Average per trade",
+    "weeklyReviews": "Days reviewed",
+    "weeklyImproved": "Improving",
+    "weeklyDeclined": "Declining",
+    "weeklyFlat": "Unchanged",
+    "noReviewYet": "No review written for today yet."
   }
 }

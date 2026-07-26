@@ -37,6 +37,9 @@
           <button class="nav-link" data-page="signals" id="navSignals"></button>
           <button class="nav-link" data-page="journal" id="navJournal"></button>
           <button class="nav-link" data-page="backtest" id="navBacktest"></button>
+          <button class="nav-link" data-page="daily" id="navDaily"></button>
+          <button class="nav-link" data-page="playbooks" id="navPlaybooks"></button>
+          <button class="nav-link" data-page="edge" id="navEdge"></button>
           <button class="nav-link" data-page="analytics" id="navAnalytics"></button>
           <button class="nav-link" data-page="data" id="navData"></button>
           <button class="nav-link" data-page="settings" id="navSettings"></button>
@@ -78,6 +81,15 @@
               <button id="overviewGoSignals" class="primary"></button>
             </div>
           </div>
+
+          <section class="panel slim quick-start hidden" id="quickStartPanel">
+            <div class="panel-head">
+              <h3 id="quickStartTitle"></h3>
+              <button id="quickStartDismiss" class="ghost small"></button>
+            </div>
+            <p class="muted" id="quickStartDescription"></p>
+            <div id="quickStartSteps" class="quick-start-steps"></div>
+          </section>
 
           <section class="panel spotlight overview-hero">
             <div class="hero-main">
@@ -233,6 +245,14 @@
                     <option value="CISD">CISD</option>
                   </select>
                 </label>
+                <label class="full">
+                  <span id="tradePlaybookLabel"></span>
+                  <select id="tradePlaybook"></select>
+                </label>
+                <div class="full hidden" id="tradeRulesWrap">
+                  <span class="chart-attach-title" id="tradeRulesLabel"></span>
+                  <div id="tradeRulesChecklist" class="rules-checklist"></div>
+                </div>
                 <label>
                   <span id="tradeSymbolLabel"></span>
                   <input id="tradeSymbol" placeholder="XAUUSD">
@@ -260,6 +280,27 @@
                   <span id="tradeNoteLabel"></span>
                   <textarea id="tradeNote" rows="4" placeholder="Why did you execute or hesitate?"></textarea>
                 </label>
+                <div class="full chart-attach">
+                  <span class="chart-attach-title" id="tradeChartsTitle"></span>
+                  <div class="chart-attach-grid">
+                    <div class="chart-slot" data-slot="before">
+                      <small id="tradeChartBeforeLabel"></small>
+                      <div class="chart-slot-preview" id="tradeChartBeforePreview"></div>
+                      <div class="chart-slot-actions">
+                        <button type="button" class="ghost small" id="tradeChartBeforeBtn"></button>
+                        <button type="button" class="ghost small danger hidden" id="tradeChartBeforeClear"></button>
+                      </div>
+                    </div>
+                    <div class="chart-slot" data-slot="after">
+                      <small id="tradeChartAfterLabel"></small>
+                      <div class="chart-slot-preview" id="tradeChartAfterPreview"></div>
+                      <div class="chart-slot-actions">
+                        <button type="button" class="ghost small" id="tradeChartAfterBtn"></button>
+                        <button type="button" class="ghost small danger hidden" id="tradeChartAfterClear"></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div class="form-actions full">
                   <button type="submit" class="primary" id="saveTradeBtn"></button>
                 </div>
@@ -269,7 +310,7 @@
             <section class="panel">
               <div class="panel-head">
                 <h3 id="recentTradesTitle"></h3>
-                <span id="recentTradesHint" class="panel-hint"></span>
+                <button id="exportTradesBtn" class="ghost small"></button>
               </div>
               <div class="toolbar-inline">
                 <input id="journalSearch" class="search-input" type="search" placeholder="Search trades">
@@ -360,6 +401,193 @@
           </section>
         </section>
 
+        <section class="page" data-page="daily">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="dailyKicker"></div>
+              <h1 id="dailyTitle"></h1>
+              <p id="dailyDescription"></p>
+            </div>
+          </div>
+
+          <div id="dailyTodayCards" class="metric-grid large"></div>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="dailyMorningTitle"></h3>
+                <span class="panel-hint" id="dailyMorningHint"></span>
+              </div>
+              <div class="form-grid compact-form">
+                <div class="full">
+                  <span class="chart-attach-title" id="dailyMoodLabel"></span>
+                  <div id="dailyMoodPicker" class="mood-picker"></div>
+                </div>
+                <div class="full">
+                  <span class="chart-attach-title" id="dailyChecklistLabel"></span>
+                  <div id="dailyChecklist" class="rules-checklist"></div>
+                </div>
+                <label class="full">
+                  <span id="dailyPlanLabel"></span>
+                  <textarea id="dailyPlan" rows="3"></textarea>
+                </label>
+                <div class="form-actions full">
+                  <button type="button" class="primary" id="saveMorningBtn"></button>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="dailyEveningTitle"></h3>
+                <span class="panel-hint" id="dailyEveningHint"></span>
+              </div>
+              <div class="form-grid compact-form">
+                <label class="full">
+                  <span id="dailyWentWellLabel"></span>
+                  <textarea id="dailyWentWell" rows="4"></textarea>
+                </label>
+                <label class="full">
+                  <span id="dailyToImproveLabel"></span>
+                  <textarea id="dailyToImprove" rows="4"></textarea>
+                </label>
+                <div class="form-actions full">
+                  <button type="button" class="primary" id="saveEveningBtn"></button>
+                </div>
+                <div class="inline-note full" id="dailyReviewStatus"></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="dailyMoodTitle"></h3>
+                <span class="panel-hint" id="dailyMoodHint"></span>
+              </div>
+              <div id="dailyMoodInsight" class="hero-insight"></div>
+              <div id="dailyMoodRows" class="mood-rows"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="dailyTiltTitle"></h3>
+                <span class="panel-hint" id="dailyTiltHint"></span>
+              </div>
+              <div id="dailyTiltInsight" class="hero-insight"></div>
+              <div id="dailyTiltCells" class="playbook-split"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><h3 id="dailyWeeklyTitle"></h3></div>
+            <div id="dailyWeeklyCards" class="metric-grid"></div>
+          </section>
+        </section>
+
+        <section class="page" data-page="playbooks">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="playbooksKicker"></div>
+              <h1 id="playbooksTitle"></h1>
+              <p id="playbooksDescription"></p>
+            </div>
+            <div class="head-actions">
+              <button id="newPlaybookBtn" class="primary"></button>
+            </div>
+          </div>
+
+          <div id="playbooksSummary" class="metric-grid"></div>
+          <div id="playbooksList" class="list playbook-list"></div>
+        </section>
+
+        <section class="page" data-page="edge">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="edgeKicker"></div>
+              <h1 id="edgeTitle"></h1>
+              <p id="edgeDescription"></p>
+            </div>
+            <div class="head-actions">
+              <div class="edge-score-badge">
+                <small id="edgeScoreLabel"></small>
+                <strong id="edgeScoreValue">—</strong>
+                <span id="edgeScoreGrade" class="chip"></span>
+              </div>
+            </div>
+          </div>
+
+          <section class="panel spotlight hesitation-hero">
+            <div class="hesitation-main">
+              <div class="section-kicker" id="edgeHesitationKicker"></div>
+              <div id="edgeHesitationHeadline" class="hesitation-headline"></div>
+              <div id="edgeHesitationNote" class="hesitation-note"></div>
+            </div>
+            <div id="edgeHesitationCards" class="metric-grid compact"></div>
+          </section>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="edgeReasonsTitle"></h3>
+                <span class="panel-hint" id="edgeReasonsHint"></span>
+              </div>
+              <div id="edgeReasonsList" class="list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="edgePotentialTitle"></h3>
+                <span class="panel-hint" id="edgePotentialHint"></span>
+              </div>
+              <div id="edgePotentialBars" class="potential-bars"></div>
+              <div id="edgeUplift" class="inline-note"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><h3 id="edgeStatsTitle"></h3></div>
+            <div id="edgeStatsCards" class="metric-grid large"></div>
+          </section>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="edgeDistributionTitle"></h3>
+                <span class="panel-hint" id="edgeDistributionHint"></span>
+              </div>
+              <div id="edgeDistribution" class="r-distribution"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="edgeScoreTitle"></h3>
+                <span class="panel-hint" id="edgeScoreHint"></span>
+              </div>
+              <div id="edgeScoreComponents" class="score-components"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3 id="edgeExitTitle"></h3>
+              <span class="panel-hint" id="edgeExitHint"></span>
+            </div>
+            <div id="edgeExitInsight" class="hero-insight"></div>
+            <div id="edgeExitCards" class="metric-grid"></div>
+            <div id="edgeExitBreakdown" class="exit-breakdown"></div>
+            <div class="exit-worst" id="edgeExitWorstWrap">
+              <span id="edgeExitWorstTitle"></span>
+              <div id="edgeExitWorst" class="list"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h3 id="edgeInsightsTitle"></h3></div>
+            <div id="edgeInsightsList" class="list"></div>
+          </section>
+        </section>
+
         <section class="page" data-page="analytics">
           <div class="page-head">
             <div>
@@ -386,6 +614,22 @@
 
           <section class="panel">
             <div class="panel-head">
+              <h3 id="calendarTitle"></h3>
+              <div class="calendar-controls">
+                <span class="panel-hint" id="calendarHint"></span>
+                <select id="calendarMonthSelect" class="calendar-month-select"></select>
+              </div>
+            </div>
+            <div id="calendarCards" class="metric-grid"></div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+            <div class="calendar-weekday-strip">
+              <span id="calendarWeekdayTitle"></span>
+              <div id="calendarWeekdays" class="weekday-bars"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
               <h3 id="analyticsSummaryTitle"></h3>
               <span id="analyticsSummaryHint" class="panel-hint"></span>
             </div>
@@ -398,7 +642,10 @@
                 <h3 id="analyticsCurveTitle"></h3>
                 <span class="panel-hint" id="analyticsCurveHint"></span>
               </div>
-              <div id="analyticsCurve" class="chart-box"></div>
+              <div class="chart-wrap">
+                <div id="analyticsCurve" class="chart-box"></div>
+                <div id="curveTooltip" class="curve-tooltip hidden"></div>
+              </div>
               <div id="analyticsCurveMeta" class="micro-stats"></div>
             </section>
             <section class="panel">
@@ -662,8 +909,143 @@
               </div>
             </section>
           </div>
+
+          <section class="panel danger-zone">
+            <div class="panel-head"><h3 id="dangerZoneTitle"></h3></div>
+            <p class="muted" id="dangerZoneDescription"></p>
+            <div class="button-row">
+              <button id="resetAccountBtn" class="ghost danger"></button>
+            </div>
+          </section>
         </section>
       </main>
+    </div>
+  </div>
+
+  <div id="accountModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="panel-head">
+        <h3 id="accountModalTitle"></h3>
+        <button id="closeAccountModal" class="ghost icon">×</button>
+      </div>
+      <p id="accountModalDescription" class="muted"></p>
+      <form id="accountModalForm" class="form-grid compact-form">
+        <label>
+          <span id="accountModalFirmLabel"></span>
+          <input id="accountModalFirm" autocomplete="off">
+        </label>
+        <label>
+          <span id="accountModalNameLabel"></span>
+          <input id="accountModalName" autocomplete="off">
+        </label>
+        <label>
+          <span id="accountModalCapitalLabel"></span>
+          <input id="accountModalCapital" type="number" min="0" step="100">
+        </label>
+        <label>
+          <span id="accountModalCurrencyLabel"></span>
+          <select id="accountModalCurrency">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </label>
+        <label>
+          <span id="accountModalPhaseLabel"></span>
+          <select id="accountModalPhase">
+            <option value="Challenge">Challenge</option>
+            <option value="Phase 1">Phase 1</option>
+            <option value="Phase 2">Phase 2</option>
+            <option value="Funded">Funded</option>
+            <option value="Practice">Practice</option>
+          </select>
+        </label>
+        <label>
+          <span id="accountModalTargetLabel"></span>
+          <input id="accountModalTarget" type="number" min="0" step="0.1">
+        </label>
+        <label>
+          <span id="accountModalDailyLossLabel"></span>
+          <input id="accountModalDailyLoss" type="number" min="0" step="0.1">
+        </label>
+        <label>
+          <span id="accountModalDrawdownLabel"></span>
+          <input id="accountModalDrawdown" type="number" min="0" step="0.1">
+        </label>
+        <div class="form-actions full">
+          <button type="button" class="ghost" id="cancelAccountModal"></button>
+          <button type="submit" class="primary" id="submitAccountModal"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="playbookModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="panel-head">
+        <h3 id="playbookModalTitle"></h3>
+        <button id="closePlaybookModal" class="ghost icon">×</button>
+      </div>
+      <form id="playbookForm" class="form-grid compact-form">
+        <label class="full">
+          <span id="playbookNameLabel"></span>
+          <input id="playbookName" autocomplete="off">
+        </label>
+        <label class="full">
+          <span id="playbookDescriptionLabel"></span>
+          <input id="playbookDescription" autocomplete="off">
+        </label>
+        <label class="full">
+          <span id="playbookRulesLabel"></span>
+          <textarea id="playbookRules" rows="5"></textarea>
+        </label>
+        <label>
+          <span id="playbookMaxRiskLabel"></span>
+          <input id="playbookMaxRisk" type="number" min="0" step="0.1">
+        </label>
+        <label>
+          <span id="playbookMaxTradesLabel"></span>
+          <input id="playbookMaxTrades" type="number" min="0" step="1">
+        </label>
+        <div class="full">
+          <span class="chart-attach-title" id="playbookMatchTitle"></span>
+          <p class="muted playbook-match-hint" id="playbookMatchHint"></p>
+        </div>
+        <label>
+          <span id="playbookSymbolLabel"></span>
+          <input id="playbookSymbol" autocomplete="off" placeholder="XAUUSD">
+        </label>
+        <label>
+          <span id="playbookSessionLabel"></span>
+          <input id="playbookSession" autocomplete="off" placeholder="London">
+        </label>
+        <label>
+          <span id="playbookTimeframeLabel"></span>
+          <input id="playbookTimeframe" autocomplete="off" placeholder="15m">
+        </label>
+        <div class="form-actions full">
+          <button type="button" class="ghost" id="cancelPlaybookModal"></button>
+          <button type="submit" class="primary" id="submitPlaybookModal"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-card confirm-modal-card">
+      <div class="panel-head">
+        <h3 id="confirmModalTitle"></h3>
+        <button id="closeConfirmModal" class="ghost icon">×</button>
+      </div>
+      <p id="confirmModalText" class="muted"></p>
+      <label class="full hidden" id="confirmModalTypeWrap">
+        <span id="confirmModalTypeLabel"></span>
+        <input id="confirmModalTypeInput" autocomplete="off">
+      </label>
+      <div class="form-actions">
+        <button type="button" class="ghost" id="cancelConfirmModal"></button>
+        <button type="button" class="primary danger-solid" id="acceptConfirmModal"></button>
+      </div>
     </div>
   </div>
 
@@ -719,6 +1101,19 @@
   </div>
 
   <div id="toast"></div>
-  <script src="app.js"></script>
+  <script src="app/01-core.js"></script>
+  <script src="app/01a-ui-kit.js"></script>
+  <script src="app/02-components.js"></script>
+  <script src="app/03-static-text.js"></script>
+  <script src="app/04-pages-overview.js"></script>
+  <script src="app/05-pages-trading.js"></script>
+  <script src="app/06-pages-daily.js"></script>
+  <script src="app/07-pages-playbooks.js"></script>
+  <script src="app/08-pages-edge.js"></script>
+  <script src="app/09-pages-rest.js"></script>
+  <script src="app/09a-calendar.js"></script>
+  <script src="app/10-render.js"></script>
+  <script src="app/11-actions.js"></script>
+  <script src="app/12-bootstrap.js"></script>
 </body>
 </html>

@@ -9,7 +9,8 @@
     "subtitle": "Trading Discipline OS",
     "footer": "LOCAL · PRIVATE · NO EA",
     "accounts": "الحسابات",
-    "newChallenge": "+ Challenge"
+    "newChallenge": "+ Challenge",
+    "commandHint": "Ctrl+K"
   },
   "nav": {
     "overview": "الرئيسية",
@@ -18,7 +19,10 @@
     "backtest": "الباكتيست",
     "analytics": "التحليلات",
     "data": "مصادر البيانات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "edge": "الحافة",
+    "playbooks": "الاستراتيجيات",
+    "daily": "اليومي"
   },
   "overview": {
     "kicker": "لوحة الانضباط الحية",
@@ -84,6 +88,18 @@
       "insightStable": "سير العمل لديك مستقر الآن. واصل تحويل الإشارات إلى قرارات واضحة.",
       "pending": "معلقة",
       "reviewed": "تمت مراجعتها"
+    },
+    "quickStart": {
+      "title": "أكمل الإعداد",
+      "description": "أكمل هذه الخطوات لتفعيل لوحة القيادة بالكامل.",
+      "capital": "حدد رأس المال وحدود المخاطرة",
+      "capitalAction": "فتح إعدادات الحساب",
+      "csv": "اختر ملف إشارات CISD من JForex",
+      "csvAction": "اختيار الملف",
+      "news": "اربط مزود الأخبار (اختياري)",
+      "newsAction": "فتح الإعدادات",
+      "done": "اكتمل الإعداد",
+      "dismiss": "إخفاء"
     }
   },
   "signals": {
@@ -172,7 +188,18 @@
       "clear": "إلغاء التوجيه",
       "enteredBadge": "إشارة تم الدخول عليها",
       "linkBadge": "ربط الإشارة مفعّل"
-    }
+    },
+    "charts": {
+      "title": "صور الشارت",
+      "before": "قبل الدخول",
+      "after": "بعد الخروج",
+      "choose": "إرفاق صورة",
+      "remove": "إزالة",
+      "empty": "لا توجد صورة مرفقة"
+    },
+    "export": "تصدير الصفقات CSV",
+    "exported": "تم تصدير الصفقات ✓",
+    "exportEmpty": "لا توجد صفقات لتصديرها في هذا الحساب."
   },
   "backtest": {
     "kicker": "إعادة اختبار الانضباط تاريخيًا",
@@ -316,7 +343,30 @@
     },
     "tradesCount": "حدث",
     "winRateShort": "WR",
-    "emptyCurve": "أضف صفقات أو نتائج ريبلاي لتوليد المنحنى."
+    "emptyCurve": "أضف صفقات أو نتائج ريبلاي لتوليد المنحنى.",
+    "calendar": {
+      "title": "تقويم الأرباح الشهري",
+      "hint": "اكتشف أي الأيام تناسبك فعلاً",
+      "net": "صافي الشهر",
+      "tradedDays": "أيام التداول",
+      "dayWinRate": "أيام رابحة",
+      "avgDay": "متوسط اليوم",
+      "best": "أفضل يوم",
+      "worst": "أسوأ يوم",
+      "week": "أسبوع",
+      "noTrades": "لا صفقات هذا الشهر",
+      "weekdayTitle": "حسب يوم الأسبوع",
+      "weekdays": {
+        "0": "أحد",
+        "1": "اثنين",
+        "2": "ثلاثاء",
+        "3": "أربعاء",
+        "4": "خميس",
+        "5": "جمعة",
+        "6": "سبت"
+      }
+    },
+    "curveEquity": "الرصيد التراكمي"
   },
   "data": {
     "kicker": "عمليات الاستيراد",
@@ -395,7 +445,13 @@
       "target": "هدف الربح %",
       "dailyLoss": "حد الخسارة اليومية %",
       "maxDrawdown": "أقصى سحب %"
-    }
+    },
+    "dangerTitle": "منطقة الخطر",
+    "dangerDescription": "هذه الإجراءات تؤثر على الحساب النشط فقط ولا يمكن التراجع عنها بدون نسخة احتياطية.",
+    "resetAccount": "تصفير الحساب الحالي",
+    "resetConfirmTitle": "تصفير هذا الحساب؟",
+    "resetConfirmText": "سيتم حذف كل الصفقات والمراكز المفتوحة والباكتيست والملاحظات اليومية لهذا الحساب نهائياً. صدّر نسخة احتياطية أولاً.",
+    "resetDone": "تم تصفير بيانات الحساب ✓"
   },
   "warnings": {
     "ALL_CLEAR": "لا توجد تحذيرات مخاطرة نشطة.",
@@ -426,10 +482,76 @@
     "noValue": "لا توجد بيانات",
     "unknown": "غير معروف",
     "empty": {
-      "noData": "لا توجد بيانات بعد."
+      "noData": "لا توجد بيانات بعد.",
+      "signals": {
+        "title": "لا توجد إشارات CISD بعد",
+        "text": "اختر ملف إشارات JForex وستظهر الإشارات الجديدة هنا تلقائياً.",
+        "action": "اختيار ملف CSV"
+      },
+      "signalsFiltered": {
+        "title": "لا إشارات تطابق بحثك",
+        "text": "جرّب رمزاً أو جلسة أو فريماً مختلفاً.",
+        "action": "مسح البحث"
+      },
+      "trades": {
+        "title": "لا توجد صفقات مسجّلة",
+        "text": "سجّل أول صفقة، أو استورد تقريراً من FundedNext أو MT5.",
+        "action": "استيراد تقرير"
+      },
+      "tradesFiltered": {
+        "title": "لا صفقات تطابق بحثك",
+        "text": "جرّب رمزاً أو وسماً أو ملاحظة مختلفة.",
+        "action": "مسح البحث"
+      },
+      "backtests": {
+        "title": "لا توجد جلسات باكتيست",
+        "text": "ابدأ جلسة قبل تشغيل باكتيست JForex لالتقاط إشاراتها.",
+        "action": ""
+      },
+      "backtestSignals": {
+        "title": "لم تُلتقط أي إشارة",
+        "text": "حدّث الجلسة بعد انتهاء الباكتيست، أو وسّع فلاترها.",
+        "action": ""
+      },
+      "playbooks": {
+        "title": "لا توجد استراتيجيات",
+        "text": "عرّف أول استراتيجية لتبدأ قياس ما إذا كان الالتزام بقواعدك يعود عليك.",
+        "action": "إنشاء استراتيجية"
+      },
+      "reasons": {
+        "title": "لا إشارات متروكة مسجّلة",
+        "text": "عندما تحدد إشارة كمتروكة، تُحسب كلفتها وتُنسب هنا.",
+        "action": ""
+      },
+      "insights": {
+        "title": "البيانات غير كافية للرؤى",
+        "text": "سجّل بضع صفقات وقرارات إشارات ثم عد.",
+        "action": ""
+      },
+      "imports": {
+        "title": "لا عمليات استيراد بعد",
+        "text": "استورد تقرير FundedNext أو MT5 وستظهر تشخيصاته هنا.",
+        "action": "استيراد تقرير"
+      },
+      "accounts": {
+        "title": "لا توجد حسابات",
+        "text": "أنشئ حساب تحدٍ لإبقاء كل شركة تمويل منفصلة.",
+        "action": "حساب جديد"
+      },
+      "news": {
+        "title": "لا أخبار عالية التأثير",
+        "text": "لا شيء مجدول، أو يحتاج المزود مفتاح API من الإعدادات.",
+        "action": ""
+      }
     },
     "error": "خطأ",
-    "loading": "جارٍ تحميل مساحة العمل…"
+    "loading": "جارٍ تحميل مساحة العمل…",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "create": "إنشاء",
+    "close": "إغلاق",
+    "required": "هذا الحقل مطلوب.",
+    "invalidNumber": "أدخل رقماً صحيحاً."
   },
   "messages": {
     "preferencesSaved": "تم حفظ التفضيلات ✓",
@@ -477,7 +599,11 @@
     "investorPasswordRequired": "Investor Password مطلوبة ما لم تكن محفوظة مسبقًا",
     "fundingAccessMissing": "لا يوجد مصدر وصول لبيانات التمويل مهيأ لهذا الحساب",
     "investorNotImplemented": "المزامنة الحية عبر Investor Pass لم تُنفذ بعد. يمكن اختبار Shared Dashboard الآن.",
-    "fundingBridgeExeMissing": "ملف MT5 bridge التنفيذي غير موجود داخل الحزمة. ابنِ وأرفق bridges/mt5_readonly_sync.exe مع نسخة التطبيق."
+    "fundingBridgeExeMissing": "ملف MT5 bridge التنفيذي غير موجود داخل الحزمة. ابنِ وأرفق bridges/mt5_readonly_sync.exe مع نسخة التطبيق.",
+    "importEmptyCsv": "ملف CSV فارغ.",
+    "importNotFundedNext": "هذا ليس ملف FundedNext CSV بالتنسيق المتوقع.",
+    "importNoMt5Table": "لم أجد جدول صفقات MT5 في هذا التقرير.",
+    "importMt5ColumnsMissing": "أعمدة MT5 الأساسية غير موجودة في هذا التقرير."
   },
   "funding": {
     "title": "وصول بيانات شركة التمويل",
@@ -510,5 +636,234 @@
     "sync": "مزامنة بيانات التمويل",
     "bridgeReady": "تم العثور على MT5 bridge التنفيذي داخل الحزمة",
     "bridgeMissing": "ملف MT5 bridge التنفيذي غير موجود داخل الحزمة"
+  },
+  "accountModal": {
+    "title": "حساب تحدٍ جديد",
+    "description": "أنشئ حساباً منفصلاً حتى لا تختلط الصفقات والإشارات والتحليلات بين شركات التمويل.",
+    "firm": "الشركة",
+    "firmPlaceholder": "FundingPips",
+    "name": "اسم الحساب / التحدي",
+    "namePlaceholder": "المرحلة 1 — 100K",
+    "capital": "رأس المال الابتدائي",
+    "currency": "العملة",
+    "phase": "المرحلة",
+    "target": "هدف الربح %",
+    "dailyLoss": "حد الخسارة اليومي %",
+    "maxDrawdown": "أقصى تراجع %",
+    "submit": "إنشاء الحساب",
+    "created": "تم إنشاء الحساب ✓",
+    "firmRequired": "أدخل اسم الشركة.",
+    "nameRequired": "أدخل اسم الحساب."
+  },
+  "confirmModal": {
+    "defaultTitle": "تأكيد الإجراء",
+    "confirm": "تأكيد",
+    "typeToConfirm": "اكتب {{word}} للتأكيد"
+  },
+  "edge": {
+    "kicker": "الحافة والسلوك",
+    "title": "أين تُكسب حافتك وأين تُفقد",
+    "description": "معظم اليوميات تقيس الصفقات التي دخلتها فقط. هذه الصفحة تحسب أيضاً ثمن التي تركتها.",
+    "hesitationTitle": "ضريبة التردد",
+    "hesitationHint": "الربح الذي أضاعه تخطّي الإشارات الصحيحة",
+    "hesitationHeadline": "التردد كلّفك {{value}} عبر {{count}} إشارة متروكة.",
+    "hesitationClean": "لا يوجد تردد مُكلف. كل إشارة تركتها كانت حماية للحساب.",
+    "hesitationEstimate": "يشمل {{count}} قيمة تقديرية — راجع تلك الإشارات لأرقام دقيقة.",
+    "protectedLabel": "خسائر تجنّبتها",
+    "protectedHint": "انضباط أثمر",
+    "taxLabel": "ربح ضائع",
+    "taxHint": "صفقات رابحة تركتها",
+    "netLabel": "الأثر الصافي",
+    "netHint": "المحصلة على الحساب",
+    "reasonsTitle": "كم يكلفك كل سبب فعلياً",
+    "reasonsHint": "يفصل التردد المُكلف عن الانضباط المُربح",
+    "reasonCostly": "مُكلف",
+    "reasonProtective": "حماك",
+    "reasonNeutral": "محايد",
+    "reasonEstimated": "تقديري",
+    "potentialTitle": "المحقق مقابل المتاح",
+    "potentialHint": "ما كانت ستعطيه الإشارات نفسها",
+    "realised": "المحقق",
+    "missed": "المتروك",
+    "potential": "المتاح",
+    "uplift": "كانت نتيجتك ستكون أكبر بـ {{value}} ضعف.",
+    "scoreTitle": "درجة الحافة",
+    "scoreHint": "موزونة على المنهجية لا على الحظ",
+    "grade": "التقدير",
+    "components": {
+      "execution": "التنفيذ",
+      "discipline": "الانضباط",
+      "expectancy": "التوقع",
+      "riskControl": "ضبط المخاطرة",
+      "consistency": "الثبات"
+    },
+    "statsTitle": "إحصاءات الصفقات",
+    "stats": {
+      "expectancy": "التوقع",
+      "expectancyHint": "متوسط النتيجة لكل صفقة",
+      "payoff": "نسبة العائد",
+      "payoffHint": "متوسط الربح ÷ متوسط الخسارة",
+      "profitFactor": "معامل الربح",
+      "profitFactorHint": "إجمالي الربح ÷ إجمالي الخسارة",
+      "kelly": "نسبة كيلي",
+      "kellyHint": "حجم المخاطرة الذي تبرره حافتك",
+      "winRate": "نسبة الربح",
+      "winRateHint": "نسبة الصفقات الرابحة",
+      "avgWin": "متوسط الربح",
+      "avgLoss": "متوسط الخسارة"
+    },
+    "distributionTitle": "توزيع مضاعفات R",
+    "distributionHint": "شكل نتائجك",
+    "insightsTitle": "ما الذي تفعله الآن",
+    "insights": {
+      "COSTLIEST_HESITATION": "«{{reason}}» أغلى عاداتك: {{value}} عبر {{count}} إشارة.",
+      "PROTECTIVE_DISCIPLINE": "تخطّيك بسبب «{{reason}}» وفّر عليك {{value}}. استمر.",
+      "UNREVIEWED_SIGNALS": "{{count}} إشارة بلا قرار. أرقامك ناقصة حتى تسجلها.",
+      "LOW_PAYOFF_RATIO": "متوسط ربحك أصغر من متوسط خسارتك ({{value}}). دع الرابحة تمتد أطول.",
+      "POSITIVE_EXPECTANCY": "حافتك المنفذة إيجابية بمقدار {{value}} لكل صفقة.",
+      "MISSING_TRADE_LINKS": "{{count}} إشارة منفذة بلا صفقة مرتبطة، لذا نتائجها غير مرئية."
+    },
+    "empty": "سجّل قرارات الإشارات والصفقات لتفعيل تحليل الحافة.",
+    "unitR": "R",
+    "exit": {
+      "title": "جودة الخروج",
+      "hint": "هل تلتقط ما خطّطت له؟",
+      "capture": "التقاط الهدف",
+      "captureHint": "من الربح المخطط، ما أخذته فعلاً",
+      "leftOnTable": "متروك على الطاولة",
+      "leftHint": "بالخروج قبل الهدف",
+      "avgShortfall": "متوسط الفجوة",
+      "avgShortfallHint": "لكل خروج مبكر",
+      "cutsEarly": "تخرج من الرابحة قبل الهدف أكثر مما تصله. تركت {{value}} حتى الآن.",
+      "healthy": "أنت تُبقي الرابحة حتى الهدف. استمر.",
+      "empty": "أضف وقف الخسارة وجني الأرباح لصفقاتك لتفعيل تحليل الخروج.",
+      "breakdown": {
+        "target": "بلغ الهدف",
+        "beyondTarget": "تجاوز الهدف",
+        "early": "خروج مبكر",
+        "breakeven": "تعادل",
+        "smallLoss": "خسارة صغيرة",
+        "stopped": "ضرب الوقف"
+      },
+      "worstTitle": "أكبر امتدادات ضائعة",
+      "planned": "المخطط",
+      "captured": "المأخوذ"
+    }
+  },
+  "playbooks": {
+    "kicker": "قواعد الاستراتيجية",
+    "title": "كتيّب الاستراتيجيات",
+    "description": "عرّف كل نموذج مرة واحدة، ثم قِس هل الالتزام بقواعدك يعود عليك فعلاً.",
+    "newPlaybook": "+ استراتيجية جديدة",
+    "empty": "لا توجد استراتيجيات بعد. عرّف أول استراتيجية لتبدأ قياس الالتزام.",
+    "emptyAction": "أنشئ أول استراتيجية",
+    "form": {
+      "title": "تعريف استراتيجية",
+      "name": "اسم الاستراتيجية",
+      "namePlaceholder": "انعكاس لندن على الذهب",
+      "description": "الوصف",
+      "descriptionPlaceholder": "متى ولماذا تأخذ هذا النموذج",
+      "rules": "القواعد (قاعدة في كل سطر)",
+      "rulesPlaceholder": "جلسة لندن فقط\nاتجاه الفريم الأكبر متوافق\nالدخول بعد ارتداد",
+      "maxRisk": "أقصى مخاطرة %",
+      "maxTrades": "أقصى صفقات / يوم",
+      "matchTitle": "مطابقة الإشارات بـ",
+      "matchHint": "تُستخدم لاكتشاف الإشارات المطابقة التي تركتها. اتركها فارغة لمطابقة الكل.",
+      "symbol": "الرمز",
+      "session": "الجلسة",
+      "timeframe": "الفريم",
+      "save": "حفظ الاستراتيجية",
+      "nameRequired": "أدخل اسم الاستراتيجية.",
+      "rulesRequired": "أضف قاعدة واحدة على الأقل."
+    },
+    "card": {
+      "adherence": "الالتزام بالقواعد",
+      "followed": "عند الالتزام",
+      "broken": "عند المخالفة",
+      "edgeGap": "كلفة كسر القاعدة",
+      "trades": "صفقة",
+      "noData": "لا توجد صفقات مصنّفة بعد",
+      "missedTitle": "إشارات مطابقة تركتها",
+      "missedValue": "المتروك",
+      "estimated": "يشمل تقديرات",
+      "archive": "أرشفة",
+      "delete": "حذف",
+      "deleteConfirm": "سيتم حذف هذه الاستراتيجية وفك ارتباط صفقاتها. هل تريد المتابعة؟",
+      "deleted": "تم حذف الاستراتيجية ✓",
+      "saved": "تم حفظ الاستراتيجية ✓"
+    },
+    "breaksTitle": "أغلى القواعد المكسورة",
+    "breakCount": "كُسرت {{count}} مرة",
+    "summary": {
+      "best": "الأفضل أداءً",
+      "worst": "تحتاج مراجعة",
+      "totalMissed": "إجمالي المتروك",
+      "totalMissedHint": "عبر كل الاستراتيجيات"
+    },
+    "linkTitle": "الاستراتيجية",
+    "linkNone": "بدون استراتيجية",
+    "rulesFollowed": "القواعد المتبعة"
+  },
+  "daily": {
+    "kicker": "الروتين اليومي",
+    "title": "خطّط للجلسة، وراجع يومك",
+    "description": "الانضباط عادة يومية. صرّح بحالتك قبل التداول، ثم واجه الأرقام بعده.",
+    "morningTitle": "قبل الجلسة",
+    "morningHint": "دقيقتان الآن توفّران قراراً سيئاً لاحقاً",
+    "moodLabel": "كيف تشعر الآن؟",
+    "moods": {
+      "calm": "هادئ",
+      "anxious": "قلق",
+      "excited": "متحمس",
+      "tired": "متعب",
+      "frustrated": "محبَط"
+    },
+    "checklistLabel": "قائمة ما قبل الجلسة",
+    "checklist": {
+      "reviewedNews": "راجعت الأخبار عالية التأثير",
+      "markedLevels": "حددت المستويات الرئيسية",
+      "knowDailyLimit": "أعرف حد خسارتي اليومي",
+      "reviewedPlan": "راجعت قواعد استراتيجيتي"
+    },
+    "planLabel": "ما أنوي فعله اليوم",
+    "planPlaceholder": "انعكاسات لندن على الذهب فقط، بحد أقصى صفقتان",
+    "saveMorning": "حفظ خطة الجلسة",
+    "morningSaved": "تم حفظ خطة الجلسة ✓",
+    "eveningTitle": "بعد الجلسة",
+    "eveningHint": "ما الذي حدث فعلاً",
+    "wentWell": "ما الذي سار جيداً؟",
+    "wentWellPlaceholder": "انتظرت التأكيد بدل المطاردة",
+    "toImprove": "ما الذي سأغيّره غداً؟",
+    "toImprovePlaceholder": "التوقف عن التداول بعد خسارتين",
+    "saveEvening": "حفظ المراجعة",
+    "eveningSaved": "تم حفظ المراجعة ✓",
+    "todayTitle": "أرقام اليوم",
+    "metrics": {
+      "trades": "الصفقات",
+      "net": "الصافي",
+      "executed": "إشارات دخلتها",
+      "missed": "إشارات تركتها",
+      "checklist": "قائمة التحقق"
+    },
+    "moodTitle": "المزاج مقابل الأداء",
+    "moodHint": "هل حالتك تتنبأ بنتائجك؟",
+    "moodDays": "{{count}} يوم",
+    "moodUnreliable": "الأيام غير كافية بعد",
+    "moodInsight": "متوسطك {{best}} في أيام {{bestMood}} و{{worst}} في أيام {{worstMood}}.",
+    "moodEmpty": "سجّل مزاجك بضعة أيام لتفعيل هذا التحليل.",
+    "tiltTitle": "بعد الخسائر المتتالية",
+    "tiltHint": "نمط التذبذب الكلاسيكي",
+    "tiltBaseline": "في المعتاد",
+    "tiltAfter": "بعد {{count}} خسائر",
+    "tiltInsight": "أداؤك يهبط {{value}} بعد {{count}} خسائر متتالية.",
+    "tiltEmpty": "الصفقات غير كافية لاكتشاف نمط بعد.",
+    "weeklyTitle": "هذا الأسبوع مقابل الماضي",
+    "weeklyNet": "الصافي",
+    "weeklyAverage": "المتوسط لكل صفقة",
+    "weeklyReviews": "أيام راجعتها",
+    "weeklyImproved": "تتحسن",
+    "weeklyDeclined": "تتراجع",
+    "weeklyFlat": "بلا تغيير",
+    "noReviewYet": "لم تكتب مراجعة لليوم بعد."
   }
 }

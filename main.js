@@ -10,6 +10,11 @@ const { fetchCalendar } = require('./lib/news-providers');
 const { importFundedNextText, importMT5Text, importCisdSignalsText, importBacktestSignalsText } = require('./lib/import-engine');
 const { buildAccountDashboardSnapshot } = require('./lib/engines/account-dashboard');
 const { buildAccountAnalyticsSnapshot } = require('./lib/engines/analytics');
+const { buildEdgeSnapshot } = require('./lib/engines/edge');
+const { createPlaybook, buildPlaybookOverview } = require('./lib/engines/playbooks');
+const { buildDailyReviewSnapshot } = require('./lib/engines/daily-review');
+const { buildMonthCalendar, listTradedMonths } = require('./lib/engines/calendar');
+const { buildExitQualitySnapshot } = require('./lib/engines/exit-quality');
 const { resolveLocale, getBundle } = require('./lib/locale');
 const { resolveFundingAccessMode, validateFundingAccess, buildFundingAccessView } = require('./lib/funding-access');
 const { parseFundingPipsSharedText } = require('./lib/funding-shared-parser');
@@ -45,6 +50,18 @@ function ensureAccount(data, accountId) {
   return account;
 }
 
+/**
+ * Import/provider modules throw errors carrying a stable `code`. Translate it here so the
+ * user reads the message in their selected language instead of a hardcoded string.
+ */
+function localizeError(error, locale) {
+  if (error && error.code) {
+    const translated = getBundle(locale).errors?.[error.code];
+    if (translated) return new Error(translated);
+  }
+  return error;
+}
+
 function ensureCsvPath(data) {
   if (!data.settings?.csvPath || !fs.existsSync(data.settings.csvPath)) {
     throw new Error(getBundle(data.settings?.locale).errors.csvPathMissing || 'CISD CSV path is missing');
@@ -58,16 +75,24 @@ function isImportCandidate(fileName) {
 
 function importFundedNextFile(filePath, accountId, options = {}) {
   const data = read();
-  const result = importFundedNextText(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), options);
-  save(data);
-  return { state: data, ...result };
+  try {
+    const result = importFundedNextText(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), options);
+    save(data);
+    return { state: data, ...result };
+  } catch (error) {
+    throw localizeError(error, data.settings?.locale);
+  }
 }
 
 function importMT5File(filePath, accountId, options = {}) {
   const data = read();
-  const result = importMT5Text(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), /\.html?$/i.test(filePath), options);
-  save(data);
-  return { state: data, ...result };
+  try {
+    const result = importMT5Text(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), /\.html?$/i.test(filePath), options);
+    save(data);
+    return { state: data, ...result };
+  } catch (error) {
+    throw localizeError(error, data.settings?.locale);
+  }
 }
 
 function importBacktestSessionSignals(backtestId, options = {}) {
@@ -351,8 +376,12 @@ async function syncFundingAccess(accountId) {
 
 async function fetchNews() {
   const data = read();
-  newsCache = await fetchCalendar(data.settings.newsProvider || 'FMP', newsKey());
-  return newsCache;
+  try {
+    newsCache = await fetchCalendar(data.settings.newsProvider || 'FMP', newsKey());
+    return newsCache;
+  } catch (error) {
+    throw localizeError(error, data.settings?.locale);
+  }
 }
 
 function validateRestorePayload(payload, locale) {
@@ -376,6 +405,17 @@ function createWindow() {
     },
   });
 
+  // A local-first journal must never navigate itself away from the bundled UI,
+  // and must never open arbitrary child windows.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:$/.test(new URL(url).protocol)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  win.webContents.on('will-navigate', (event, url) => {
+    if (url !== win.webContents.getURL()) event.preventDefault();
+  });
+
   win.loadFile('renderer/index.html');
 }
 
@@ -393,6 +433,65 @@ function registerHandlers() {
   ipcMain.handle('runtime:readiness', () => buildRuntimeReadinessSnapshot({ app, isPackaged: app.isPackaged, currentDirname: __dirname, platform: process.platform }));
   ipcMain.handle('dashboard:snapshot', (_, accountId, options = {}) => buildAccountDashboardSnapshot(read(), accountId, options));
   ipcMain.handle('analytics:snapshot', (_, accountId, options = {}) => buildAccountAnalyticsSnapshot(read(), accountId, options));
+  ipcMain.handle('calendar:month', (_, accountId, options = {}) => {
+    const data = read();
+    return {
+      calendar: buildMonthCalendar(data, accountId, options),
+      months: listTradedMonths(data, accountId, options),
+    };
+  });
+
+  ipcMain.handle('daily:snapshot', (_, accountId, options = {}) => buildDailyReviewSnapshot(read(), accountId, options));
+
+  ipcMain.handle('playbooks:overview', (_, accountId, options = {}) => buildPlaybookOverview(read(), accountId, options));
+
+  ipcMain.handle('playbook:save', (_, payload = {}) => {
+    const data = read();
+    data.playbooks = data.playbooks || [];
+    const index = data.playbooks.findIndex((item) => item.id === payload.id);
+
+    if (index >= 0) {
+      const merged = createPlaybook({ ...data.playbooks[index], ...payload, id: data.playbooks[index].id });
+      merged.createdAt = data.playbooks[index].createdAt;
+      data.playbooks[index] = merged;
+    } else {
+      data.playbooks.push(createPlaybook(payload));
+    }
+
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('playbook:archive', (_, id) => {
+    const data = read();
+    const playbook = (data.playbooks || []).find((item) => item.id === id);
+    if (playbook) playbook.archived = true;
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('playbook:delete', (_, id) => {
+    const data = read();
+    data.playbooks = (data.playbooks || []).filter((item) => item.id !== id);
+    // Unlink trades so they are not orphaned against a playbook that no longer exists.
+    for (const trade of data.trades || []) {
+      if (trade.playbookId === id) {
+        delete trade.playbookId;
+        delete trade.followedRules;
+      }
+    }
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('edge:snapshot', (_, accountId, options = {}) => {
+    const data = read();
+    const risk = buildAccountDashboardSnapshot(data, accountId, options).risk;
+    return {
+      ...buildEdgeSnapshot(data, accountId, { ...options, risk }),
+      exitQuality: buildExitQualitySnapshot(data, accountId, options),
+    };
+  });
   ipcMain.handle('locale:get', () => read().settings.locale || 'ar');
   ipcMain.handle('locale:bundle', () => getBundle(read().settings.locale));
   ipcMain.handle('locale:set', (_, locale) => updateSettings({ locale }).settings.locale);
@@ -712,6 +811,9 @@ function registerHandlers() {
     const data = read();
     const index = data.daily.findIndex((item) => item.accountId === payload.accountId && item.day === day);
     const value = { accountId: payload.accountId, day, ...payload };
+    // Mark the day as reviewed only when the trader actually wrote a review,
+    // so the weekly review-rate reflects real effort rather than a saved draft.
+    if (payload.wentWell || payload.toImprove) value.reviewedAt = new Date().toISOString();
     if (index >= 0) data.daily[index] = { ...data.daily[index], ...value };
     else data.daily.push(value);
     save(data);
@@ -823,11 +925,24 @@ function registerHandlers() {
   ipcMain.on('window:close', () => win?.close());
 }
 
-app.whenReady().then(() => {
-  createWindow();
-  watchSignalsFile();
-  watchAllFundedNextFolders();
-  registerHandlers();
-});
+// Two instances would race on the same journal-data.json and could lose trades.
+const hasInstanceLock = app.requestSingleInstanceLock();
 
-app.on('window-all-closed', () => app.quit());
+if (!hasInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!win) return;
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  });
+
+  app.whenReady().then(() => {
+    createWindow();
+    watchSignalsFile();
+    watchAllFundedNextFolders();
+    registerHandlers();
+  });
+
+  app.on('window-all-closed', () => app.quit());
+}

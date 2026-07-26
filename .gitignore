@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+*.exe
+
+# Built MT5 bridge helper (produced on Windows, shipped as a release artifact)
+bridges/mt5_readonly_sync.exe
+bridges/*.spec
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local journal data & secrets — must never reach the repository
+*.local.json
+journal-data.json
+journal-data.json.*
+news-api-key.bin
+investor-pass-*.bin
+cisd-journal-errors.log
+*.corrupt-*
+*.before-restore-*
+
+# Reports and exports produced while testing
+CISD-Journal-Backup*.json
+CISD-Journal-Trades*.csv
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+npm-debug.log*
