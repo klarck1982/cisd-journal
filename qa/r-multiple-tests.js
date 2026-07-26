@@ -84,3 +84,37 @@ assert.equal(noSlData.trades[0].resultR, null, 'no stop loss means no derivable 
 assert.equal(noSlData.trades[0].resultRSource, null);
 
 console.log('R-Multiple QA: PASS (buy/sell direction, invalid input, manual override, importer wiring)');
+
+// ------------------------------------------- derived R must not corrupt units
+// Regression: once R is derived on import, an imported trade carries BOTH a
+// currency netProfit and a derived R. Engines that aggregate money must keep
+// reporting money, otherwise a $19 profit silently becomes "0.5".
+const { buildAccountAnalyticsSnapshot } = require('../lib/engines/analytics');
+const { buildDisciplineSnapshot } = require('../lib/engines/discipline');
+
+const mixed = {
+  accounts: [{ id: 'a' }],
+  openPositions: [],
+  signals: [{ SignalID: 'S1', mode: 'LIVE', decisions: { a: { status: 'ORDER_PLACED' } } }],
+  trades: [
+    // Imported: money is the truth, R is only derived from price.
+    { accountId: 'a', signalId: 'S1', netProfit: 19, resultR: 0.5, resultRSource: 'derived', date: '2026-07-24' },
+  ],
+};
+
+const money = buildAccountAnalyticsSnapshot(mixed, 'a');
+assert.equal(money.totals.net, 19, 'derived R must not replace currency P&L in analytics');
+
+const linked = buildDisciplineSnapshot(mixed, 'a').linkedPerformance;
+assert.equal(linked.netResult, 19, 'derived R must not replace currency P&L in discipline');
+
+// A manually entered R still takes precedence, as the trader intended.
+const manualTrade = {
+  accounts: [{ id: 'a' }],
+  openPositions: [],
+  signals: [],
+  trades: [{ accountId: 'a', netProfit: 19, resultR: 2.5, date: '2026-07-24' }],
+};
+assert.equal(buildAccountAnalyticsSnapshot(manualTrade, 'a').totals.net, 2.5, 'manual R wins');
+
+console.log('R-Multiple Unit Safety: PASS (derived R never mixes with currency aggregates)');
