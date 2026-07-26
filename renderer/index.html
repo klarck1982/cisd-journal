@@ -37,6 +37,7 @@
           <button class="nav-link" data-page="signals" id="navSignals"></button>
           <button class="nav-link" data-page="journal" id="navJournal"></button>
           <button class="nav-link" data-page="backtest" id="navBacktest"></button>
+          <button class="nav-link" data-page="daily" id="navDaily"></button>
           <button class="nav-link" data-page="playbooks" id="navPlaybooks"></button>
           <button class="nav-link" data-page="edge" id="navEdge"></button>
           <button class="nav-link" data-page="analytics" id="navAnalytics"></button>
@@ -397,6 +398,90 @@
               <input id="backtestSearch" class="search-input" type="search" placeholder="Search backtest signals">
             </div>
             <div id="backtestReviewList" class="list"></div>
+          </section>
+        </section>
+
+        <section class="page" data-page="daily">
+          <div class="page-head">
+            <div>
+              <div class="section-kicker" id="dailyKicker"></div>
+              <h1 id="dailyTitle"></h1>
+              <p id="dailyDescription"></p>
+            </div>
+          </div>
+
+          <div id="dailyTodayCards" class="metric-grid large"></div>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="dailyMorningTitle"></h3>
+                <span class="panel-hint" id="dailyMorningHint"></span>
+              </div>
+              <div class="form-grid compact-form">
+                <div class="full">
+                  <span class="chart-attach-title" id="dailyMoodLabel"></span>
+                  <div id="dailyMoodPicker" class="mood-picker"></div>
+                </div>
+                <div class="full">
+                  <span class="chart-attach-title" id="dailyChecklistLabel"></span>
+                  <div id="dailyChecklist" class="rules-checklist"></div>
+                </div>
+                <label class="full">
+                  <span id="dailyPlanLabel"></span>
+                  <textarea id="dailyPlan" rows="3"></textarea>
+                </label>
+                <div class="form-actions full">
+                  <button type="button" class="primary" id="saveMorningBtn"></button>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="dailyEveningTitle"></h3>
+                <span class="panel-hint" id="dailyEveningHint"></span>
+              </div>
+              <div class="form-grid compact-form">
+                <label class="full">
+                  <span id="dailyWentWellLabel"></span>
+                  <textarea id="dailyWentWell" rows="4"></textarea>
+                </label>
+                <label class="full">
+                  <span id="dailyToImproveLabel"></span>
+                  <textarea id="dailyToImprove" rows="4"></textarea>
+                </label>
+                <div class="form-actions full">
+                  <button type="button" class="primary" id="saveEveningBtn"></button>
+                </div>
+                <div class="inline-note full" id="dailyReviewStatus"></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="dailyMoodTitle"></h3>
+                <span class="panel-hint" id="dailyMoodHint"></span>
+              </div>
+              <div id="dailyMoodInsight" class="hero-insight"></div>
+              <div id="dailyMoodRows" class="mood-rows"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3 id="dailyTiltTitle"></h3>
+                <span class="panel-hint" id="dailyTiltHint"></span>
+              </div>
+              <div id="dailyTiltInsight" class="hero-insight"></div>
+              <div id="dailyTiltCells" class="playbook-split"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><h3 id="dailyWeeklyTitle"></h3></div>
+            <div id="dailyWeeklyCards" class="metric-grid"></div>
           </section>
         </section>
 

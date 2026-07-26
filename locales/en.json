@@ -21,7 +21,8 @@
     "data": "Data Sources",
     "settings": "Settings",
     "edge": "Edge",
-    "playbooks": "Playbooks"
+    "playbooks": "Playbooks",
+    "daily": "Daily"
   },
   "overview": {
     "kicker": "Live discipline cockpit",
@@ -695,5 +696,67 @@
     "linkTitle": "Strategy",
     "linkNone": "No playbook",
     "rulesFollowed": "Rules followed"
+  },
+  "daily": {
+    "kicker": "Daily routine",
+    "title": "Plan the session, review the day",
+    "description": "Discipline is a daily habit. Declare your state before trading, then face the numbers afterwards.",
+    "morningTitle": "Before the session",
+    "morningHint": "Two minutes now saves a bad decision later",
+    "moodLabel": "How do you feel right now?",
+    "moods": {
+      "calm": "Calm",
+      "anxious": "Anxious",
+      "excited": "Excited",
+      "tired": "Tired",
+      "frustrated": "Frustrated"
+    },
+    "checklistLabel": "Pre-session checklist",
+    "checklist": {
+      "reviewedNews": "Reviewed high-impact news",
+      "markedLevels": "Marked key levels",
+      "knowDailyLimit": "Know my daily loss limit",
+      "reviewedPlan": "Reviewed my playbook rules"
+    },
+    "planLabel": "What I intend to do today",
+    "planPlaceholder": "Only London reversals on gold, maximum two trades",
+    "saveMorning": "Save session plan",
+    "morningSaved": "Session plan saved ✓",
+    "eveningTitle": "After the session",
+    "eveningHint": "What actually happened",
+    "wentWell": "What went well?",
+    "wentWellPlaceholder": "Waited for confirmation instead of chasing",
+    "toImprove": "What will I change tomorrow?",
+    "toImprovePlaceholder": "Stop trading after two losses",
+    "saveEvening": "Save review",
+    "eveningSaved": "Review saved ✓",
+    "todayTitle": "Today's numbers",
+    "metrics": {
+      "trades": "Trades",
+      "net": "Net result",
+      "executed": "Signals taken",
+      "missed": "Signals skipped",
+      "checklist": "Checklist"
+    },
+    "moodTitle": "Mood vs performance",
+    "moodHint": "Does your state predict your results?",
+    "moodDays": "{{count}} days",
+    "moodUnreliable": "Not enough days yet",
+    "moodInsight": "You average {{best}} on {{bestMood}} days and {{worst}} on {{worstMood}} days.",
+    "moodEmpty": "Log your mood for a few days to unlock this.",
+    "tiltTitle": "After consecutive losses",
+    "tiltHint": "The classic tilt pattern",
+    "tiltBaseline": "Normally",
+    "tiltAfter": "After {{count}} losses",
+    "tiltInsight": "Your performance drops {{value}} after {{count}} consecutive losses.",
+    "tiltEmpty": "Not enough trades to detect a pattern yet.",
+    "weeklyTitle": "This week vs last",
+    "weeklyNet": "Net result",
+    "weeklyAverage": "Average per trade",
+    "weeklyReviews": "Days reviewed",
+    "weeklyImproved": "Improving",
+    "weeklyDeclined": "Declining",
+    "weeklyFlat": "Unchanged",
+    "noReviewYet": "No review written for today yet."
   }
 }

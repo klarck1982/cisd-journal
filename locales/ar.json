@@ -21,7 +21,8 @@
     "data": "مصادر البيانات",
     "settings": "الإعدادات",
     "edge": "الحافة",
-    "playbooks": "الاستراتيجيات"
+    "playbooks": "الاستراتيجيات",
+    "daily": "اليومي"
   },
   "overview": {
     "kicker": "لوحة الانضباط الحية",
@@ -695,5 +696,67 @@
     "linkTitle": "الاستراتيجية",
     "linkNone": "بدون استراتيجية",
     "rulesFollowed": "القواعد المتبعة"
+  },
+  "daily": {
+    "kicker": "الروتين اليومي",
+    "title": "خطّط للجلسة، وراجع يومك",
+    "description": "الانضباط عادة يومية. صرّح بحالتك قبل التداول، ثم واجه الأرقام بعده.",
+    "morningTitle": "قبل الجلسة",
+    "morningHint": "دقيقتان الآن توفّران قراراً سيئاً لاحقاً",
+    "moodLabel": "كيف تشعر الآن؟",
+    "moods": {
+      "calm": "هادئ",
+      "anxious": "قلق",
+      "excited": "متحمس",
+      "tired": "متعب",
+      "frustrated": "محبَط"
+    },
+    "checklistLabel": "قائمة ما قبل الجلسة",
+    "checklist": {
+      "reviewedNews": "راجعت الأخبار عالية التأثير",
+      "markedLevels": "حددت المستويات الرئيسية",
+      "knowDailyLimit": "أعرف حد خسارتي اليومي",
+      "reviewedPlan": "راجعت قواعد استراتيجيتي"
+    },
+    "planLabel": "ما أنوي فعله اليوم",
+    "planPlaceholder": "انعكاسات لندن على الذهب فقط، بحد أقصى صفقتان",
+    "saveMorning": "حفظ خطة الجلسة",
+    "morningSaved": "تم حفظ خطة الجلسة ✓",
+    "eveningTitle": "بعد الجلسة",
+    "eveningHint": "ما الذي حدث فعلاً",
+    "wentWell": "ما الذي سار جيداً؟",
+    "wentWellPlaceholder": "انتظرت التأكيد بدل المطاردة",
+    "toImprove": "ما الذي سأغيّره غداً؟",
+    "toImprovePlaceholder": "التوقف عن التداول بعد خسارتين",
+    "saveEvening": "حفظ المراجعة",
+    "eveningSaved": "تم حفظ المراجعة ✓",
+    "todayTitle": "أرقام اليوم",
+    "metrics": {
+      "trades": "الصفقات",
+      "net": "الصافي",
+      "executed": "إشارات دخلتها",
+      "missed": "إشارات تركتها",
+      "checklist": "قائمة التحقق"
+    },
+    "moodTitle": "المزاج مقابل الأداء",
+    "moodHint": "هل حالتك تتنبأ بنتائجك؟",
+    "moodDays": "{{count}} يوم",
+    "moodUnreliable": "الأيام غير كافية بعد",
+    "moodInsight": "متوسطك {{best}} في أيام {{bestMood}} و{{worst}} في أيام {{worstMood}}.",
+    "moodEmpty": "سجّل مزاجك بضعة أيام لتفعيل هذا التحليل.",
+    "tiltTitle": "بعد الخسائر المتتالية",
+    "tiltHint": "نمط التذبذب الكلاسيكي",
+    "tiltBaseline": "في المعتاد",
+    "tiltAfter": "بعد {{count}} خسائر",
+    "tiltInsight": "أداؤك يهبط {{value}} بعد {{count}} خسائر متتالية.",
+    "tiltEmpty": "الصفقات غير كافية لاكتشاف نمط بعد.",
+    "weeklyTitle": "هذا الأسبوع مقابل الماضي",
+    "weeklyNet": "الصافي",
+    "weeklyAverage": "المتوسط لكل صفقة",
+    "weeklyReviews": "أيام راجعتها",
+    "weeklyImproved": "تتحسن",
+    "weeklyDeclined": "تتراجع",
+    "weeklyFlat": "بلا تغيير",
+    "noReviewYet": "لم تكتب مراجعة لليوم بعد."
   }
 }

@@ -1098,3 +1098,29 @@ button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 @media (max-width: 980px) {
   .playbook-split { grid-template-columns: 1fr; }
 }
+
+/* ================= Daily routine ================= */
+.mood-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.mood-chip {
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.mood-chip.active { background: rgba(88,166,255,.16); border-color: rgba(88,166,255,.45); color: var(--blue); font-weight: 700; }
+
+.mood-rows { display: grid; gap: 10px; margin-top: 14px; }
+.mood-row { display: grid; grid-template-columns: 84px 1fr 64px 72px; gap: 10px; align-items: center; font-size: 13px; }
+.mood-row.unreliable { opacity: .55; }
+.mood-name { color: var(--muted); }
+.mood-track { height: 12px; border-radius: 999px; background: rgba(255,255,255,.05); overflow: hidden; }
+.mood-track i { display: block; height: 100%; border-radius: inherit; min-width: 3px; }
+.mood-track i.pos { background: linear-gradient(90deg, var(--green), var(--teal)); }
+.mood-track i.neg { background: linear-gradient(90deg, rgba(255,123,143,.9), rgba(255,123,143,.55)); }
+.mood-days { color: var(--muted); font-size: 11px; text-align: end; }
+
+@media (max-width: 980px) {
+  .mood-row { grid-template-columns: 70px 1fr 56px; }
+  .mood-days { display: none; }
+}

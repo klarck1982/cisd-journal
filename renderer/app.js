@@ -9,6 +9,8 @@ const model = {
   analytics: null,
   edge: null,
   playbooks: null,
+  daily: null,
+  dailyDraft: { mood: '' },
   fundingAccess: null,
   runtimeReadiness: null,
   page: 'overview',
@@ -374,6 +376,7 @@ function navLabelForPage(page) {
     signals: t('nav.signals'),
     journal: t('nav.journal'),
     backtest: t('nav.backtest'),
+    daily: t('nav.daily'),
     playbooks: t('nav.playbooks'),
     edge: t('nav.edge'),
     analytics: t('nav.analytics'),
@@ -521,6 +524,7 @@ function applyStaticText() {
   $('#navSignals').innerHTML = iconText('signals', t('nav.signals'), 'nav-content');
   $('#navJournal').innerHTML = iconText('journal', t('nav.journal'), 'nav-content');
   $('#navBacktest').innerHTML = iconText('backtest', t('nav.backtest'), 'nav-content');
+  $('#navDaily').innerHTML = iconText('journal', t('nav.daily'), 'nav-content');
   $('#navPlaybooks').innerHTML = iconText('backtest', t('nav.playbooks'), 'nav-content');
   $('#navEdge').innerHTML = iconText('discipline', t('nav.edge'), 'nav-content');
   $('#navAnalytics').innerHTML = iconText('analytics', t('nav.analytics'), 'nav-content');
@@ -683,6 +687,28 @@ function applyStaticText() {
   $('#restoreBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.restore'))}`;
   $('#openGuideBtn').innerHTML = `${icon('journal','button-icon')}${escapeHtml(t('settings.guide'))}`;
   $('#restartOnboardingBtn').innerHTML = `${icon('settings','button-icon')}${escapeHtml(t('settings.restartOnboarding'))}`;
+  $('#dailyKicker').textContent = t('daily.kicker');
+  $('#dailyTitle').textContent = t('daily.title');
+  $('#dailyDescription').textContent = t('daily.description');
+  $('#dailyMorningTitle').textContent = t('daily.morningTitle');
+  $('#dailyMorningHint').textContent = t('daily.morningHint');
+  $('#dailyMoodLabel').textContent = t('daily.moodLabel');
+  $('#dailyChecklistLabel').textContent = t('daily.checklistLabel');
+  $('#dailyPlanLabel').textContent = t('daily.planLabel');
+  $('#dailyPlan').placeholder = t('daily.planPlaceholder');
+  $('#saveMorningBtn').textContent = t('daily.saveMorning');
+  $('#dailyEveningTitle').textContent = t('daily.eveningTitle');
+  $('#dailyEveningHint').textContent = t('daily.eveningHint');
+  $('#dailyWentWellLabel').textContent = t('daily.wentWell');
+  $('#dailyWentWell').placeholder = t('daily.wentWellPlaceholder');
+  $('#dailyToImproveLabel').textContent = t('daily.toImprove');
+  $('#dailyToImprove').placeholder = t('daily.toImprovePlaceholder');
+  $('#saveEveningBtn').textContent = t('daily.saveEvening');
+  $('#dailyMoodTitle').textContent = t('daily.moodTitle');
+  $('#dailyMoodHint').textContent = t('daily.moodHint');
+  $('#dailyTiltTitle').textContent = t('daily.tiltTitle');
+  $('#dailyTiltHint').textContent = t('daily.tiltHint');
+  $('#dailyWeeklyTitle').textContent = t('daily.weeklyTitle');
   $('#playbooksKicker').textContent = t('playbooks.kicker');
   $('#playbooksTitle').textContent = t('playbooks.title');
   $('#playbooksDescription').textContent = t('playbooks.description');
@@ -1270,6 +1296,176 @@ function formatEdgeValue(value, unit, withSign = true) {
   const sign = withSign && number > 0 ? '+' : '';
   if (unit === 'R') return `${sign}${formatNumber(number, 2)}R`;
   return `${sign}${formatCurrency(number, activeAccount()?.currency)}`;
+}
+
+function renderDaily() {
+  const snapshot = model.daily;
+  if (!snapshot) return;
+
+  const today = snapshot.todaySummary;
+
+  // --- Today's numbers -------------------------------------------------------
+  $('#dailyTodayCards').innerHTML = [
+    metricCard(t('daily.metrics.trades'), String(today.performance.count), '', '', 'journal'),
+    metricCard(
+      t('daily.metrics.net'),
+      `${today.performance.net > 0 ? '+' : ''}${formatNumber(today.performance.net, 2)}R`,
+      '',
+      today.performance.net >= 0 ? 'good' : 'bad',
+      'curve'
+    ),
+    metricCard(t('daily.metrics.executed'), String(today.signals.executed), '', '', 'discipline'),
+    metricCard(t('daily.metrics.missed'), String(today.signals.missed), '', today.signals.missed ? 'warn' : '', 'risk'),
+    metricCard(
+      t('daily.metrics.checklist'),
+      `${today.checklistProgress.completed}/${today.checklistProgress.total}`,
+      '',
+      today.checklistProgress.rate === 1 ? 'good' : 'warn',
+      'signals'
+    ),
+  ].join('');
+
+  // --- Morning: mood picker + checklist -------------------------------------
+  $('#dailyMoodPicker').innerHTML = snapshot.moods.map((mood) => `
+    <button type="button" class="mood-chip ${today.mood === mood ? 'active' : ''}" data-mood="${escapeHtml(mood)}">
+      ${escapeHtml(t(`daily.moods.${mood}`))}
+    </button>
+  `).join('');
+  $$('[data-mood]').forEach((button) => {
+    button.onclick = () => {
+      model.dailyDraft.mood = button.dataset.mood;
+      $$('[data-mood]').forEach((other) => other.classList.toggle('active', other === button));
+    };
+  });
+
+  $('#dailyChecklist').innerHTML = snapshot.checklistKeys.map((key) => `
+    <label class="rule-check">
+      <input type="checkbox" data-checklist="${escapeHtml(key)}" ${today.checklist[key] ? 'checked' : ''}>
+      <span>${escapeHtml(t(`daily.checklist.${key}`))}</span>
+    </label>
+  `).join('');
+
+  if (document.activeElement !== $('#dailyPlan')) $('#dailyPlan').value = today.plan || '';
+  if (document.activeElement !== $('#dailyWentWell')) $('#dailyWentWell').value = today.wentWell || '';
+  if (document.activeElement !== $('#dailyToImprove')) $('#dailyToImprove').value = today.toImprove || '';
+  $('#dailyReviewStatus').textContent = today.reviewedAt
+    ? `${t('daily.eveningSaved')} · ${formatDateTime(today.reviewedAt)}`
+    : t('daily.noReviewYet');
+
+  // --- Mood vs performance ---------------------------------------------------
+  const correlation = snapshot.moodCorrelation;
+  const moodInsight = $('#dailyMoodInsight');
+  if (correlation.hasEnoughData && correlation.best && correlation.worst) {
+    moodInsight.className = 'hero-insight warn';
+    moodInsight.innerHTML = `<p>${escapeHtml(t('daily.moodInsight', {
+      best: `${correlation.best.average > 0 ? '+' : ''}${formatNumber(correlation.best.average, 2)}R`,
+      bestMood: t(`daily.moods.${correlation.best.mood}`),
+      worst: `${correlation.worst.average > 0 ? '+' : ''}${formatNumber(correlation.worst.average, 2)}R`,
+      worstMood: t(`daily.moods.${correlation.worst.mood}`),
+    }))}</p>`;
+  } else {
+    moodInsight.className = 'hero-insight';
+    moodInsight.innerHTML = `<p>${escapeHtml(t('daily.moodEmpty'))}</p>`;
+  }
+
+  const maxMood = Math.max(1, ...correlation.moods.map((item) => Math.abs(item.average)));
+  $('#dailyMoodRows').innerHTML = correlation.moods.map((item) => `
+    <div class="mood-row ${item.reliable ? '' : 'unreliable'}">
+      <span class="mood-name">${escapeHtml(t(`daily.moods.${item.mood}`))}</span>
+      <div class="mood-track">
+        <i class="${item.average >= 0 ? 'pos' : 'neg'}" style="width:${Math.max(4, (Math.abs(item.average) / maxMood) * 100)}%"></i>
+      </div>
+      <span class="${item.average >= 0 ? 'value-good' : 'value-bad'}">${item.average > 0 ? '+' : ''}${formatNumber(item.average, 2)}R</span>
+      <span class="mood-days">${escapeHtml(item.reliable ? t('daily.moodDays', { count: item.days }) : t('daily.moodUnreliable'))}</span>
+    </div>
+  `).join('');
+
+  // --- Tilt ------------------------------------------------------------------
+  const tilt = snapshot.tilt;
+  const tiltInsight = $('#dailyTiltInsight');
+  if (tilt.hasEvidence && tilt.degradation !== null && tilt.degradation < 0) {
+    tiltInsight.className = 'hero-insight bad';
+    tiltInsight.innerHTML = `<p>${escapeHtml(t('daily.tiltInsight', {
+      value: formatPercent(Math.abs(tilt.degradation), 0),
+      count: tilt.threshold,
+    }))}</p>`;
+  } else {
+    tiltInsight.className = 'hero-insight';
+    tiltInsight.innerHTML = `<p>${escapeHtml(t('daily.tiltEmpty'))}</p>`;
+  }
+
+  $('#dailyTiltCells').innerHTML = `
+    <div class="split-cell good">
+      <small>${escapeHtml(t('daily.tiltBaseline'))}</small>
+      <strong>${tilt.baseline.count ? `${tilt.baseline.average > 0 ? '+' : ''}${formatNumber(tilt.baseline.average, 2)}R` : '—'}</strong>
+      <span>${tilt.baseline.count} ${escapeHtml(t('playbooks.card.trades'))}</span>
+    </div>
+    <div class="split-cell bad">
+      <small>${escapeHtml(t('daily.tiltAfter', { count: tilt.threshold }))}</small>
+      <strong>${tilt.afterLossStreak.count ? `${tilt.afterLossStreak.average > 0 ? '+' : ''}${formatNumber(tilt.afterLossStreak.average, 2)}R` : '—'}</strong>
+      <span>${tilt.afterLossStreak.count} ${escapeHtml(t('playbooks.card.trades'))}</span>
+    </div>
+  `;
+
+  // --- Weekly trend ----------------------------------------------------------
+  const weekly = snapshot.weekly;
+  const trendTone = weekly.netChange > 0 ? 'good' : weekly.netChange < 0 ? 'bad' : '';
+  const trendLabel = weekly.netChange > 0
+    ? t('daily.weeklyImproved')
+    : weekly.netChange < 0 ? t('daily.weeklyDeclined') : t('daily.weeklyFlat');
+
+  $('#dailyWeeklyCards').innerHTML = [
+    metricCard(
+      t('daily.weeklyNet'),
+      `${weekly.current.net > 0 ? '+' : ''}${formatNumber(weekly.current.net, 2)}R`,
+      `${weekly.netChange > 0 ? '+' : ''}${formatNumber(weekly.netChange, 2)}R · ${trendLabel}`,
+      trendTone,
+      'curve'
+    ),
+    metricCard(
+      t('daily.weeklyAverage'),
+      `${weekly.current.average > 0 ? '+' : ''}${formatNumber(weekly.current.average, 2)}R`,
+      '',
+      weekly.current.average >= 0 ? 'good' : 'bad',
+      'analytics'
+    ),
+    metricCard(t('daily.weeklyReviews'), `${weekly.reviewedDays}/7`, '', weekly.reviewedDays >= 5 ? 'good' : 'warn', 'journal'),
+  ].join('');
+}
+
+function collectDailyPayload() {
+  const checklist = {};
+  $$('#dailyChecklist input[data-checklist]').forEach((input) => {
+    checklist[input.dataset.checklist] = input.checked;
+  });
+  return {
+    accountId: model.accountId,
+    mood: model.dailyDraft.mood || model.daily?.todaySummary?.mood || '',
+    checklist,
+    plan: $('#dailyPlan').value.trim(),
+  };
+}
+
+async function saveMorning() {
+  if (!model.accountId) return;
+  const payload = collectDailyPayload();
+  model.state = await runBusy(t('ui.loading'), () => cisd.saveDaily(model.daily.today, payload));
+  await refreshSnapshots();
+  render();
+  toast(t('daily.morningSaved'), 'success');
+}
+
+async function saveEvening() {
+  if (!model.accountId) return;
+  const payload = {
+    ...collectDailyPayload(),
+    wentWell: $('#dailyWentWell').value.trim(),
+    toImprove: $('#dailyToImprove').value.trim(),
+  };
+  model.state = await runBusy(t('ui.loading'), () => cisd.saveDaily(model.daily.today, payload));
+  await refreshSnapshots();
+  render();
+  toast(t('daily.eveningSaved'), 'success');
 }
 
 function visiblePlaybooks() {
@@ -1934,6 +2130,7 @@ function render() {
   renderSignalsPage();
   renderJournal();
   renderBacktest();
+  renderDaily();
   renderPlaybooks();
   renderEdge();
   renderAnalytics();
@@ -1964,6 +2161,7 @@ async function refreshSnapshots() {
   model.analytics = await cisd.analyticsSnapshot(model.accountId, model.filters);
   model.edge = await cisd.edgeSnapshot(model.accountId, { risk: { today: todayKey() } });
   model.playbooks = await cisd.playbooksOverview(model.accountId);
+  model.daily = await cisd.dailySnapshot(model.accountId, { today: todayKey() });
 }
 
 async function refreshStateAndRender() {
@@ -2443,6 +2641,9 @@ function bindEvents() {
     persistUiState();
     renderQuickStart();
   };
+
+  $('#saveMorningBtn').onclick = saveMorning;
+  $('#saveEveningBtn').onclick = saveEvening;
 
   $('#newPlaybookBtn').onclick = openPlaybookModal;
   $('#playbookForm').addEventListener('submit', savePlaybook);
