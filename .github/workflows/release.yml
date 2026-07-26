@@ -20,7 +20,12 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - run: npm ci
+      - run: npm run build:bridge:win
+      - run: npm run validate:release:exe
       - run: npm test
       - run: npm run dist:win
       - name: Publish GitHub Release
@@ -31,3 +36,4 @@ jobs:
           body_path: docs/RELEASE_NOTES_v1.0.0.md
           files: |
             dist/*.exe
+            bridges/mt5_readonly_sync.exe

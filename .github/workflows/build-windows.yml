@@ -15,17 +15,38 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-  
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Build MT5 bridge EXE
+        run: npm run build:bridge:win
+
+      - name: Validate EXE release readiness
+        run: npm run validate:release:exe
+
+      - name: Run quality gate
+        run: npm test
 
       - name: Build Windows EXE
         run: npm run dist:win
 
-      - name: Upload EXE
+      - name: Upload App EXE
         uses: actions/upload-artifact@v4
         with:
           name: CISD-Journal-Windows-EXE
           path: dist/*.exe
+          if-no-files-found: error
+
+      - name: Upload MT5 Bridge EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: CISD-Journal-MT5-Bridge
+          path: bridges/mt5_readonly_sync.exe
           if-no-files-found: error
