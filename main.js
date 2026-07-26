@@ -45,6 +45,18 @@ function ensureAccount(data, accountId) {
   return account;
 }
 
+/**
+ * Import/provider modules throw errors carrying a stable `code`. Translate it here so the
+ * user reads the message in their selected language instead of a hardcoded string.
+ */
+function localizeError(error, locale) {
+  if (error && error.code) {
+    const translated = getBundle(locale).errors?.[error.code];
+    if (translated) return new Error(translated);
+  }
+  return error;
+}
+
 function ensureCsvPath(data) {
   if (!data.settings?.csvPath || !fs.existsSync(data.settings.csvPath)) {
     throw new Error(getBundle(data.settings?.locale).errors.csvPathMissing || 'CISD CSV path is missing');
@@ -58,16 +70,24 @@ function isImportCandidate(fileName) {
 
 function importFundedNextFile(filePath, accountId, options = {}) {
   const data = read();
-  const result = importFundedNextText(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), options);
-  save(data);
-  return { state: data, ...result };
+  try {
+    const result = importFundedNextText(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), options);
+    save(data);
+    return { state: data, ...result };
+  } catch (error) {
+    throw localizeError(error, data.settings?.locale);
+  }
 }
 
 function importMT5File(filePath, accountId, options = {}) {
   const data = read();
-  const result = importMT5Text(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), /\.html?$/i.test(filePath), options);
-  save(data);
-  return { state: data, ...result };
+  try {
+    const result = importMT5Text(data, fs.readFileSync(filePath, 'utf8'), accountId, path.basename(filePath), /\.html?$/i.test(filePath), options);
+    save(data);
+    return { state: data, ...result };
+  } catch (error) {
+    throw localizeError(error, data.settings?.locale);
+  }
 }
 
 function importBacktestSessionSignals(backtestId, options = {}) {
@@ -351,8 +371,12 @@ async function syncFundingAccess(accountId) {
 
 async function fetchNews() {
   const data = read();
-  newsCache = await fetchCalendar(data.settings.newsProvider || 'FMP', newsKey());
-  return newsCache;
+  try {
+    newsCache = await fetchCalendar(data.settings.newsProvider || 'FMP', newsKey());
+    return newsCache;
+  } catch (error) {
+    throw localizeError(error, data.settings?.locale);
+  }
 }
 
 function validateRestorePayload(payload, locale) {
@@ -374,6 +398,17 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
     },
+  });
+
+  // A local-first journal must never navigate itself away from the bundled UI,
+  // and must never open arbitrary child windows.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:$/.test(new URL(url).protocol)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  win.webContents.on('will-navigate', (event, url) => {
+    if (url !== win.webContents.getURL()) event.preventDefault();
   });
 
   win.loadFile('renderer/index.html');
@@ -823,11 +858,24 @@ function registerHandlers() {
   ipcMain.on('window:close', () => win?.close());
 }
 
-app.whenReady().then(() => {
-  createWindow();
-  watchSignalsFile();
-  watchAllFundedNextFolders();
-  registerHandlers();
-});
+// Two instances would race on the same journal-data.json and could lose trades.
+const hasInstanceLock = app.requestSingleInstanceLock();
 
-app.on('window-all-closed', () => app.quit());
+if (!hasInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!win) return;
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  });
+
+  app.whenReady().then(() => {
+    createWindow();
+    watchSignalsFile();
+    watchAllFundedNextFolders();
+    registerHandlers();
+  });
+
+  app.on('window-all-closed', () => app.quit());
+}

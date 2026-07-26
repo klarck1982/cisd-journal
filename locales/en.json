@@ -9,7 +9,8 @@
     "subtitle": "Trading Discipline OS",
     "footer": "LOCAL · PRIVATE · NO EA",
     "accounts": "Accounts",
-    "newChallenge": "+ Challenge"
+    "newChallenge": "+ Challenge",
+    "commandHint": "Ctrl+K"
   },
   "nav": {
     "overview": "Overview",
@@ -84,6 +85,18 @@
       "insightStable": "Your workflow is stable right now. Keep turning signals into clear decisions.",
       "pending": "Pending",
       "reviewed": "Reviewed"
+    },
+    "quickStart": {
+      "title": "Finish your setup",
+      "description": "Complete these steps to unlock the full dashboard.",
+      "capital": "Set initial capital and risk limits",
+      "capitalAction": "Open account settings",
+      "csv": "Select the JForex CISD CSV file",
+      "csvAction": "Choose CSV",
+      "news": "Connect a news provider (optional)",
+      "newsAction": "Open settings",
+      "done": "Setup complete",
+      "dismiss": "Hide this"
     }
   },
   "signals": {
@@ -172,7 +185,18 @@
       "clear": "Clear guidance",
       "enteredBadge": "Entered signal",
       "linkBadge": "Signal link active"
-    }
+    },
+    "charts": {
+      "title": "Chart screenshots",
+      "before": "Before entry",
+      "after": "After exit",
+      "choose": "Attach image",
+      "remove": "Remove",
+      "empty": "No image attached"
+    },
+    "export": "Export trades CSV",
+    "exported": "Trades exported ✓",
+    "exportEmpty": "There are no trades to export for this account."
   },
   "backtest": {
     "kicker": "Historical discipline replay",
@@ -395,7 +419,13 @@
       "target": "Profit target %",
       "dailyLoss": "Daily loss limit %",
       "maxDrawdown": "Maximum drawdown %"
-    }
+    },
+    "dangerTitle": "Danger zone",
+    "dangerDescription": "These actions affect the active account only and cannot be undone without a backup.",
+    "resetAccount": "Reset current account",
+    "resetConfirmTitle": "Reset this account?",
+    "resetConfirmText": "All trades, open positions, backtests, and daily notes for this account will be permanently deleted. Export a backup first.",
+    "resetDone": "Account data reset ✓"
   },
   "warnings": {
     "ALL_CLEAR": "No active risk warnings.",
@@ -429,7 +459,13 @@
       "noData": "No data yet."
     },
     "error": "Error",
-    "loading": "Loading workspace…"
+    "loading": "Loading workspace…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "close": "Close",
+    "required": "This field is required.",
+    "invalidNumber": "Enter a valid number."
   },
   "messages": {
     "preferencesSaved": "Preferences saved ✓",
@@ -477,7 +513,11 @@
     "investorPasswordRequired": "Investor password is required unless one is already stored",
     "fundingAccessMissing": "No funding access is configured for this account",
     "investorNotImplemented": "Investor Pass live sync is not implemented yet. Shared Dashboard sync can be tested now.",
-    "fundingBridgeExeMissing": "Bundled MT5 bridge EXE is missing. Build and ship bridges/mt5_readonly_sync.exe with the desktop app."
+    "fundingBridgeExeMissing": "Bundled MT5 bridge EXE is missing. Build and ship bridges/mt5_readonly_sync.exe with the desktop app.",
+    "importEmptyCsv": "The CSV file is empty.",
+    "importNotFundedNext": "This is not a FundedNext CSV in the expected format.",
+    "importNoMt5Table": "No MT5 trade table was found in this report.",
+    "importMt5ColumnsMissing": "Required MT5 columns are missing from this report."
   },
   "funding": {
     "title": "Funding access",
@@ -510,5 +550,28 @@
     "sync": "Sync funding data",
     "bridgeReady": "bundled MT5 bridge EXE detected",
     "bridgeMissing": "bundled MT5 bridge EXE missing"
+  },
+  "accountModal": {
+    "title": "New challenge account",
+    "description": "Create a separate account so trades, signals, and analytics never mix between prop firms.",
+    "firm": "Firm",
+    "firmPlaceholder": "FundingPips",
+    "name": "Account / challenge name",
+    "namePlaceholder": "Phase 1 — 100K",
+    "capital": "Initial capital",
+    "currency": "Currency",
+    "phase": "Phase",
+    "target": "Profit target %",
+    "dailyLoss": "Daily loss limit %",
+    "maxDrawdown": "Maximum drawdown %",
+    "submit": "Create account",
+    "created": "Account created ✓",
+    "firmRequired": "Enter the firm name.",
+    "nameRequired": "Enter an account name."
+  },
+  "confirmModal": {
+    "defaultTitle": "Please confirm",
+    "confirm": "Confirm",
+    "typeToConfirm": "Type {{word}} to confirm"
   }
 }

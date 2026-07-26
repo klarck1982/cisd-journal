@@ -79,6 +79,15 @@
             </div>
           </div>
 
+          <section class="panel slim quick-start hidden" id="quickStartPanel">
+            <div class="panel-head">
+              <h3 id="quickStartTitle"></h3>
+              <button id="quickStartDismiss" class="ghost small"></button>
+            </div>
+            <p class="muted" id="quickStartDescription"></p>
+            <div id="quickStartSteps" class="quick-start-steps"></div>
+          </section>
+
           <section class="panel spotlight overview-hero">
             <div class="hero-main">
               <div class="section-kicker" id="overviewHeroKicker"></div>
@@ -260,6 +269,27 @@
                   <span id="tradeNoteLabel"></span>
                   <textarea id="tradeNote" rows="4" placeholder="Why did you execute or hesitate?"></textarea>
                 </label>
+                <div class="full chart-attach">
+                  <span class="chart-attach-title" id="tradeChartsTitle"></span>
+                  <div class="chart-attach-grid">
+                    <div class="chart-slot" data-slot="before">
+                      <small id="tradeChartBeforeLabel"></small>
+                      <div class="chart-slot-preview" id="tradeChartBeforePreview"></div>
+                      <div class="chart-slot-actions">
+                        <button type="button" class="ghost small" id="tradeChartBeforeBtn"></button>
+                        <button type="button" class="ghost small danger hidden" id="tradeChartBeforeClear"></button>
+                      </div>
+                    </div>
+                    <div class="chart-slot" data-slot="after">
+                      <small id="tradeChartAfterLabel"></small>
+                      <div class="chart-slot-preview" id="tradeChartAfterPreview"></div>
+                      <div class="chart-slot-actions">
+                        <button type="button" class="ghost small" id="tradeChartAfterBtn"></button>
+                        <button type="button" class="ghost small danger hidden" id="tradeChartAfterClear"></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div class="form-actions full">
                   <button type="submit" class="primary" id="saveTradeBtn"></button>
                 </div>
@@ -269,7 +299,7 @@
             <section class="panel">
               <div class="panel-head">
                 <h3 id="recentTradesTitle"></h3>
-                <span id="recentTradesHint" class="panel-hint"></span>
+                <button id="exportTradesBtn" class="ghost small"></button>
               </div>
               <div class="toolbar-inline">
                 <input id="journalSearch" class="search-input" type="search" placeholder="Search trades">
@@ -662,8 +692,92 @@
               </div>
             </section>
           </div>
+
+          <section class="panel danger-zone">
+            <div class="panel-head"><h3 id="dangerZoneTitle"></h3></div>
+            <p class="muted" id="dangerZoneDescription"></p>
+            <div class="button-row">
+              <button id="resetAccountBtn" class="ghost danger"></button>
+            </div>
+          </section>
         </section>
       </main>
+    </div>
+  </div>
+
+  <div id="accountModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="panel-head">
+        <h3 id="accountModalTitle"></h3>
+        <button id="closeAccountModal" class="ghost icon">×</button>
+      </div>
+      <p id="accountModalDescription" class="muted"></p>
+      <form id="accountModalForm" class="form-grid compact-form">
+        <label>
+          <span id="accountModalFirmLabel"></span>
+          <input id="accountModalFirm" autocomplete="off">
+        </label>
+        <label>
+          <span id="accountModalNameLabel"></span>
+          <input id="accountModalName" autocomplete="off">
+        </label>
+        <label>
+          <span id="accountModalCapitalLabel"></span>
+          <input id="accountModalCapital" type="number" min="0" step="100">
+        </label>
+        <label>
+          <span id="accountModalCurrencyLabel"></span>
+          <select id="accountModalCurrency">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </label>
+        <label>
+          <span id="accountModalPhaseLabel"></span>
+          <select id="accountModalPhase">
+            <option value="Challenge">Challenge</option>
+            <option value="Phase 1">Phase 1</option>
+            <option value="Phase 2">Phase 2</option>
+            <option value="Funded">Funded</option>
+            <option value="Practice">Practice</option>
+          </select>
+        </label>
+        <label>
+          <span id="accountModalTargetLabel"></span>
+          <input id="accountModalTarget" type="number" min="0" step="0.1">
+        </label>
+        <label>
+          <span id="accountModalDailyLossLabel"></span>
+          <input id="accountModalDailyLoss" type="number" min="0" step="0.1">
+        </label>
+        <label>
+          <span id="accountModalDrawdownLabel"></span>
+          <input id="accountModalDrawdown" type="number" min="0" step="0.1">
+        </label>
+        <div class="form-actions full">
+          <button type="button" class="ghost" id="cancelAccountModal"></button>
+          <button type="submit" class="primary" id="submitAccountModal"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal hidden">
+    <div class="modal-card confirm-modal-card">
+      <div class="panel-head">
+        <h3 id="confirmModalTitle"></h3>
+        <button id="closeConfirmModal" class="ghost icon">×</button>
+      </div>
+      <p id="confirmModalText" class="muted"></p>
+      <label class="full hidden" id="confirmModalTypeWrap">
+        <span id="confirmModalTypeLabel"></span>
+        <input id="confirmModalTypeInput" autocomplete="off">
+      </label>
+      <div class="form-actions">
+        <button type="button" class="ghost" id="cancelConfirmModal"></button>
+        <button type="button" class="primary danger-solid" id="acceptConfirmModal"></button>
+      </div>
     </div>
   </div>
 

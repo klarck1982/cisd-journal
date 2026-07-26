@@ -19,6 +19,8 @@ const model = {
   backtestReviewStatus: 'WIN',
   journalPrefill: null,
   journalGuidanceMode: null,
+  tradeCharts: { beforeImage: '', afterImage: '' },
+  quickStartDismissed: false,
   busy: false,
   search: {
     signals: '',
@@ -54,6 +56,7 @@ function persistUiState() {
       selectedBacktestId: model.selectedBacktestId,
       filters: model.filters,
       search: model.search,
+      quickStartDismissed: model.quickStartDismissed,
     }));
   } catch {}
 }
@@ -68,6 +71,7 @@ function restoreUiState() {
     if (saved.selectedBacktestId) model.selectedBacktestId = saved.selectedBacktestId;
     if (saved.filters) model.filters = { ...model.filters, ...saved.filters };
     if (saved.search) model.search = { ...model.search, ...saved.search };
+    if (saved.quickStartDismissed) model.quickStartDismissed = true;
   } catch {}
 }
 
@@ -86,6 +90,55 @@ async function runBusy(message, task) {
   } finally {
     setBusy(false);
   }
+}
+
+function openConfirm({ title, text, confirmLabel, typeToConfirm = '' }) {
+  return new Promise((resolve) => {
+    const modal = $('#confirmModal');
+    const input = $('#confirmModalTypeInput');
+    const accept = $('#acceptConfirmModal');
+
+    $('#confirmModalTitle').textContent = title || t('confirmModal.defaultTitle');
+    $('#confirmModalText').textContent = text || '';
+    $('#cancelConfirmModal').textContent = t('ui.cancel');
+    accept.textContent = confirmLabel || t('confirmModal.confirm');
+
+    $('#confirmModalTypeWrap').classList.toggle('hidden', !typeToConfirm);
+    $('#confirmModalTypeLabel').textContent = typeToConfirm ? t('confirmModal.typeToConfirm', { word: typeToConfirm }) : '';
+    input.value = '';
+    accept.disabled = !!typeToConfirm;
+
+    const validate = () => {
+      accept.disabled = input.value.trim().toUpperCase() !== typeToConfirm.toUpperCase();
+    };
+
+    const cleanup = (result) => {
+      modal.classList.add('hidden');
+      input.removeEventListener('input', validate);
+      document.removeEventListener('keydown', onKey);
+      accept.onclick = null;
+      $('#cancelConfirmModal').onclick = null;
+      $('#closeConfirmModal').onclick = null;
+      modal.onclick = null;
+      resolve(result);
+    };
+
+    const onKey = (event) => {
+      if (event.key === 'Escape') cleanup(false);
+    };
+
+    if (typeToConfirm) input.addEventListener('input', validate);
+    document.addEventListener('keydown', onKey);
+    accept.onclick = () => cleanup(true);
+    $('#cancelConfirmModal').onclick = () => cleanup(false);
+    $('#closeConfirmModal').onclick = () => cleanup(false);
+    modal.onclick = (event) => {
+      if (event.target.id === 'confirmModal') cleanup(false);
+    };
+
+    modal.classList.remove('hidden');
+    (typeToConfirm ? input : accept).focus();
+  });
 }
 
 function activeAccount() {
@@ -117,7 +170,19 @@ function escapeHtml(value) {
 }
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  // Trading day in the configured timezone (prop-firm limits reset on the trading day,
+  // not on the UTC day).
+  const zone = model.state?.settings?.timezone || 'America/New_York';
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: zone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
 }
 
 function formatCurrency(value, currency) {
@@ -498,7 +563,14 @@ function applyStaticText() {
   $('#tradeNoteLabel').textContent = t('journal.form.note');
   $('#saveTradeBtn').innerHTML = `${icon('journal','button-icon')}${escapeHtml(t('journal.form.save'))}`;
   $('#recentTradesTitle').innerHTML = iconText('journal', t('journal.recentTrades.title'));
-  $('#recentTradesHint').textContent = t('journal.recentTrades.hint');
+  $('#exportTradesBtn').innerHTML = `${icon('import', 'button-icon')}${escapeHtml(t('journal.export'))}`;
+  $('#tradeChartsTitle').textContent = t('journal.charts.title');
+  $('#tradeChartBeforeLabel').textContent = t('journal.charts.before');
+  $('#tradeChartAfterLabel').textContent = t('journal.charts.after');
+  $('#tradeChartBeforeBtn').textContent = t('journal.charts.choose');
+  $('#tradeChartAfterBtn').textContent = t('journal.charts.choose');
+  $('#tradeChartBeforeClear').textContent = t('journal.charts.remove');
+  $('#tradeChartAfterClear').textContent = t('journal.charts.remove');
   $('#journalSearch').placeholder = t('journal.searchPlaceholder');
   $('#journalGuidanceBackBtn').textContent = t('journal.guidance.backToSignals');
   $('#journalGuidanceClearBtn').textContent = t('journal.guidance.clear');
@@ -605,6 +677,27 @@ function applyStaticText() {
   $('#restoreBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.restore'))}`;
   $('#openGuideBtn').innerHTML = `${icon('journal','button-icon')}${escapeHtml(t('settings.guide'))}`;
   $('#restartOnboardingBtn').innerHTML = `${icon('settings','button-icon')}${escapeHtml(t('settings.restartOnboarding'))}`;
+  $('#quickStartTitle').textContent = t('overview.quickStart.title');
+  $('#quickStartDescription').textContent = t('overview.quickStart.description');
+  $('#quickStartDismiss').textContent = t('overview.quickStart.dismiss');
+  $('#dangerZoneTitle').textContent = t('settings.dangerTitle');
+  $('#dangerZoneDescription').textContent = t('settings.dangerDescription');
+  $('#resetAccountBtn').innerHTML = `${icon('risk','button-icon')}${escapeHtml(t('settings.resetAccount'))}`;
+
+  $('#accountModalTitle').textContent = t('accountModal.title');
+  $('#accountModalDescription').textContent = t('accountModal.description');
+  $('#accountModalFirmLabel').textContent = t('accountModal.firm');
+  $('#accountModalNameLabel').textContent = t('accountModal.name');
+  $('#accountModalCapitalLabel').textContent = t('accountModal.capital');
+  $('#accountModalCurrencyLabel').textContent = t('accountModal.currency');
+  $('#accountModalPhaseLabel').textContent = t('accountModal.phase');
+  $('#accountModalTargetLabel').textContent = t('accountModal.target');
+  $('#accountModalDailyLossLabel').textContent = t('accountModal.dailyLoss');
+  $('#accountModalDrawdownLabel').textContent = t('accountModal.maxDrawdown');
+  $('#accountModalFirm').placeholder = t('accountModal.firmPlaceholder');
+  $('#accountModalName').placeholder = t('accountModal.namePlaceholder');
+  $('#cancelAccountModal').textContent = t('ui.cancel');
+  $('#submitAccountModal').textContent = t('accountModal.submit');
 
   $('#reasonModalTitle').textContent = t('signals.reasonModal.title');
   $('#reasonModalDescription').textContent = t('signals.reasonModal.description');
@@ -690,11 +783,70 @@ function renderOverviewHero(account, dashboard) {
   `;
 }
 
+function renderQuickStart() {
+  const panel = $('#quickStartPanel');
+  const account = activeAccount();
+
+  if (model.quickStartDismissed || !account) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  const steps = [
+    {
+      done: Number(account.capital) > 0 && Number(account.dailyLoss) > 0 && Number(account.maxDrawdown) > 0,
+      label: t('overview.quickStart.capital'),
+      action: t('overview.quickStart.capitalAction'),
+      go: 'settings',
+    },
+    {
+      done: !!model.state?.settings?.csvPath,
+      label: t('overview.quickStart.csv'),
+      action: t('overview.quickStart.csvAction'),
+      go: 'csv',
+    },
+    {
+      done: !!model.newsConfigured,
+      label: t('overview.quickStart.news'),
+      action: t('overview.quickStart.newsAction'),
+      go: 'settings',
+    },
+  ];
+
+  if (steps.every((step) => step.done)) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  panel.classList.remove('hidden');
+  $('#quickStartSteps').innerHTML = steps.map((step, index) => `
+    <div class="quick-step ${step.done ? 'done' : ''}">
+      <span class="quick-step-index">${step.done ? '✓' : index + 1}</span>
+      <span class="quick-step-label">${escapeHtml(step.label)}</span>
+      ${step.done ? '' : `<button class="ghost small" data-quick-go="${escapeHtml(step.go)}">${escapeHtml(step.action)}</button>`}
+    </div>
+  `).join('');
+
+  $$('[data-quick-go]').forEach((button) => {
+    button.onclick = async () => {
+      if (button.dataset.quickGo === 'csv') {
+        await chooseCsv();
+        return;
+      }
+      model.page = 'settings';
+      persistUiState();
+      renderActivePage();
+      renderWorkspaceStatus();
+    };
+  });
+}
+
 function renderOverview() {
   const account = activeAccount();
   const dashboard = model.dashboard;
   if (!account || !dashboard) return;
 
+  renderQuickStart();
   renderOverviewHero(account, dashboard);
 
   $('#overviewHealthCards').innerHTML = [
@@ -1042,7 +1194,12 @@ function renderBacktest() {
   });
   $$('[data-backtest-reset]').forEach((button) => {
     button.onclick = async () => {
-      if (!confirm(t('backtest.library.resetConfirm'))) return;
+      const ok = await openConfirm({
+        title: t('backtest.library.reset'),
+        text: t('backtest.library.resetConfirm'),
+        confirmLabel: t('backtest.library.reset'),
+      });
+      if (!ok) return;
       await runBusy(t('ui.loading'), () => cisd.resetBacktest(button.dataset.backtestReset));
       if (model.selectedBacktestId === button.dataset.backtestReset) model.selectedBacktestId = null;
       persistUiState();
@@ -1584,6 +1741,8 @@ async function saveTrade(event) {
     signalId: signalId || '',
     tags: $('#tradeTags').value.trim(),
     note: $('#tradeNote').value.trim(),
+    beforeImage: model.tradeCharts.beforeImage,
+    afterImage: model.tradeCharts.afterImage,
   };
 
   if (!trade.symbol) {
@@ -1599,6 +1758,8 @@ async function saveTrade(event) {
   await refreshSnapshots();
   $('#tradeForm').reset();
   $('#tradeDate').value = todayKey();
+  model.tradeCharts = { beforeImage: '', afterImage: '' };
+  renderChartSlots();
   clearJournalGuidance();
   render();
   toast(t('messages.tradeSaved'), 'success');
@@ -1627,30 +1788,60 @@ async function startBacktest(event) {
   }
 }
 
-async function createAccount() {
-  const firm = prompt(t('settings.newAccount.prompts.firm'), 'FundingPips');
-  if (!firm) return;
-  const name = prompt(t('settings.newAccount.prompts.name'), 'New Challenge');
-  if (!name) return;
-  const capital = Number(prompt(t('settings.newAccount.prompts.capital'), '100000')) || 0;
-  const phase = prompt(t('settings.newAccount.prompts.phase'), 'Challenge') || 'Challenge';
+function openAccountModal() {
+  $('#accountModalFirm').value = 'FundingPips';
+  $('#accountModalName').value = '';
+  $('#accountModalCapital').value = '100000';
+  $('#accountModalCurrency').value = 'USD';
+  $('#accountModalPhase').value = 'Challenge';
+  $('#accountModalTarget').value = '10';
+  $('#accountModalDailyLoss').value = '5';
+  $('#accountModalDrawdown').value = '10';
+  $('#accountModal').classList.remove('hidden');
+  $('#accountModalFirm').focus();
+}
+
+function closeAccountModal() {
+  $('#accountModal').classList.add('hidden');
+}
+
+async function createAccount(event) {
+  event?.preventDefault();
+  const firm = $('#accountModalFirm').value.trim();
+  const name = $('#accountModalName').value.trim();
+
+  if (!firm) {
+    toast(t('accountModal.firmRequired'), 'warn');
+    $('#accountModalFirm').focus();
+    return;
+  }
+  if (!name) {
+    toast(t('accountModal.nameRequired'), 'warn');
+    $('#accountModalName').focus();
+    return;
+  }
+
+  const capital = Number($('#accountModalCapital').value || 0);
   const nextState = await runBusy(t('ui.loading'), () => cisd.saveAccount({
     firm,
     name,
     capital,
     currentBalance: capital,
-    currency: 'USD',
-    phase,
-    profitTarget: 0,
-    dailyLoss: 0,
-    maxDrawdown: 0,
+    currency: $('#accountModalCurrency').value,
+    phase: $('#accountModalPhase').value,
+    profitTarget: Number($('#accountModalTarget').value || 0),
+    dailyLoss: Number($('#accountModalDailyLoss').value || 0),
+    maxDrawdown: Number($('#accountModalDrawdown').value || 0),
   }));
+
   model.state = nextState;
   model.accountId = visibleAccounts().slice(-1)[0]?.id || model.accountId;
+  closeAccountModal();
   persistUiState();
   await refreshFundingAccess();
   await refreshSnapshots();
   render();
+  toast(t('accountModal.created'), 'success');
 }
 
 async function chooseTerminal() {
@@ -1708,13 +1899,83 @@ async function watchFundedNext() {
   }
 }
 
+function renderChartSlots() {
+  for (const slot of ['before', 'after']) {
+    const key = slot === 'before' ? 'beforeImage' : 'afterImage';
+    const value = model.tradeCharts[key];
+    const cap = slot === 'before' ? 'Before' : 'After';
+    const preview = $(`#tradeChart${cap}Preview`);
+    preview.innerHTML = value
+      ? `<img src="${escapeHtml(`file://${value}`)}" alt="">`
+      : `<span class="chart-slot-empty">${escapeHtml(t('journal.charts.empty'))}</span>`;
+    $(`#tradeChart${cap}Clear`).classList.toggle('hidden', !value);
+  }
+}
+
+async function attachTradeChart(slot) {
+  try {
+    const filePath = await cisd.chooseImage();
+    if (!filePath) return;
+    model.tradeCharts[slot === 'before' ? 'beforeImage' : 'afterImage'] = filePath;
+    renderChartSlots();
+  } catch (error) {
+    toast(`${t('ui.error')}: ${error.message}`, 'error');
+  }
+}
+
+function clearTradeChart(slot) {
+  model.tradeCharts[slot === 'before' ? 'beforeImage' : 'afterImage'] = '';
+  renderChartSlots();
+}
+
+async function exportTrades() {
+  const account = activeAccount();
+  if (!account) return;
+  const hasTrades = (model.state?.trades || []).some((trade) => trade.accountId === account.id);
+  if (!hasTrades) {
+    toast(t('journal.exportEmpty'), 'warn');
+    return;
+  }
+  try {
+    const filePath = await runBusy(t('ui.loading'), () => cisd.exportTrades(account.id));
+    if (filePath) toast(t('journal.exported'), 'success');
+  } catch (error) {
+    toast(`${t('ui.error')}: ${error.message}`, 'error');
+  }
+}
+
+async function resetCurrentAccount() {
+  const account = activeAccount();
+  if (!account) return;
+  const ok = await openConfirm({
+    title: t('settings.resetConfirmTitle'),
+    text: t('settings.resetConfirmText'),
+    confirmLabel: t('settings.resetAccount'),
+    typeToConfirm: 'RESET',
+  });
+  if (!ok) return;
+  try {
+    model.state = await runBusy(t('ui.loading'), () => cisd.resetAccount(account.id));
+    await refreshSnapshots();
+    render();
+    toast(t('settings.resetDone'), 'success');
+  } catch (error) {
+    toast(`${t('ui.error')}: ${error.message}`, 'error');
+  }
+}
+
 async function backupData() {
   const path = await runBusy(t('ui.loading'), () => cisd.backup());
   if (path) toast(t('messages.backupSaved'), 'success');
 }
 
 async function restoreData() {
-  if (!confirm(t('settings.restoreConfirm'))) return;
+  const ok = await openConfirm({
+    title: t('settings.restore'),
+    text: t('settings.restoreConfirm'),
+    confirmLabel: t('settings.restore'),
+  });
+  if (!ok) return;
   try {
     const result = await runBusy(t('ui.loading'), () => cisd.restore());
     if (!result.cancelled) {
@@ -1762,7 +2023,26 @@ function bindEvents() {
   $('#minimizeBtn').onclick = () => cisd.minimize();
   $('#maximizeBtn').onclick = () => cisd.maximize();
   $('#closeBtn').onclick = () => cisd.close();
-  $('#newAccountBtn').onclick = createAccount;
+  $('#newAccountBtn').onclick = openAccountModal;
+  $('#accountModalForm').addEventListener('submit', createAccount);
+  $('#cancelAccountModal').onclick = closeAccountModal;
+  $('#closeAccountModal').onclick = closeAccountModal;
+  $('#accountModal').addEventListener('click', (event) => {
+    if (event.target.id === 'accountModal') closeAccountModal();
+  });
+
+  $('#quickStartDismiss').onclick = () => {
+    model.quickStartDismissed = true;
+    persistUiState();
+    renderQuickStart();
+  };
+
+  $('#exportTradesBtn').onclick = exportTrades;
+  $('#resetAccountBtn').onclick = resetCurrentAccount;
+  $('#tradeChartBeforeBtn').onclick = () => attachTradeChart('before');
+  $('#tradeChartAfterBtn').onclick = () => attachTradeChart('after');
+  $('#tradeChartBeforeClear').onclick = () => clearTradeChart('before');
+  $('#tradeChartAfterClear').onclick = () => clearTradeChart('after');
 
   $$('.nav-link').forEach((button) => {
     button.onclick = () => {
@@ -1843,6 +2123,13 @@ function bindEvents() {
 
   ['#filterPeriod', '#filterSource', '#filterInstrument', '#filterSide', '#filterSession'].forEach((selector) => {
     $(selector).addEventListener('change', updateFilters);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (!$('#accountModal').classList.contains('hidden')) closeAccountModal();
+    if (model.reasonSignalId) closeReasonModal();
+    if (model.backtestReviewSignalId) closeBacktestReviewModal();
   });
 }
 

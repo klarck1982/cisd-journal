@@ -9,7 +9,8 @@
     "subtitle": "Trading Discipline OS",
     "footer": "LOCAL · PRIVATE · NO EA",
     "accounts": "الحسابات",
-    "newChallenge": "+ Challenge"
+    "newChallenge": "+ Challenge",
+    "commandHint": "Ctrl+K"
   },
   "nav": {
     "overview": "الرئيسية",
@@ -84,6 +85,18 @@
       "insightStable": "سير العمل لديك مستقر الآن. واصل تحويل الإشارات إلى قرارات واضحة.",
       "pending": "معلقة",
       "reviewed": "تمت مراجعتها"
+    },
+    "quickStart": {
+      "title": "أكمل الإعداد",
+      "description": "أكمل هذه الخطوات لتفعيل لوحة القيادة بالكامل.",
+      "capital": "حدد رأس المال وحدود المخاطرة",
+      "capitalAction": "فتح إعدادات الحساب",
+      "csv": "اختر ملف إشارات CISD من JForex",
+      "csvAction": "اختيار الملف",
+      "news": "اربط مزود الأخبار (اختياري)",
+      "newsAction": "فتح الإعدادات",
+      "done": "اكتمل الإعداد",
+      "dismiss": "إخفاء"
     }
   },
   "signals": {
@@ -172,7 +185,18 @@
       "clear": "إلغاء التوجيه",
       "enteredBadge": "إشارة تم الدخول عليها",
       "linkBadge": "ربط الإشارة مفعّل"
-    }
+    },
+    "charts": {
+      "title": "صور الشارت",
+      "before": "قبل الدخول",
+      "after": "بعد الخروج",
+      "choose": "إرفاق صورة",
+      "remove": "إزالة",
+      "empty": "لا توجد صورة مرفقة"
+    },
+    "export": "تصدير الصفقات CSV",
+    "exported": "تم تصدير الصفقات ✓",
+    "exportEmpty": "لا توجد صفقات لتصديرها في هذا الحساب."
   },
   "backtest": {
     "kicker": "إعادة اختبار الانضباط تاريخيًا",
@@ -395,7 +419,13 @@
       "target": "هدف الربح %",
       "dailyLoss": "حد الخسارة اليومية %",
       "maxDrawdown": "أقصى سحب %"
-    }
+    },
+    "dangerTitle": "منطقة الخطر",
+    "dangerDescription": "هذه الإجراءات تؤثر على الحساب النشط فقط ولا يمكن التراجع عنها بدون نسخة احتياطية.",
+    "resetAccount": "تصفير الحساب الحالي",
+    "resetConfirmTitle": "تصفير هذا الحساب؟",
+    "resetConfirmText": "سيتم حذف كل الصفقات والمراكز المفتوحة والباكتيست والملاحظات اليومية لهذا الحساب نهائياً. صدّر نسخة احتياطية أولاً.",
+    "resetDone": "تم تصفير بيانات الحساب ✓"
   },
   "warnings": {
     "ALL_CLEAR": "لا توجد تحذيرات مخاطرة نشطة.",
@@ -429,7 +459,13 @@
       "noData": "لا توجد بيانات بعد."
     },
     "error": "خطأ",
-    "loading": "جارٍ تحميل مساحة العمل…"
+    "loading": "جارٍ تحميل مساحة العمل…",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "create": "إنشاء",
+    "close": "إغلاق",
+    "required": "هذا الحقل مطلوب.",
+    "invalidNumber": "أدخل رقماً صحيحاً."
   },
   "messages": {
     "preferencesSaved": "تم حفظ التفضيلات ✓",
@@ -477,7 +513,11 @@
     "investorPasswordRequired": "Investor Password مطلوبة ما لم تكن محفوظة مسبقًا",
     "fundingAccessMissing": "لا يوجد مصدر وصول لبيانات التمويل مهيأ لهذا الحساب",
     "investorNotImplemented": "المزامنة الحية عبر Investor Pass لم تُنفذ بعد. يمكن اختبار Shared Dashboard الآن.",
-    "fundingBridgeExeMissing": "ملف MT5 bridge التنفيذي غير موجود داخل الحزمة. ابنِ وأرفق bridges/mt5_readonly_sync.exe مع نسخة التطبيق."
+    "fundingBridgeExeMissing": "ملف MT5 bridge التنفيذي غير موجود داخل الحزمة. ابنِ وأرفق bridges/mt5_readonly_sync.exe مع نسخة التطبيق.",
+    "importEmptyCsv": "ملف CSV فارغ.",
+    "importNotFundedNext": "هذا ليس ملف FundedNext CSV بالتنسيق المتوقع.",
+    "importNoMt5Table": "لم أجد جدول صفقات MT5 في هذا التقرير.",
+    "importMt5ColumnsMissing": "أعمدة MT5 الأساسية غير موجودة في هذا التقرير."
   },
   "funding": {
     "title": "وصول بيانات شركة التمويل",
@@ -510,5 +550,28 @@
     "sync": "مزامنة بيانات التمويل",
     "bridgeReady": "تم العثور على MT5 bridge التنفيذي داخل الحزمة",
     "bridgeMissing": "ملف MT5 bridge التنفيذي غير موجود داخل الحزمة"
+  },
+  "accountModal": {
+    "title": "حساب تحدٍ جديد",
+    "description": "أنشئ حساباً منفصلاً حتى لا تختلط الصفقات والإشارات والتحليلات بين شركات التمويل.",
+    "firm": "الشركة",
+    "firmPlaceholder": "FundingPips",
+    "name": "اسم الحساب / التحدي",
+    "namePlaceholder": "المرحلة 1 — 100K",
+    "capital": "رأس المال الابتدائي",
+    "currency": "العملة",
+    "phase": "المرحلة",
+    "target": "هدف الربح %",
+    "dailyLoss": "حد الخسارة اليومي %",
+    "maxDrawdown": "أقصى تراجع %",
+    "submit": "إنشاء الحساب",
+    "created": "تم إنشاء الحساب ✓",
+    "firmRequired": "أدخل اسم الشركة.",
+    "nameRequired": "أدخل اسم الحساب."
+  },
+  "confirmModal": {
+    "defaultTitle": "تأكيد الإجراء",
+    "confirm": "تأكيد",
+    "typeToConfirm": "اكتب {{word}} للتأكيد"
   }
 }
