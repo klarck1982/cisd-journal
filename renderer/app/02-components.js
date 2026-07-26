@@ -3,6 +3,14 @@
  * (metric cards, empty states, list rows, charts, breakdowns, heatmap).
  */
 
+/**
+ * Equity curve with hover inspection.
+ *
+ * A static curve shows the shape but hides the detail: which trade caused a drop, and
+ * when. Each point gets an invisible hit area spanning its slice of the chart, so
+ * pointing anywhere near it reveals that trade's date, result and running equity.
+ * Hit areas are generous by design — a 4px dot is unhittable with a mouse.
+ */
 function buildCurveSvg(points) {
   if (!points.length) return emptyState(t('analytics.emptyCurve'));
   const width = 920;
@@ -24,8 +32,25 @@ function buildCurveSvg(points) {
     return `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="rgba(255,255,255,.06)" stroke-dasharray="4 6" stroke-width="1"></line>`;
   }).join('');
   const dots = xs.map((x, index) => `<circle cx="${x}" cy="${yFor(values[index])}" r="2.5" fill="#9fd0ff" opacity="${index === values.length - 1 ? '0' : '.65'}"></circle>`).join('');
+
+  // One hit area per point, each covering half the gap to its neighbours.
+  const step = points.length > 1 ? (width - paddingX * 2) / (points.length - 1) : width;
+  const hotspots = xs.map((x, index) => {
+    const point = points[index];
+    const left = index === 0 ? 0 : x - step / 2;
+    const slice = index === 0 || index === xs.length - 1 ? step / 2 + paddingX : step;
+    return `<rect class="curve-hit" x="${Math.max(0, left)}" y="0" width="${slice}" height="${height}"
+      fill="transparent"
+      data-curve-index="${index}"
+      data-curve-x="${x}"
+      data-curve-y="${yFor(values[index])}"
+      data-curve-at="${escapeHtml(point.at || '')}"
+      data-curve-result="${point.result}"
+      data-curve-equity="${point.equity}"></rect>`;
+  }).join('');
+
   return `
-    <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+    <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="curve-svg">
       <defs>
         <linearGradient id="curveFill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.34"></stop>
@@ -42,8 +67,70 @@ function buildCurveSvg(points) {
       <polyline points="${polyline}" fill="none" stroke="#58a6ff" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" filter="url(#curveGlow)"></polyline>
       ${dots}
       <circle cx="${lastX}" cy="${lastY}" r="6" fill="#58a6ff" stroke="#d9f0ff" stroke-width="2"></circle>
+      <line class="curve-cursor hidden" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}"
+            stroke="rgba(88,166,255,.5)" stroke-width="1" stroke-dasharray="3 4"></line>
+      <circle class="curve-marker hidden" r="5" fill="#d9f0ff" stroke="#58a6ff" stroke-width="2"></circle>
+      ${hotspots}
     </svg>
   `;
+}
+
+/**
+ * Attaches hover inspection to a rendered curve.
+ * Safe to call repeatedly: listeners live on the freshly rendered nodes.
+ */
+function bindCurveTooltip(containerSelector, unitLabel = '') {
+  const container = $(containerSelector);
+  if (!container) return;
+
+  const svg = container.querySelector('.curve-svg');
+  const tooltip = $('#curveTooltip');
+  if (!svg || !tooltip) return;
+
+  const cursor = svg.querySelector('.curve-cursor');
+  const marker = svg.querySelector('.curve-marker');
+
+  const hide = () => {
+    tooltip.classList.add('hidden');
+    cursor?.classList.add('hidden');
+    marker?.classList.add('hidden');
+  };
+
+  svg.querySelectorAll('.curve-hit').forEach((hit) => {
+    hit.addEventListener('mouseenter', () => {
+      const x = Number(hit.dataset.curveX);
+      const y = Number(hit.dataset.curveY);
+      const result = Number(hit.dataset.curveResult) || 0;
+      const equity = Number(hit.dataset.curveEquity) || 0;
+
+      cursor?.setAttribute('x1', x);
+      cursor?.setAttribute('x2', x);
+      cursor?.classList.remove('hidden');
+      marker?.setAttribute('cx', x);
+      marker?.setAttribute('cy', y);
+      marker?.classList.remove('hidden');
+
+      tooltip.innerHTML = `
+        <strong>${escapeHtml(formatDateTime(hit.dataset.curveAt) || t('ui.noValue'))}</strong>
+        <span class="${result >= 0 ? 'value-good' : 'value-bad'}">
+          ${result > 0 ? '+' : ''}${escapeHtml(formatNumber(result, 2))}${escapeHtml(unitLabel)}
+        </span>
+        <span class="curve-tooltip-equity">
+          ${escapeHtml(t('analytics.curveEquity'))}: ${equity > 0 ? '+' : ''}${escapeHtml(formatNumber(equity, 2))}${escapeHtml(unitLabel)}
+        </span>
+      `;
+
+      // Position within the container, clamped so it never leaves the panel.
+      const bounds = container.getBoundingClientRect();
+      const ratio = x / 920;
+      const left = Math.min(Math.max(ratio * bounds.width, 70), bounds.width - 70);
+      tooltip.style.insetInlineStart = `${left}px`;
+      tooltip.style.top = `${(y / 240) * bounds.height}px`;
+      tooltip.classList.remove('hidden');
+    });
+  });
+
+  svg.addEventListener('mouseleave', hide);
 }
 
 function renderBreakdown(containerSelector, items, type = 'default') {

@@ -56,6 +56,8 @@ function renderAnalytics() {
   ].join('');
 
   $('#analyticsCurve').innerHTML = buildCurveSvg(analytics.totals.equityCurve);
+  // Trades journalled in R show an R suffix; cash accounts show a bare number.
+  bindCurveTooltip('#analyticsCurve', model.edge?.unit === 'R' ? 'R' : '');
   $('#analyticsCurveMeta').innerHTML = [
     { label: t('analytics.curveStats.best'), value: analytics.totals.bestResult, tone: analytics.totals.bestResult >= 0 ? 'good' : 'bad' },
     { label: t('analytics.curveStats.worst'), value: analytics.totals.worstResult, tone: analytics.totals.worstResult >= 0 ? 'good' : 'bad' },

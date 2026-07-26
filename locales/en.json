@@ -365,7 +365,8 @@
         "5": "Fri",
         "6": "Sat"
       }
-    }
+    },
+    "curveEquity": "Running equity"
   },
   "data": {
     "kicker": "Import operations",
