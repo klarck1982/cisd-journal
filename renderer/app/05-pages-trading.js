@@ -74,7 +74,13 @@ function renderSignalsPage() {
     metricCard(t('signals.metrics.coverage'), formatPercent(model.dashboard?.discipline?.rates?.decisionCoverage || 0), diagnostics ? `${diagnostics.added} ${t('signals.metrics.newSignals')}` : t('signals.metrics.coverageHint'), 'warn', 'source'),
   ].join('');
   $('#signalsLiveHint').textContent = diagnostics ? `${diagnostics.added} ${t('signals.metrics.newSignals')} · ${diagnostics.duplicates} ${t('signals.metrics.duplicates')}` : t('signals.summaryHint');
-  $('#signalList').innerHTML = renderListRows(liveSignalsForAccount(), renderSignalCard);
+  $('#signalList').innerHTML = renderListRows(
+    liveSignalsForAccount(),
+    renderSignalCard,
+    model.search.signals.trim()
+      ? { key: 'signalsFiltered', action: 'clearSignalSearch' }
+      : { key: 'signals', action: 'chooseCsv' }
+  );
   bindSignalActions();
 }
 
@@ -155,7 +161,9 @@ function renderJournal() {
         ${(trade.tags || '').split(',').filter(Boolean).slice(0, 3).map((tag) => `<span class="tag neutral">${escapeHtml(tag.trim())}</span>`).join('')}
       </div>
     </article>
-  `);
+  `, tradeQuery
+    ? { key: 'tradesFiltered', action: 'clearJournalSearch' }
+    : { key: 'trades', action: 'importReport' });
 }
 
 function backtestsForAccount() {
@@ -240,7 +248,7 @@ function renderBacktest() {
         </div>
       </article>
     `;
-  });
+  }, 'backtests');
 
   const reviewQuery = model.search.backtest.trim().toLowerCase();
   const reviewSignals = backtestSignalsForSelected().filter((signal) => !reviewQuery || `${signal.SignalID || ''} ${signal.Instrument || ''} ${signal.Direction || ''} ${signal.Session || ''} ${signal.TF || ''} ${signal.reviewNote || ''}`.toLowerCase().includes(reviewQuery));
@@ -268,7 +276,7 @@ function renderBacktest() {
         </div>
       </article>
     `;
-  });
+  }, 'backtestSignals');
 
   $$('[data-backtest-open]').forEach((button) => {
     button.onclick = () => {

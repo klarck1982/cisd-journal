@@ -191,9 +191,13 @@ function renderOverview() {
         </div>
       </div>
     `).join('')
-    : emptyState(model.newsConfigured ? t('overview.news.empty') : t('overview.news.notConfigured'));
+    : guidedEmpty('news', model.newsConfigured ? '' : 'openSettings');
 
   const liveSignals = allLiveSignalsForAccount();
   $('#overviewSignalsHint').textContent = `${liveSignals.length} ${t('signals.totalSignals')}`;
-  $('#overviewSignalList').innerHTML = renderListRows(liveSignals.slice(0, 5), renderSignalCard);
+  $('#overviewSignalList').innerHTML = renderListRows(
+    liveSignals.slice(0, 5),
+    renderSignalCard,
+    { key: 'signals', action: 'chooseCsv' }
+  );
 }

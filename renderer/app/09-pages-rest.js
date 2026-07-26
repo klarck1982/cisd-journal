@@ -143,7 +143,7 @@ function renderData() {
         </div>
       </article>
     `;
-  });
+  }, { key: 'imports', action: 'importReport' });
 }
 
 function toggleFundingAccessFields() {

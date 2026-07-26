@@ -21,6 +21,7 @@ function render() {
   renderReasonModal();
   renderBacktestReviewModal();
   renderActivePage();
+  bindEmptyStateActions();
 }
 
 async function refreshRuntimeReadiness() {

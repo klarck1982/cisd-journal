@@ -481,7 +481,67 @@
     "noValue": "No data",
     "unknown": "Unknown",
     "empty": {
-      "noData": "No data yet."
+      "noData": "No data yet.",
+      "signals": {
+        "title": "No CISD signals yet",
+        "text": "Select your JForex signals CSV and new signals will appear here automatically.",
+        "action": "Choose CSV file"
+      },
+      "signalsFiltered": {
+        "title": "No signals match your search",
+        "text": "Try a different symbol, session or timeframe.",
+        "action": "Clear search"
+      },
+      "trades": {
+        "title": "No trades logged yet",
+        "text": "Log your first trade, or import a report from FundedNext or MT5.",
+        "action": "Import a report"
+      },
+      "tradesFiltered": {
+        "title": "No trades match your search",
+        "text": "Try a different symbol, tag or note.",
+        "action": "Clear search"
+      },
+      "backtests": {
+        "title": "No backtest sessions yet",
+        "text": "Start a session before running a JForex backtest to capture its signals.",
+        "action": ""
+      },
+      "backtestSignals": {
+        "title": "No signals captured",
+        "text": "Refresh the session after your backtest finishes, or widen its filters.",
+        "action": ""
+      },
+      "playbooks": {
+        "title": "No playbooks yet",
+        "text": "Define your first strategy to start measuring whether following your rules pays.",
+        "action": "Create a playbook"
+      },
+      "reasons": {
+        "title": "No skipped signals recorded",
+        "text": "When you mark a signal as missed, its cost is priced and attributed here.",
+        "action": ""
+      },
+      "insights": {
+        "title": "Not enough data for insights",
+        "text": "Log a few trades and signal decisions, then come back.",
+        "action": ""
+      },
+      "imports": {
+        "title": "No imports yet",
+        "text": "Import a FundedNext or MT5 report and its diagnostics will appear here.",
+        "action": "Import a report"
+      },
+      "accounts": {
+        "title": "No accounts yet",
+        "text": "Create a challenge account to keep each prop firm separate.",
+        "action": "New account"
+      },
+      "news": {
+        "title": "No high-impact news",
+        "text": "Nothing scheduled, or the provider needs an API key in settings.",
+        "action": ""
+      }
     },
     "error": "Error",
     "loading": "Loading workspace…",

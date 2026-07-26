@@ -55,7 +55,7 @@ function renderEdge() {
         </div>
       </article>
     `;
-  });
+  }, 'reasons');
 
   // --- Realised vs available -------------------------------------------------
   const potential = edge.potential;
@@ -136,5 +136,5 @@ function renderEdge() {
         </div>
       </article>
     `;
-  });
+  }, 'insights');
 }

@@ -104,13 +104,7 @@ function renderPlaybooks() {
   ].join('') : '';
 
   if (!overview.count) {
-    $('#playbooksList').innerHTML = `
-      <div class="empty-state playbook-empty">
-        <p>${escapeHtml(t('playbooks.empty'))}</p>
-        <button class="primary" id="playbookEmptyCreate">${escapeHtml(t('playbooks.emptyAction'))}</button>
-      </div>
-    `;
-    $('#playbookEmptyCreate').onclick = openPlaybookModal;
+    $('#playbooksList').innerHTML = guidedEmpty('playbooks', 'newPlaybook');
     return;
   }
 

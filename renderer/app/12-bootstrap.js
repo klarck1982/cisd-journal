@@ -2,6 +2,35 @@
  * Event wiring and application start-up. Loaded last.
  */
 
+// Handlers offered by guided empty states. Registered here so 01-core can stay
+// free of page-specific logic while still rendering an actionable button.
+Object.assign(EMPTY_STATE_ACTIONS, {
+  chooseCsv: () => chooseCsv(),
+  importReport: () => importFundedNext(),
+  newPlaybook: () => openPlaybookModal(),
+  newAccount: () => openAccountModal(),
+  openSettings: () => {
+    model.page = 'settings';
+    persistUiState();
+    renderActivePage();
+    renderWorkspaceStatus();
+  },
+  clearSignalSearch: () => {
+    model.search.signals = '';
+    $('#signalsSearch').value = '';
+    persistUiState();
+    renderSignalsPage();
+    bindEmptyStateActions();
+  },
+  clearJournalSearch: () => {
+    model.search.journal = '';
+    $('#journalSearch').value = '';
+    persistUiState();
+    renderJournal();
+    bindEmptyStateActions();
+  },
+});
+
 function bindEvents() {
   $('#minimizeBtn').onclick = () => cisd.minimize();
   $('#maximizeBtn').onclick = () => cisd.maximize();

@@ -102,4 +102,37 @@ for (const name of rendererFiles) {
   assert.ok(lineCount <= 450, `renderer/app/${name} has ${lineCount} lines; split it before it grows further`);
 }
 
+
+// --- 9) Guided empty states must resolve to real translations and real handlers. -------
+// A mistyped key renders the raw key as a title; a mistyped action renders a dead button.
+// Only descriptors that are actually empty-state usages: guidedEmpty('x'),
+// a bare key passed to renderListRows, or a { key, action } pair beside an action.
+const emptyKeys = new Set([
+  ...[...app.matchAll(/guidedEmpty\(\s*'([A-Za-z]+)'/g)].map((m) => m[1]),
+  ...[...app.matchAll(/\}\s*,\s*'([A-Za-z]+)'\s*\)\s*;/g)].map((m) => m[1]),
+  ...[...app.matchAll(/\{\s*key:\s*'([A-Za-z]+)'\s*,\s*action:/g)].map((m) => m[1]),
+]);
+for (const key of emptyKeys) {
+  for (const [name, bundle] of [['ar', ar], ['en', en]]) {
+    for (const field of ['title', 'text', 'action']) {
+      assert.equal(
+        typeof lookup(bundle, `ui.empty.${key}.${field}`),
+        'string',
+        `missing ${name} translation ui.empty.${key}.${field}`
+      );
+    }
+  }
+}
+
+const registered = new Set(
+  [...app.matchAll(/^\s{2}([A-Za-z][A-Za-z0-9]*):\s*(?:\(\)|async)/gm)].map((m) => m[1])
+);
+const usedActions = [...app.matchAll(/action:\s*'([A-Za-z]+)'/g)].map((m) => m[1]);
+for (const action of new Set(usedActions)) {
+  assert.ok(
+    app.includes(`${action}: () =>`) || app.includes(`${action}: async`),
+    `guided empty state uses action "${action}" with no registered handler`
+  );
+}
+
 console.log(`Renderer Contract QA: PASS (${rendererFiles.length} modules, dialogs, drag region, ids, i18n, IPC wiring)`);
