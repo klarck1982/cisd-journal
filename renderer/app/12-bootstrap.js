@@ -95,6 +95,10 @@ function bindEvents() {
 
   $('#tradeForm').addEventListener('submit', saveTrade);
   $('#backtestForm').addEventListener('submit', startBacktest);
+  const chooseBacktestCsvBtn = $('#chooseBacktestCsvBtn');
+  if (chooseBacktestCsvBtn) chooseBacktestCsvBtn.onclick = chooseBacktestCsv;
+  const clearBacktestCsvBtn = $('#clearBacktestCsvBtn');
+  if (clearBacktestCsvBtn) clearBacktestCsvBtn.onclick = clearBacktestCsv;
   $('#accountSettingsForm').addEventListener('submit', saveAccountSettings);
   $('#journalGuidanceBackBtn').onclick = () => {
     model.page = 'signals';
@@ -220,6 +224,13 @@ async function init() {
     render();
     if ((state.signals?.length || 0) > previousSignalCount) toast(t('messages.newSignalArrived'), 'info');
   });
+
+  if (cisd.onNewsUpdated) {
+    cisd.onNewsUpdated((news) => {
+      model.news = news || [];
+      render();
+    });
+  }
 }
 
 init().catch((error) => {

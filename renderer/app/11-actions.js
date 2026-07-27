@@ -154,6 +154,25 @@ async function saveTrade(event) {
   toast(t('messages.tradeSaved'), 'success');
 }
 
+async function chooseBacktestCsv() {
+  try {
+    const result = await cisd.chooseBacktestCsv();
+    if (result.cancelled) return;
+    model.backtestCsvPath = result.path;
+    $('#backtestCsvPathLabel').textContent = result.path;
+    $('#clearBacktestCsvBtn').classList.remove('hidden');
+    toast(t('messages.csvChosen'), 'success');
+  } catch (error) {
+    toast(`${t('ui.error')}: ${error.message}`, 'error');
+  }
+}
+
+function clearBacktestCsv() {
+  model.backtestCsvPath = '';
+  $('#backtestCsvPathLabel').textContent = t('backtest.create.defaultCsvHint') || 'يستخدم الملف الحي الافتراضي';
+  $('#clearBacktestCsvBtn').classList.add('hidden');
+}
+
 async function startBacktest(event) {
   event.preventDefault();
   const payload = {
@@ -164,14 +183,20 @@ async function startBacktest(event) {
     session: $('#backtestSession').value,
     symbol: $('#backtestSymbol').value.trim().toUpperCase(),
     tf: $('#backtestTf').value.trim(),
+    backtestCsvPath: model.backtestCsvPath || '',
   };
+  if (!payload.start || !payload.end) {
+    toast(t('backtest.create.dateRequired') || 'اختر تاريخ البداية والنهاية ليطابق JForex Replay', 'warn');
+    return;
+  }
   try {
     const result = await runBusy(t('ui.loading'), () => cisd.startBacktest(payload));
     model.selectedBacktestId = result.state?.activeBacktestId || result.state?.backtests?.[0]?.id || null;
     persistUiState();
     await refreshStateAndRender();
     $('#backtestForm').reset();
-    toast(`${t('messages.backtestImported')} ${result.count}`, 'success');
+    clearBacktestCsv();
+    toast(`${t('messages.backtestImported')} ${result.count} - الفترة: ${payload.start} إلى ${payload.end}`, 'success');
   } catch (error) {
     toast(`${t('ui.error')}: ${error.message}`, 'error');
   }

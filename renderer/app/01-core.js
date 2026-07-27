@@ -37,6 +37,7 @@ const model = {
   editingPlaybookId: null,
   welcomeStep: 0,
   welcomeCsvPath: '',
+  backtestCsvPath: '',
   search: {
     signals: '',
     journal: '',
