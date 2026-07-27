@@ -150,10 +150,33 @@ function bindEvents() {
     $(selector).addEventListener('change', updateFilters);
   });
 
+  // --- Trade edit / delete ---------------------------------------------------
+  $('#tradeEditForm').addEventListener('submit', saveTradeEdit);
+  $('#closeTradeEditModal').onclick = closeTradeEditModal;
+  $('#cancelTradeEditBtn').onclick = closeTradeEditModal;
+  $('#deleteTradeBtn').onclick = () => deleteTrade(model.editingTradeId);
+  $('#tradeEditModal').addEventListener('click', (event) => {
+    if (event.target.id === 'tradeEditModal') closeTradeEditModal();
+  });
+
+  // --- Account lifecycle -----------------------------------------------------
+  $('#archiveAccountBtn').onclick = archiveCurrentAccount;
+  $('#deleteAccountBtn').onclick = deleteCurrentAccount;
+
+  // --- Welcome / first run ---------------------------------------------------
+  $('#welcomeNext').onclick = welcomeNext;
+  $('#welcomeBack').onclick = welcomeBack;
+  $('#welcomeSkip').onclick = finishWelcome;
+  $('#welcomeChooseCsv').onclick = chooseWelcomeCsv;
+  $$('[data-welcome-locale]').forEach((button) => {
+    button.onclick = () => chooseWelcomeLocale(button.dataset.welcomeLocale);
+  });
+
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     if (!$('#accountModal').classList.contains('hidden')) closeAccountModal();
     if (!$('#playbookModal').classList.contains('hidden')) closePlaybookModal();
+    if (!$('#tradeEditModal').classList.contains('hidden')) closeTradeEditModal();
     if (model.reasonSignalId) closeReasonModal();
     if (model.backtestReviewSignalId) closeBacktestReviewModal();
   });
@@ -167,11 +190,25 @@ async function init() {
   await refreshStateAndRender();
   if (model.newsConfigured) await loadNews(true);
   render();
-  setInterval(() => {
-    if (!model.state) return;
-    renderWorkspaceStatus();
-    const account = activeAccount();
-    if (account && model.dashboard) renderOverviewHero(account, model.dashboard);
+  // Live monitoring.
+  //
+  // This tick used to only re-render from the cached snapshot, so it redrew the
+  // same numbers every minute and nothing ever refetched: a position moving
+  // against the trader was invisible until they clicked something. Refetching
+  // here is also what lets main.js raise a desktop notification when the risk
+  // engine reports NEAR_DAILY_LOSS_LIMIT or a breach.
+  setInterval(async () => {
+    if (!model.state || model.busy) return;
+    try {
+      await refreshSnapshots();
+      renderWorkspaceStatus();
+      const account = activeAccount();
+      if (account && model.dashboard) renderOverviewHero(account, model.dashboard);
+      renderRiskBanner();
+    } catch (error) {
+      // A failed background refresh must never surface as a toast storm.
+      console.error('background refresh failed', error);
+    }
   }, 60000);
 
   cisd.onChange(async (state) => {

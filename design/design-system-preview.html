@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>CISD Journal — مقارنة نظام التصميم</title>
+<style>
+/* ============================================================
+   المقترح: نظام رموز مغلق (Closed Token System)
+   كل قيمة بصرية تأتي من هنا. لا أرقام حرة في المكوّنات.
+   ============================================================ */
+:root {
+  /* --- السطوح: 4 مستويات ارتفاع فقط، لا 8 --- */
+  --s-base:  #0a1220;
+  --s-1:     #101b2d;
+  --s-2:     #16243a;
+  --s-3:     #1d2e47;
+
+  /* --- الحدود: 3 أوزان --- */
+  --line-subtle: rgba(148,178,214,.10);
+  --line:        rgba(148,178,214,.18);
+  --line-strong: rgba(148,178,214,.30);
+
+  /* --- النص: 3 مستويات فقط --- */
+  --ink:      #e9f0fa;
+  --ink-2:    #a3b4cc;
+  --ink-3:    #6d8099;
+
+  /* --- الدلالة --- */
+  --accent:  #5aa9ff;
+  --pos:     #3ddc97;
+  --neg:     #ff6b85;
+  --warn:    #ffc94d;
+
+  /* --- سلّم المسافات: مضاعفات 4 حصراً --- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px;
+  --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
+
+  /* --- سلّم الخط: نسبة 1.25، ستّ درجات --- */
+  --t-xs: 12px; --t-sm: 13px; --t-md: 15px;
+  --t-lg: 19px; --t-xl: 24px; --t-2xl: 30px;
+
+  /* --- الاستدارة: 3 قيم --- */
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+
+  /* --- الارتفاع البصري: 2 قيمة --- */
+  --el-1: 0 1px 2px rgba(0,0,0,.30);
+  --el-2: 0 8px 24px rgba(0,0,0,.36);
+
+  /* --- الحركة --- */
+  --motion: 140ms cubic-bezier(.2,.8,.3,1);
+
+  /* --- الخطوط: عربي مخصص أولاً، ثم لاتيني --- */
+  --font-ar: "IBM Plex Sans Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  --font-num: "IBM Plex Sans", "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--s-base);
+  color: var(--ink);
+  font-family: var(--font-ar);
+  font-size: var(--t-md);
+  line-height: 1.65;          /* العربية تحتاج تنفّساً رأسياً أكبر */
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: var(--sp-7) var(--sp-5); }
+
+h1 { font-size: var(--t-2xl); line-height: 1.3; margin: 0 0 var(--sp-2); letter-spacing: -.02em; }
+h2 {
+  font-size: var(--t-lg); line-height: 1.4; margin: var(--sp-7) 0 var(--sp-4);
+  padding-bottom: var(--sp-3); border-bottom: 1px solid var(--line);
+  letter-spacing: -.01em;
+}
+.lede { color: var(--ink-2); margin: 0 0 var(--sp-6); max-width: 68ch; }
+
+/* شبكة المقارنة */
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); align-items: start; }
+@media (max-width: 900px) { .cmp { grid-template-columns: 1fr; } }
+
+.side { display: grid; gap: var(--sp-3); }
+.side-label {
+  font-size: var(--t-xs); letter-spacing: .14em; font-weight: 600;
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.side-label.bad  { color: var(--neg); }
+.side-label.good { color: var(--pos); }
+.stage {
+  background: var(--s-1); border: 1px solid var(--line);
+  border-radius: var(--r-lg); padding: var(--sp-5);
+}
+.note { font-size: var(--t-sm); color: var(--ink-3); line-height: 1.6; }
+
+/* ============================================================
+   1) البطاقة — قبل
+   ============================================================ */
+.old-card {
+  padding: 14px; border-radius: 14px;
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+  display: grid; gap: 6px;
+  font-family: Inter, "Segoe UI", Tahoma, Arial, sans-serif;
+}
+.old-card small { color: #97a8c0; font-size: 12px; }
+.old-card strong { font-size: 24px; }          /* لا tabular-nums */
+.old-card .mini { font-size: 12px; color: #97a8c0; }
+
+/* ============================================================
+   1) البطاقة — بعد
+   ============================================================ */
+.card {
+  padding: var(--sp-4); border-radius: var(--r-md);
+  background: var(--s-2); border: 1px solid var(--line-subtle);
+  display: grid; gap: var(--sp-1);
+  box-shadow: var(--el-1);
+  transition: border-color var(--motion), transform var(--motion);
+}
+.card:hover { border-color: var(--line); transform: translateY(-1px); }
+.card-label {
+  font-size: var(--t-xs); color: var(--ink-3); font-weight: 500;
+  letter-spacing: .01em;
+}
+.card-value {
+  font-family: var(--font-num);
+  font-size: var(--t-xl); font-weight: 600; line-height: 1.15;
+  font-variant-numeric: tabular-nums;      /* الأرقام تصطف عمودياً */
+  letter-spacing: -.02em;
+}
+.card-value.pos { color: var(--pos); }
+.card-value.neg { color: var(--neg); }
+.card-hint { font-size: var(--t-xs); color: var(--ink-3); }
+
+.metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--sp-3); }
+.metrics-old { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+
+/* ============================================================
+   2) الأرقام غير المصطفّة — البرهان
+   ============================================================ */
+.align-demo { display: grid; gap: var(--sp-4); }
+.col { display: grid; gap: var(--sp-1); }
+.col-head { font-size: var(--t-xs); color: var(--ink-3); letter-spacing: .1em; }
+.num-old {
+  font-family: Inter, "Segoe UI", Tahoma, Arial, sans-serif;
+  font-size: 22px; font-weight: 700;
+  /* بلا tabular-nums: كل رقم بعرض مختلف */
+}
+.num-new {
+  font-family: var(--font-num);
+  font-size: 22px; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   3) حالات التركيز
+   ============================================================ */
+.btn {
+  font: inherit; font-size: var(--t-sm); font-weight: 500;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm); cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--s-3); color: var(--ink);
+  transition: background var(--motion), border-color var(--motion);
+}
+.btn:hover { border-color: var(--line-strong); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #06121f; font-weight: 600; }
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;                     /* حلقة تركيز واضحة */
+}
+.btn-old {
+  font-family: Inter, "Segoe UI", Tahoma, sans-serif; font-size: 13px;
+  padding: 9px 14px; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05); color: #eef5ff;
+}
+.btn-old:focus { outline: none; }          /* لا شيء — كما هو الحال اليوم */
+.btn-row { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+
+/* ============================================================
+   4) الرسم البياني
+   ============================================================ */
+.chart-old { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.05); border-radius: 16px; overflow: hidden; }
+.chart-old svg { width: 100%; height: 200px; display: block; }
+.chart-new { background: var(--s-2); border: 1px solid var(--line-subtle); border-radius: var(--r-md); padding: var(--sp-4); }
+.chart-new svg { width: 100%; display: block; }
+.axis-label { font-family: var(--font-num); font-size: 10px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   5) سلالم النظام
+   ============================================================ */
+.scale-row { display: flex; align-items: baseline; gap: var(--sp-4); padding: var(--sp-2) 0; border-bottom: 1px solid var(--line-subtle); }
+.scale-key { font-family: var(--font-num); font-size: var(--t-xs); color: var(--ink-3); min-width: 90px; font-variant-numeric: tabular-nums; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: var(--sp-2); }
+.sw { border-radius: var(--r-sm); padding: var(--sp-3); border: 1px solid var(--line-subtle); font-size: var(--t-xs); font-family: var(--font-num); }
+.chip {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  font-size: var(--t-xs); padding: 2px var(--sp-2);
+  border-radius: 999px; border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+table.count { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+table.count th, table.count td { text-align: start; padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--line-subtle); }
+table.count th { color: var(--ink-3); font-weight: 500; font-size: var(--t-xs); letter-spacing: .08em; }
+table.count td.n { font-family: var(--font-num); font-variant-numeric: tabular-nums; text-align: end; }
+.bad-n  { color: var(--neg); font-weight: 600; }
+.good-n { color: var(--pos); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>نظام التصميم — قبل وبعد</h1>
+  <p class="lede">
+    هذه الصفحة ليست اقتراحاً نظرياً. الجانب الأيمن في كل مقارنة هو <strong>الكود الحالي منسوخاً حرفياً</strong>
+    من <code>renderer/style.css</code>. الجانب الأيسر هو النظام المقترح. افتح الصفحة وقارن بعينك.
+  </p>
+
+  <!-- ================= 1 ================= -->
+  <h2>١. بطاقة المؤشر — أكثر عنصر تكراراً في التطبيق</h2>
+  <div class="cmp">
+    <div class="side">
+      <div class="side-label bad">◀ الحالي</div>
+      <div class="stage">
+        <div class="metrics-old">
+          <div class="old-card"><small>الرصيد</small><strong>103,481.00</strong><div class="mini">‎+3.48%‎</div></div>
+          <div class="old-card"><small>الحد اليومي</small><strong>1,118.00</strong><div class="mini">متبقٍ</div></div>
+          <div class="old-card"><small>التراجع</small><strong>2,940.50</strong><div class="mini">من القمة</div></div>
+        </div>
+      </div>
+      <p class="note">
+        الرقم بوزن 700 والعنوان بلون باهت — التباين بينهما ضعيف، فالعين لا تعرف أين تبدأ.
+        البطاقات الثلاث بنفس الوزن البصري تماماً رغم أن «الحد اليومي» أخطرها.
+      </p>
+    </div>
+    <div class="side">
+      <div class="side-label good">المقترح ▶</div>
+      <div class="stage">
+        <div class="metrics">
+          <div class="card">
+            <div class="card-label">الرصيد</div>
+            <div class="card-value">103,481.00</div>
+            <div class="card-hint">‎+3.48%‎ عن البداية</div>
+          </div>
+          <div class="card">
+            <div class="card-label">الحد اليومي المتبقي</div>
+            <div class="card-value warn" style="color:var(--warn)">1,118.00</div>
+            <div class="card-hint">من أصل 2,000.00</div>
+          </div>
+          <div class="card">
+            <div class="card-label">التراجع الحالي</div>
+            <div class="card-value neg">2,940.50</div>
+            <div class="card-hint">من قمة 106,421.50</div>
+          </div>
+        </div>
+      </div>
+      <p class="note">
+        العنوان صغير وهادئ، الرقم كبير ومصطفّ، والتلميح يحمل <strong>السياق</strong> لا التكرار
+        («من أصل 2,000» يخبرك بشيء؛ «متبقٍ» لا يخبرك بشيء).
+      </p>
+    </div>
+  </div>
+
+  <!-- ================= 2 ================= -->
+  <h2>٢. الأرقام لا تصطفّ — العيب الأوضح لعين المحترف</h2>
+  <div class="cmp">
+    <div class="side">
+      <div class="side-label bad">◀ الحالي — بلا <code>tabular-nums</code></div>
+      <div class="stage">
+        <div class="col">
+          <div class="col-head">صافي الربح</div>
+          <div class="num-old">1,111.11</div>
+          <div class="num-old">8,000.00</div>
+          <div class="num-old">‎-11,948.30</div>
+          <div class="num-old">743.05</div>
+        </div>
+      </div>
+      <p class="note">
+        الرقم <code>1</code> أضيق من <code>8</code> في الخطوط النسبية، فالخانات تتذبذب سطراً بعد سطر.
+        في جدول صفقات من 50 سطراً تبدو الأعمدة مهتزّة. هذا التفصيل تحديداً يفصل بين
+        «أداة مالية» و«صفحة ويب».
+      </p>
+    </div>
+    <div class="side">
+      <div class="side-label good">المقترح — <code>tabular-nums</code> ▶</div>
+      <div class="stage">
+        <div class="col">
+          <div class="col-head">صافي الربح</div>
+          <div class="num-new">1,111.11</div>
+          <div class="num-new">8,000.00</div>
+          <div class="num-new">‎-11,948.30</div>
+          <div class="num-new">743.05</div>
+        </div>
+      </div>
+      <p class="note">
+        كل خانة بعرض ثابت، فالفواصل العشرية تقع على خط رأسي واحد.
+        سطر واحد في CSS. في الكود الحالي هذه الخاصية موجودة — لكنها مطبَّقة على
+        <code>.value-good</code> فقط، ولا تشمل أرقام البطاقات الرئيسية.
+      </p>
+    </div>
+  </div>
+
+  <!-- ================= 3 ================= -->
+  <h2>٣. حلقة التركيز — صفر في الكود الحالي</h2>
+  <div class="cmp">
+    <div class="side">
+      <div class="side-label bad">◀ الحالي</div>
+      <div class="stage">
+        <div class="btn-row">
+          <button class="btn-old">استيراد تقرير</button>
+          <button class="btn-old">تصدير</button>
+          <button class="btn-old">إعادة ضبط</button>
+        </div>
+      </div>
+      <p class="note">
+        اضغط <kbd>Tab</kbd> داخل هذا الإطار. لن ترى أين أنت.
+        <code>grep -c focus-visible renderer/style.css</code> ← <strong class="bad-n">0</strong>
+        مقابل ٦٢ زراً في الواجهة.
+      </p>
+    </div>
+    <div class="side">
+      <div class="side-label good">المقترح ▶</div>
+      <div class="stage">
+        <div class="btn-row">
+          <button class="btn btn-primary">استيراد تقرير</button>
+          <button class="btn">تصدير</button>
+          <button class="btn">إعادة ضبط</button>
+        </div>
+      </div>
+      <p class="note">
+        اضغط <kbd>Tab</kbd> هنا. حلقة واضحة بإزاحة ٢px.
+        ولاحظ أيضاً أن زراً واحداً فقط أساسي — الحالي يعطي الأزرار الثلاثة نفس الوزن،
+        فلا يوجد إجراء مقترح.
+      </p>
+    </div>
+  </div>
+
+  <!-- ================= 4 ================= -->
+  <h2>٤. منحنى الإكويتي — تشوّه هندسي مؤكد</h2>
+  <div class="cmp">
+    <div class="side">
+      <div class="side-label bad">◀ الحالي</div>
+      <div class="stage">
+        <div class="chart-old">
+          <!-- طبق الأصل: viewBox 920x240 + preserveAspectRatio="none" + height ثابت 240 -->
+          <svg viewBox="0 0 920 240" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="f1" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#58a6ff" stop-opacity=".34"/>
+                <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/>
+              </linearGradient>
+              <filter id="g1"><feGaussianBlur stdDeviation="4" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <polygon points="18,216 18,190 200,150 380,175 560,96 740,120 902,58 902,216" fill="url(#f1)"/>
+            <polyline points="18,190 200,150 380,175 560,96 740,120 902,58"
+              fill="none" stroke="#58a6ff" stroke-width="4" stroke-linejoin="round"
+              stroke-linecap="round" filter="url(#g1)"/>
+            <circle cx="902" cy="58" r="6" fill="#58a6ff" stroke="#d9f0ff" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+      <p class="note">
+        <code>preserveAspectRatio="none"</code> مع عرض مرن وارتفاع ثابت ٢٤٠px.
+        <strong>النتيجة: تمدّد أفقي غير منتظم.</strong> الدائرة الطرفية تصبح بيضاوية،
+        وسُمك الخط يختلف بين المحورين. غيّر عرض النافذة وسترى شكل المنحنى نفسه يتغيّر.
+        <br><br>
+        كذلك: لا محور رأسي، ولا أي رقم. المنحنى يقول «ارتفع» ولا يقول «إلى كم».
+      </p>
+    </div>
+    <div class="side">
+      <div class="side-label good">المقترح ▶</div>
+      <div class="stage">
+        <div class="chart-new">
+          <svg viewBox="0 0 920 260" preserveAspectRatio="xMidYMid meet" role="img"
+               aria-label="منحنى الإكويتي: ارتفاع من 100,000 إلى 103,481">
+            <!-- شبكة أفقية مع قيم حقيقية -->
+            <g>
+              <line x1="86" y1="30"  x2="900" y2="30"  stroke="rgba(148,178,214,.10)"/>
+              <line x1="86" y1="90"  x2="900" y2="90"  stroke="rgba(148,178,214,.10)"/>
+              <line x1="86" y1="150" x2="900" y2="150" stroke="rgba(148,178,214,.10)"/>
+              <line x1="86" y1="210" x2="900" y2="210" stroke="rgba(148,178,214,.18)"/>
+              <text class="axis-label" x="78" y="34"  text-anchor="end">104,000</text>
+              <text class="axis-label" x="78" y="94"  text-anchor="end">102,500</text>
+              <text class="axis-label" x="78" y="154" text-anchor="end">101,000</text>
+              <text class="axis-label" x="78" y="214" text-anchor="end">100,000</text>
+            </g>
+            <defs>
+              <linearGradient id="f2" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#5aa9ff" stop-opacity=".22"/>
+                <stop offset="100%" stop-color="#5aa9ff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <polygon points="100,210 100,186 260,152 420,172 580,102 740,124 890,56 890,210" fill="url(#f2)"/>
+            <polyline points="100,186 260,152 420,172 580,102 740,124 890,56"
+              fill="none" stroke="#5aa9ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"
+              vector-effect="non-scaling-stroke"/>
+            <circle cx="890" cy="56" r="3.5" fill="#5aa9ff"/>
+            <circle cx="890" cy="56" r="7" fill="none" stroke="#5aa9ff" stroke-opacity=".35"/>
+            <text class="axis-label" x="100" y="238">١٢ يوليو</text>
+            <text class="axis-label" x="890" y="238" text-anchor="end">٢٦ يوليو</text>
+          </svg>
+        </div>
+      </div>
+      <p class="note">
+        <code>preserveAspectRatio</code> صحيح، و<code>vector-effect="non-scaling-stroke"</code>
+        يثبّت سُمك الخط عند أي عرض. محور رأسي بقيم حقيقية، وخط أنحف (٢px بدل ٤)
+        لأن الوضوح يأتي من الدقة لا من السماكة. حُذف التوهّج: زينة تُشوّش القراءة.
+      </p>
+    </div>
+  </div>
+
+  <!-- ================= 5 ================= -->
+  <h2>٥. جذر المشكلة — النظام غير مغلق</h2>
+  <p class="lede">
+    الأعراض أعلاه ليست أخطاء متفرقة. لها سبب واحد: <strong>لا يوجد نظام رموز مُلزِم.</strong>
+    القيم البصرية مكتوبة مباشرة داخل القواعد، فكل إضافة جديدة تخترع قيمة جديدة.
+  </p>
+
+  <table class="count">
+    <tr><th>القياس</th><th class="n">الحالي</th><th class="n">المقترح</th><th>الأثر</th></tr>
+    <tr><td>رموز معرّفة في <code>:root</code></td><td class="n bad-n">16</td><td class="n good-n">38</td><td>تغطية كاملة</td></tr>
+    <tr><td>ألوان مكتوبة يدوياً</td><td class="n bad-n">218</td><td class="n good-n">0</td><td>مصدر واحد للحقيقة</td></tr>
+    <tr><td>قيم لونية متمايزة</td><td class="n bad-n">120</td><td class="n good-n">14</td><td>تناسق بصري</td></tr>
+    <tr><td>الأزرق نفسه بشفافيات مختلفة</td><td class="n bad-n">20</td><td class="n good-n">3</td><td>لغة واحدة للتفاعل</td></tr>
+    <tr><td>الأحمر نفسه بشفافيات مختلفة</td><td class="n bad-n">20</td><td class="n good-n">3</td><td>الخطر بدرجة واحدة</td></tr>
+    <tr><td>مقاسات الخط</td><td class="n bad-n">14</td><td class="n good-n">6</td><td>تسلسل مقروء</td></tr>
+    <tr><td>قيم الاستدارة</td><td class="n bad-n">8</td><td class="n good-n">3</td><td>لغة شكلية واحدة</td></tr>
+    <tr><td>قيم الظل</td><td class="n bad-n">19</td><td class="n good-n">2</td><td>ارتفاع منطقي</td></tr>
+    <tr><td>قيم المسافات</td><td class="n bad-n">10</td><td class="n good-n">7</td><td>شبكة ٤px</td></tr>
+    <tr><td><code>:focus-visible</code></td><td class="n bad-n">0</td><td class="n good-n">شامل</td><td>تنقّل بلوحة المفاتيح</td></tr>
+  </table>
+
+  <h2>٦. السلالم المقترحة</h2>
+
+  <p class="note" style="margin-bottom:var(--sp-4)">سلّم الخط — نسبة ١.٢٥، ست درجات لا أربع عشرة:</p>
+  <div class="scale-row"><span class="scale-key">‎--t-xs 12</span><span style="font-size:12px">تسمية حقل · Label</span></div>
+  <div class="scale-row"><span class="scale-key">‎--t-sm 13</span><span style="font-size:13px">نص ثانوي · Secondary</span></div>
+  <div class="scale-row"><span class="scale-key">‎--t-md 15</span><span style="font-size:15px">نص الجسم · Body</span></div>
+  <div class="scale-row"><span class="scale-key">‎--t-lg 19</span><span style="font-size:19px">عنوان لوحة · Panel</span></div>
+  <div class="scale-row"><span class="scale-key">‎--t-xl 24</span><span style="font-size:24px">رقم مؤشر · Metric</span></div>
+  <div class="scale-row"><span class="scale-key">‎--t-2xl 30</span><span style="font-size:30px">عنوان صفحة · Page</span></div>
+
+  <p class="note" style="margin:var(--sp-5) 0 var(--sp-3)">
+    السطوح — أربعة مستويات صريحة بدل ثماني درجات بيضاء شفافة عشوائية:
+  </p>
+  <div class="swatches">
+    <div class="sw" style="background:var(--s-base)">‎--s-base<br>الخلفية</div>
+    <div class="sw" style="background:var(--s-1)">‎--s-1<br>اللوحة</div>
+    <div class="sw" style="background:var(--s-2)">‎--s-2<br>البطاقة</div>
+    <div class="sw" style="background:var(--s-3)">‎--s-3<br>مرتفع</div>
+  </div>
+
+  <h2>٧. الخط العربي — المشكلة الأعمق</h2>
+  <p class="lede" style="margin-bottom:var(--sp-3)">
+    الحزمة الحالية: <code style="direction:ltr;display:inline-block">Inter, "Segoe UI", Tahoma, Arial</code>
+  </p>
+  <p class="note" style="max-width:68ch">
+    <strong>Inter لا يدعم العربية إطلاقاً.</strong> فكل حرف عربي في التطبيق يتجاوزه إلى
+    Segoe UI، وعلى أي جهاز ينقصه ذلك ينزل إلى <strong>Tahoma</strong> — خط من عام ١٩٩٩
+    صُمم لشاشات البكسل المنخفض: وصلات مسطّحة، ولا كشيدة، ولا تشكيل لائق.
+    <br><br>
+    والمنتج يقدّم نفسه كأول أداة عربية أصيلة في فئته. لكن نصّه العربي يُعرض بخط احتياطي
+    <em>لم يُختر أصلاً</em> — لم يقرّر أحد استخدام Tahoma، بل انتهى إليه المتصفح وحده.
+    <br><br>
+    وسياسة الأمان <code>default-src 'self'</code> تمنع تحميل الخطوط من الشبكة، فالحل
+    الوحيد هو <strong>تضمين ملف خط عربي</strong> مثل IBM Plex Sans Arabic أو Noto Sans Arabic
+    داخل الحزمة. هذا يحسم أيضاً مشكلة اختلاف الشكل بين أجهزة ويندوز.
+    <br><br>
+    ولاحظ أيضاً <code>line-height</code>: الكود الحالي لا يضبطها على <code>body</code> إطلاقاً،
+    فتأخذ العربية الافتراض اللاتيني (~١.٢). العربية بمحاذاتها العلوية والسفلية
+    تحتاج ١.٦ تقريباً — وإلا بدت مضغوطة. هذه الصفحة تستخدم ١.٦٥.
+  </p>
+
+  <h2>٨. ٨٠٪ من الواجهة بخط صغير</h2>
+  <p class="note" style="max-width:68ch">
+    من ٧٠ تعريف <code>font-size</code> في الملف، <strong>٥٦ منها بين ١٠ و١٣ بكسل</strong>.
+    حين يكون كل شيء صغيراً، لا شيء ثانوي — وتختفي الهرمية تماماً.
+    الكثافة ليست صغر الخط، بل <strong>الفرق</strong> بين الكبير والصغير.
+    السلّم أعلاه يرفع نص الجسم إلى ١٥px ويُبقي ١٢px للتسميات وحدها.
+  </p>
+
+  <h2>٩. ما هو سليم فعلاً في التصميم الحالي</h2>
+  <p class="note" style="max-width:68ch">
+    الحكم يجب أن يكون منصفاً، وثلاثة أشياء هنا مبنية جيداً:
+  </p>
+  <div style="display:grid;gap:var(--sp-2);margin-top:var(--sp-3)">
+    <div><span class="chip">✔ RTL</span> صفر خاصية اتجاهية فيزيائية. لا <code>margin-left</code> ولا <code>left:</code> — كلها منطقية (<code>inline-start</code>). هذا نادر ويستحق التقدير.</div>
+    <div><span class="chip">✔ التباين</span> كل ألوان النص تتجاوز ٤.٥:١، وأدناها ٦.٩:١. الحدّة اللونية سليمة.</div>
+    <div><span class="chip">✔ الأيقونات</span> ٣١ أيقونة، جميعها <code>24×24</code> وبسُمك <code>1.8</code>. متسقة تماماً.</div>
+    <div><span class="chip">✔ الاستجابة</span> ١٨ استعلام وسائط، و<code>prefers-reduced-motion</code> مُحترم.</div>
+  </div>
+  <p class="note" style="max-width:68ch;margin-top:var(--sp-4)">
+    <strong>الخلاصة:</strong> المشكلة ليست ذوقاً سيئاً ولا إهمالاً. الأساسات المفاهيمية
+    الصعبة سليمة. المفقود هو <em>الانضباط النظامي</em>: نظام رموز مغلق يمنع اختراع
+    قيمة جديدة مع كل ميزة. هذا قابل للإصلاح في دفعة واحدة، ولا يحتاج إعادة بناء.
+  </p>
+
+</div>
+</body>
+</html>

@@ -17,6 +17,7 @@ function applyStaticText() {
   $('#navJournal').innerHTML = iconText('journal', t('nav.journal'), 'nav-content');
   $('#navBacktest').innerHTML = iconText('backtest', t('nav.backtest'), 'nav-content');
   $('#navDaily').innerHTML = iconText('journal', t('nav.daily'), 'nav-content');
+  $('#navCalendar').innerHTML = iconText('challenge', t('nav.calendar'), 'nav-content');
   $('#navPlaybooks').innerHTML = iconText('backtest', t('nav.playbooks'), 'nav-content');
   $('#navEdge').innerHTML = iconText('discipline', t('nav.edge'), 'nav-content');
   $('#navAnalytics').innerHTML = iconText('analytics', t('nav.analytics'), 'nav-content');
@@ -178,6 +179,53 @@ function applyStaticText() {
   $('#backupBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.backup'))}`;
   $('#restoreBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.restore'))}`;
   $('#openGuideBtn').innerHTML = `${icon('journal','button-icon')}${escapeHtml(t('settings.guide'))}`;
+  // --- Calendar page ---------------------------------------------------------
+  $('#calendarKicker').textContent = t('nav.calendar');
+  $('#calendarPageTitle').textContent = t('calendar.pageTitle');
+  $('#calendarPageDescription').textContent = t('calendar.pageDescription');
+
+  // --- Account lifecycle -----------------------------------------------------
+  $('#resetKeepsLimitsHint').textContent = t('settings.resetKeepsLimits');
+  $('#archiveAccountBtn').textContent = t('settings.archiveAccount');
+  $('#deleteAccountBtn').textContent = t('settings.deleteAccount');
+  $('#archivedAccountsTitle').textContent = t('settings.archivedTitle');
+
+  // --- Trade edit modal ------------------------------------------------------
+  $('#tradeEditTitle').textContent = t('journal.editTitle');
+  $('#tradeEditHint').textContent = t('journal.editHint');
+  $('#tradeEditInstrumentLabel').textContent = t('journal.form.symbol');
+  $('#tradeEditSideLabel').textContent = t('journal.form.side');
+  $('#tradeEditDateLabel').textContent = t('journal.form.date');
+  $('#tradeEditResultLabel').textContent = t('journal.form.resultR');
+  $('#tradeEditProfitLabel').textContent = t('overview.health.balance');
+  $('#tradeEditNoteLabel').textContent = t('journal.form.note');
+  $('#saveTradeEditBtn').textContent = t('journal.saveEdit');
+  $('#cancelTradeEditBtn').textContent = t('journal.cancelEdit');
+  $('#deleteTradeBtn').textContent = t('journal.delete');
+
+  // --- Welcome ---------------------------------------------------------------
+  $('#welcomeKicker').textContent = t('welcome.kicker');
+  $('#welcomeTitle').textContent = t('welcome.title');
+  $('#welcomeSubtitle').textContent = t('welcome.subtitle');
+  $('#welcomeSkip').textContent = t('welcome.skip');
+  $('#welcomeBack').textContent = t('welcome.back');
+  $('#welcomeLanguageTitle').textContent = t('welcome.language.title');
+  $('#welcomeLanguageHint').textContent = t('welcome.language.hint');
+  $('#welcomeAccountTitle').textContent = t('welcome.account.title');
+  $('#welcomeAccountHint').textContent = t('welcome.account.hint');
+  $('#welcomeFirmLabel').textContent = t('accountModal.firm');
+  $('#welcomeNameLabel').textContent = t('accountModal.name');
+  $('#welcomeCapitalLabel').textContent = t('accountModal.capital');
+  $('#welcomeCurrencyLabel').textContent = t('accountModal.currency');
+  $('#welcomeRiskTitle').textContent = t('welcome.risk.title');
+  $('#welcomeRiskHint').textContent = t('welcome.risk.hint');
+  $('#welcomeTargetLabel').textContent = t('accountModal.target');
+  $('#welcomeDailyLossLabel').textContent = t('accountModal.dailyLoss');
+  $('#welcomeDrawdownLabel').textContent = t('accountModal.maxDrawdown');
+  $('#welcomeCsvTitle').textContent = t('welcome.csv.title');
+  $('#welcomeCsvHint').textContent = t('welcome.csv.hint');
+  $('#welcomeChooseCsv').textContent = t('signals.actions.chooseCsv');
+
   $('#restartOnboardingBtn').innerHTML = `${icon('settings','button-icon')}${escapeHtml(t('settings.restartOnboarding'))}`;
   $('#calendarTitle').textContent = t('analytics.calendar.title');
   $('#calendarHint').textContent = t('analytics.calendar.hint');
