@@ -21,43 +21,150 @@ const path = require('path');
  * than on Linux. These suites must judge the same thing on both platforms.
  */
 function readSource(...segments) {
-  return fs.readFileSync(path.join(...segments), 'utf8').replace(/\r\n/g, '\n');
+  return fs.readFileSync(path.join(...segments), 'utf8').replace(/\r\n?/g, '\n');
 }
 
 const mainSource = readSource(__dirname, '..', 'main.js');
 
+function sourcePosition(source, index) {
+  const safeIndex = Math.max(0, Math.min(index, source.length));
+  const line = source.slice(0, safeIndex).split('\n').length;
+  const lineStart = source.lastIndexOf('\n', safeIndex - 1) + 1;
+  return `line ${line}, column ${safeIndex - lineStart + 1}`;
+}
+
+function sourceExcerpt(source, index, radius = 140) {
+  if (index < 0) return '<anchor not found>';
+  const start = Math.max(0, index - radius);
+  const end = Math.min(source.length, index + radius);
+  return source.slice(start, end).trim().replace(/\n/g, '\n  ');
+}
+
+function requireAnchor(source, needle, fromIndex, label) {
+  const index = source.indexOf(needle, fromIndex);
+  assert.ok(
+    index >= 0,
+    `${label}: expected ${JSON.stringify(needle)} after ${sourcePosition(source, fromIndex)}\n`
+      + `Context near search start:\n  ${sourceExcerpt(source, fromIndex)}`
+  );
+  return index;
+}
+
+function assertAnchor(condition, message, source, index) {
+  assert.ok(
+    condition,
+    `${message}\nContext near ${sourcePosition(source, index)}:\n  ${sourceExcerpt(source, index)}`
+  );
+}
+
+function nextNonWhitespace(source, index) {
+  while (/\s/.test(source[index] || '')) index++;
+  return index;
+}
+
+function findMatchingBrace(source, openIndex, label) {
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let index = openIndex; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+
+    if (inLineComment) {
+      if (char === '\n') inLineComment = false;
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (char === '*' && next === '/') {
+        inBlockComment = false;
+        index++;
+      }
+      continue;
+    }
+
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '/' && next === '/') {
+      inLineComment = true;
+      index++;
+      continue;
+    }
+
+    if (char === '/' && next === '*') {
+      inBlockComment = true;
+      index++;
+      continue;
+    }
+
+    if (char === '"' || char === "'" || char === '`') {
+      quote = char;
+      continue;
+    }
+
+    if (char === '{') depth++;
+    else if (char === '}') {
+      depth--;
+      if (depth === 0) return index;
+      assertAnchor(depth >= 0, `${label}: unmatched closing brace`, source, index);
+    }
+  }
+
+  assert.fail(
+    `${label}: body opened at ${sourcePosition(source, openIndex)} but was never closed\n`
+      + `Context near body start:\n  ${sourceExcerpt(source, openIndex)}`
+  );
+}
+
 /**
  * Extracts a single ipcMain.handle('<channel>', ...) body plus its real
  * parameter list, so the test binds arguments by the names main.js actually
- * uses rather than assuming them.
+ * uses rather than assuming them. Every source anchor reports its location and
+ * nearby code, so a formatting change fails with the broken anchor instead of
+ * a confusing downstream syntax error.
  */
 function handlerParts(channel) {
+  const label = `handler ${channel}`;
   const marker = `ipcMain.handle('${channel}'`;
-  const start = mainSource.indexOf(marker);
-  assert.ok(start >= 0, `handler ${channel} must exist in main.js`);
+  const start = requireAnchor(mainSource, marker, 0, label);
 
   // Signature sits between the channel string and the arrow.
-  const arrow = mainSource.indexOf('=>', start);
-  const sigOpen = mainSource.indexOf('(', mainSource.indexOf(',', start));
+  const comma = requireAnchor(mainSource, ',', start + marker.length, `${label} signature`);
+  const arrow = requireAnchor(mainSource, '=>', comma, `${label} signature`);
+  const sigOpen = requireAnchor(mainSource, '(', comma, `${label} signature`);
+  assertAnchor(sigOpen < arrow, `${label}: parameter list must start before the arrow`, mainSource, sigOpen);
+
   const sigClose = mainSource.lastIndexOf(')', arrow);
+  assertAnchor(
+    sigClose > sigOpen,
+    `${label}: parameter list must close before the arrow`,
+    mainSource, arrow
+  );
+
   const params = mainSource
     .slice(sigOpen + 1, sigClose)
     .split(',')
     .map((part) => part.trim())
     .filter(Boolean);
 
-  const bodyStart = mainSource.indexOf('{', arrow);
-  let depth = 0;
-  let index = bodyStart;
-  for (; index < mainSource.length; index++) {
-    if (mainSource[index] === '{') depth++;
-    else if (mainSource[index] === '}') {
-      depth--;
-      if (depth === 0) break;
-    }
-  }
+  const bodyStart = nextNonWhitespace(mainSource, arrow + 2);
+  assertAnchor(
+    mainSource[bodyStart] === '{',
+    `${label}: this harness expects a block body immediately after the arrow`,
+    mainSource,
+    bodyStart
+  );
+  const bodyEnd = findMatchingBrace(mainSource, bodyStart, label);
 
-  return { params, body: mainSource.slice(bodyStart + 1, index) };
+  return { params, body: mainSource.slice(bodyStart + 1, bodyEnd) };
 }
 
 function runHandler(channel, state, args = []) {

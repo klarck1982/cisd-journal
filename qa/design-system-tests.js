@@ -15,17 +15,126 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 
-// Everything after the :root block is component territory.
-//
-// Line endings are normalised first: a Windows checkout with core.autocrlf=true
-// delivers CRLF, and matching a literal '\n}\n' silently found nothing there —
-// the whole token block was then scanned as component code and every token
-// definition was reported as a hardcoded value. The suite passed on Linux and
-// failed on Windows, which is exactly the platform the app ships on.
-const css = fs.readFileSync(path.join(root, 'renderer', 'style.css'), 'utf8').replace(/\r\n/g, '\n');
-const html = fs.readFileSync(path.join(root, 'renderer', 'index.html'), 'utf8').replace(/\r\n/g, '\n');
+function readText(...segments) {
+  // A Windows checkout with core.autocrlf=true delivers CRLF. Normalise every
+  // source fixture so regex anchors and CSS block slicing mean the same thing
+  // on windows-latest as they do on ubuntu-latest.
+  return fs.readFileSync(path.join(...segments), 'utf8').replace(/\r\n?/g, '\n');
+}
 
-const rootEnd = css.indexOf('\n}\n', css.indexOf(':root {')) + 3;
+function sourcePosition(source, index) {
+  const safeIndex = Math.max(0, Math.min(index, source.length));
+  const line = source.slice(0, safeIndex).split('\n').length;
+  const lineStart = source.lastIndexOf('\n', safeIndex - 1) + 1;
+  return `line ${line}, column ${safeIndex - lineStart + 1}`;
+}
+
+function findMatchingBrace(source, openIndex, label) {
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+  let inComment = false;
+
+  for (let index = openIndex; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+
+    if (inComment) {
+      if (char === '*' && next === '/') {
+        inComment = false;
+        index++;
+      }
+      continue;
+    }
+
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '/' && next === '*') {
+      inComment = true;
+      index++;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (char === '{') depth++;
+    else if (char === '}') {
+      depth--;
+      if (depth === 0) return index + 1;
+      assert.ok(depth >= 0, `${label} closes too many braces at ${sourcePosition(source, index)}`);
+    }
+  }
+
+  assert.fail(`${label} opened at ${sourcePosition(source, openIndex)} but was never closed`);
+}
+
+function findRuleBlockEnd(source, selector) {
+  let quote = null;
+  let escaped = false;
+  let inComment = false;
+
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index];
+    const next = source[index + 1];
+
+    if (inComment) {
+      if (char === '*' && next === '/') {
+        inComment = false;
+        index++;
+      }
+      continue;
+    }
+
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === quote) quote = null;
+      continue;
+    }
+
+    if (char === '/' && next === '*') {
+      inComment = true;
+      index++;
+      continue;
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+
+    if (!source.startsWith(selector, index)) continue;
+
+    const before = source[index - 1] || '';
+    const after = source[index + selector.length] || '';
+    if (/[A-Za-z0-9_-]/.test(before) || /[A-Za-z0-9_-]/.test(after)) continue;
+
+    let openIndex = index + selector.length;
+    while (/\s/.test(source[openIndex] || '')) openIndex++;
+    if (source[openIndex] !== '{') continue;
+
+    return findMatchingBrace(source, openIndex, `${selector} block`);
+  }
+
+  assert.fail(`${selector} block must exist in renderer/style.css`);
+}
+
+// Everything after the :root block is component territory. The closing brace is
+// found by matching braces instead of searching for a literal '\n}\n': the
+// token block must still be found if formatting changes, comments contain
+// braces, or a checkout uses CRLF line endings.
+const css = readText(root, 'renderer', 'style.css');
+const html = readText(root, 'renderer', 'index.html');
+
+const rootEnd = findRuleBlockEnd(css, ':root');
 const tokens = css.slice(0, rootEnd);
 const components = css.slice(rootEnd);
 
