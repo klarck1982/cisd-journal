@@ -213,20 +213,26 @@
     "cancelEdit": "Cancel"
   },
   "backtest": {
-    "kicker": "Historical discipline replay",
-    "title": "Time-range backtest lab",
-    "description": "Create a backtest session from the same CISD CSV using time range, session, symbol, and timeframe filters — then review each matched signal manually.",
+    "kicker": "Practice Table - Train Before Live",
+    "title": "Backtest: Test Your Rules on Past Signals",
+    "description": "What is this? It replays old CISD signals from the same CSV as if they were live. Pick a date range (e.g., last January - Gold - London) and judge each signal: would you enter? Win or loss? This is how you train without risk.",
     "create": {
-      "title": "Create backtest session",
-      "hint": "Pull only the signals that match your historical drill criteria.",
-      "name": "Session name",
+      "title": "1️⃣ Create New Session",
+      "hint": "Pick a past period to replay. Example: Jan 1 to Jan 15, XAUUSD, London only.",
+      "name": "Session Name (e.g., London Gold Jan)",
       "session": "Session filter",
       "start": "Start date",
       "end": "End date",
       "symbol": "Symbol filter",
       "tf": "Timeframe filter",
-      "save": "Create & import signals",
-      "defaultName": "Untitled Backtest"
+      "save": "2️⃣ Create & Import Old Signals",
+      "defaultName": "Untitled Backtest",
+      "defaultCsvHint": "Uses live CSV by default",
+      "dateRequired": "Pick start and end dates - must match JForex Replay period",
+      "csvLabel": "Backtest CSV (optional)",
+      "csvHint": "If empty, uses live file but filters only your chosen period to match JForex",
+      "chooseCsv": "Choose Backtest CSV",
+      "clearCsv": "Clear"
     },
     "library": {
       "title": "Backtest library",
@@ -538,12 +544,12 @@
       },
       "backtests": {
         "title": "No backtest sessions yet",
-        "text": "Start a session before running a JForex backtest to capture its signals.",
+        "text": "Start here: 1) Make sure you chose a CISD CSV file in Signals, 2) Pick a past date range, 3) Click Create. Old signals will be pulled automatically.",
         "action": ""
       },
       "backtestSignals": {
         "title": "No signals captured",
-        "text": "Refresh the session after your backtest finishes, or widen its filters.",
+        "text": "No signals match this filter. Try broader dates or remove symbol/session filter. Or click Re-import.",
         "action": ""
       },
       "playbooks": {
@@ -572,9 +578,9 @@
         "action": "New account"
       },
       "news": {
-        "title": "No high-impact news",
-        "text": "Nothing scheduled, or the provider needs an API key in settings.",
-        "action": ""
+        "title": "News needs a free API key",
+        "text": "Get a free key from FMP (1 min). Go to Settings -> News Provider -> Paste key -> Test. News will then auto-fetch every hour.",
+        "action": "Open News Settings"
       }
     },
     "error": "Error",
@@ -637,7 +643,16 @@
     "importNotFundedNext": "This is not a FundedNext CSV in the expected format.",
     "importNoMt5Table": "No MT5 trade table was found in this report.",
     "importMt5ColumnsMissing": "Required MT5 columns are missing from this report.",
-    "tradeNotFound": "Trade not found"
+    "tradeNotFound": "Trade not found",
+    "newsKeyInvalid": "FMP key invalid or expired. Free plan does NOT include Economic Calendar - use FREE provider from Settings instead.",
+    "newsKeyLimit": "FMP free key daily limit reached. Free plan does not support news calendar. Use FREE provider.",
+    "newsRateLimit": "News rate limited - wait a minute.",
+    "newsNetworkError": "Network error fetching news - check internet.",
+    "newsNetworkTimeout": "News fetch timed out - check internet/firewall.",
+    "newsServerError": "News server unavailable - try later or use FREE provider.",
+    "newsApiError": "News provider error - details in message.",
+    "newsParseError": "News provider returned invalid data.",
+    "newsFreeFailed": "Free provider also failed - check internet."
   },
   "funding": {
     "title": "Funding access",

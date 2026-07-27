@@ -82,6 +82,8 @@
               <p id="overviewDescription"></p>
             </div>
             <div class="head-actions">
+              <button id="toggleDensityBtn" class="ghost small" title="تبديل الكثافة">☰ مكثف</button>
+              <button id="resetDashboardOrderBtn" class="ghost small" title="إعادة الترتيب الافتراضي">↺ ترتيب</button>
               <button id="overviewOpenTerminal" class="ghost"></button>
               <button id="overviewLoadNews" class="ghost"></button>
               <button id="overviewGoSignals" class="primary"></button>
@@ -97,77 +99,83 @@
             <div id="quickStartSteps" class="quick-start-steps"></div>
           </section>
 
-          <section class="panel spotlight overview-hero">
-            <div class="hero-main">
-              <div class="section-kicker" id="overviewHeroKicker"></div>
-              <h2 id="overviewHeroTitle"></h2>
-              <p id="overviewHeroText"></p>
-              <div id="overviewHeroTags" class="tag-cloud"></div>
-            </div>
-            <div class="hero-side">
-              <div class="hero-clock">
-                <small id="overviewHeroTimeLabel"></small>
-                <strong id="overviewHeroTimeValue"></strong>
-                <span id="overviewHeroSessionValue"></span>
+          <div id="overviewDashboard" class="dashboard-grid">
+            <section class="panel spotlight overview-hero" data-dashboard-id="hero">
+              <div class="dashboard-handle" draggable="true" title="اسحب للترتيب">⋮⋮</div>
+              <div class="hero-main">
+                <div class="section-kicker" id="overviewHeroKicker"></div>
+                <h2 id="overviewHeroTitle"></h2>
+                <p id="overviewHeroText"></p>
+                <div id="overviewHeroTags" class="tag-cloud"></div>
               </div>
-              <div id="overviewHeroInsight" class="hero-insight"></div>
-            </div>
-          </section>
-
-          <div class="grid three">
-            <section class="panel span-two">
-              <div class="panel-head">
-                <h3 id="overviewHealthTitle"></h3>
-                <span id="overviewAccountLabel" class="panel-hint"></span>
+              <div class="hero-side">
+                <div class="hero-clock">
+                  <small id="overviewHeroTimeLabel"></small>
+                  <strong id="overviewHeroTimeValue"></strong>
+                  <span id="overviewHeroSessionValue"></span>
+                </div>
+                <div id="overviewHeroInsight" class="hero-insight"></div>
               </div>
-              <div id="overviewHealthCards" class="metric-grid"></div>
             </section>
 
-            <section class="panel">
+            <div class="grid three dashboard-row" data-dashboard-id="health-risk">
+              <div class="dashboard-handle" draggable="true" title="اسحب للترتيب">⋮⋮</div>
+              <section class="panel span-two" data-dashboard-id="health">
+                <div class="panel-head">
+                  <h3 id="overviewHealthTitle"></h3>
+                  <span id="overviewAccountLabel" class="panel-hint"></span>
+                </div>
+                <div id="overviewHealthCards" class="metric-grid"></div>
+              </section>
+
+              <section class="panel" data-dashboard-id="risk">
+                <div class="panel-head">
+                  <h3 id="overviewRiskTitle"></h3>
+                  <span id="riskStateChip" class="chip"></span>
+                </div>
+                <div id="overviewRiskSummary" class="stack"></div>
+                <div id="overviewWarnings" class="warning-stack"></div>
+              </section>
+            </div>
+
+            <div class="grid three dashboard-row" data-dashboard-id="discipline-challenge-news">
+              <div class="dashboard-handle" draggable="true" title="اسحب للترتيب">⋮⋮</div>
+              <section class="panel" data-dashboard-id="discipline">
+                <div class="panel-head">
+                  <h3 id="overviewDisciplineTitle"></h3>
+                  <span id="disciplineScoreChip" class="chip"></span>
+                </div>
+                <div id="overviewDisciplineSummary" class="stack"></div>
+                <div id="overviewReasons" class="tag-cloud"></div>
+              </section>
+
+              <section class="panel" data-dashboard-id="challenge">
+                <div class="panel-head">
+                  <h3 id="overviewChallengeTitle"></h3>
+                  <span id="challengePercentChip" class="panel-hint"></span>
+                </div>
+                <div class="progress-track"><i id="challengeProgressBar"></i></div>
+                <div id="overviewChallengeSummary" class="stack"></div>
+              </section>
+
+              <section class="panel" data-dashboard-id="news">
+                <div class="panel-head">
+                  <h3 id="overviewNewsTitle"></h3>
+                  <span id="overviewNewsStatus" class="panel-hint"></span>
+                </div>
+                <div id="overviewNewsList" class="list"></div>
+              </section>
+            </div>
+
+            <section class="panel" data-dashboard-id="signals">
+              <div class="dashboard-handle" draggable="true" title="اسحب للترتيب">⋮⋮</div>
               <div class="panel-head">
-                <h3 id="overviewRiskTitle"></h3>
-                <span id="riskStateChip" class="chip"></span>
+                <h3 id="overviewSignalsTitle"></h3>
+                <span id="overviewSignalsHint" class="panel-hint"></span>
               </div>
-              <div id="overviewRiskSummary" class="stack"></div>
-              <div id="overviewWarnings" class="warning-stack"></div>
+              <div id="overviewSignalList" class="list"></div>
             </section>
           </div>
-
-          <div class="grid three">
-            <section class="panel">
-              <div class="panel-head">
-                <h3 id="overviewDisciplineTitle"></h3>
-                <span id="disciplineScoreChip" class="chip"></span>
-              </div>
-              <div id="overviewDisciplineSummary" class="stack"></div>
-              <div id="overviewReasons" class="tag-cloud"></div>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">
-                <h3 id="overviewChallengeTitle"></h3>
-                <span id="challengePercentChip" class="panel-hint"></span>
-              </div>
-              <div class="progress-track"><i id="challengeProgressBar"></i></div>
-              <div id="overviewChallengeSummary" class="stack"></div>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">
-                <h3 id="overviewNewsTitle"></h3>
-                <span id="overviewNewsStatus" class="panel-hint"></span>
-              </div>
-              <div id="overviewNewsList" class="list"></div>
-            </section>
-          </div>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h3 id="overviewSignalsTitle"></h3>
-              <span id="overviewSignalsHint" class="panel-hint"></span>
-            </div>
-            <div id="overviewSignalList" class="list"></div>
-          </section>
         </section>
 
         <section class="page" data-page="signals">
@@ -371,6 +379,19 @@
                   <span id="backtestTfLabel"></span>
                   <input id="backtestTf" placeholder="15m">
                 </label>
+                <div class="full">
+                  <div class="panel slim" style="padding:12px;">
+                    <div class="panel-head" style="margin-bottom:8px;">
+                      <h3 id="backtestCsvLabel" style="font-size:13px;">ملف CSV للباكتيست (اختياري)</h3>
+                      <span class="panel-hint" id="backtestCsvHint">لو تركته فارغاً سيستخدم نفس ملف الإشارات الحية</span>
+                    </div>
+                    <div class="button-row">
+                      <button type="button" class="ghost small" id="chooseBacktestCsvBtn">اختيار ملف باكتيست</button>
+                      <button type="button" class="ghost small hidden" id="clearBacktestCsvBtn">إزالة</button>
+                    </div>
+                    <div class="inline-note" id="backtestCsvPathLabel" style="margin-top:8px; word-break:break-all;">يستخدم الملف الحي الافتراضي</div>
+                  </div>
+                </div>
                 <div class="form-actions full">
                   <button type="submit" class="primary" id="backtestStartBtn"></button>
                 </div>
@@ -899,14 +920,18 @@
                 <label>
                   <span id="newsProviderLabel"></span>
                   <select id="newsProvider">
-                    <option value="FMP">FMP Free</option>
+                    <option value="FREE">✅ FREE - بدون مفتاح (موصى به)</option>
+                    <option value="FMP">FMP Free (يحتاج مفتاح مدفوع للتقويم)</option>
                     <option value="TE">Trading Economics</option>
                   </select>
                 </label>
-                <label class="full">
+                <label class="full" id="newsKeyWrap">
                   <span id="newsKeyLabel"></span>
                   <input id="newsKey" type="password" placeholder="API Key">
                 </label>
+                <div class="inline-note full" id="newsFreeHint" style="display:none; color: var(--green);">
+                  المزود المجاني يعمل بدون مفتاح ويجلب الأخبار عالية التأثير من ForexFactory مباشرة - لا يحتاج تسجيل.
+                </div>
                 <div class="form-actions full">
                   <button id="saveNewsSettingsBtn" class="ghost"></button>
                   <button id="testNewsBtn" class="ghost"></button>
@@ -1270,5 +1295,6 @@
   <script src="app/10-render.js"></script>
   <script src="app/11-actions.js"></script>
   <script src="app/12-bootstrap.js"></script>
+  <script src="app/13-dashboard-order.js"></script>
 </body>
 </html>

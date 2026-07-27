@@ -37,6 +37,8 @@ const model = {
   editingPlaybookId: null,
   welcomeStep: 0,
   welcomeCsvPath: '',
+  backtestCsvPath: '',
+  dashboardDensity: 'comfortable',
   search: {
     signals: '',
     journal: '',
@@ -73,6 +75,7 @@ function persistUiState() {
       search: model.search,
       quickStartDismissed: model.quickStartDismissed,
       calendarMonth: model.calendarMonth,
+      dashboardDensity: model.dashboardDensity,
     }));
   } catch {}
 }
@@ -89,6 +92,7 @@ function restoreUiState() {
     if (saved.search) model.search = { ...model.search, ...saved.search };
     if (saved.quickStartDismissed) model.quickStartDismissed = true;
     if (saved.calendarMonth) model.calendarMonth = saved.calendarMonth;
+    if (saved.dashboardDensity) model.dashboardDensity = saved.dashboardDensity;
   } catch {}
 }
 

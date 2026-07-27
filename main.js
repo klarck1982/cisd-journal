@@ -97,9 +97,16 @@ function importMT5File(filePath, accountId, options = {}) {
 
 function importBacktestSessionSignals(backtestId, options = {}) {
   const data = read();
-  const csvPath = ensureCsvPath(data);
   const backtest = data.backtests.find((item) => item.id === backtestId);
   if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
+  // يدعم مسار مخصص للباكتيست (ملف Replay من JForex) - هذا ما طلبه المستخدم:
+  // فترة الباكتيست كتاريخ تطابق فترة الباكتيست على JForex
+  let csvPath = backtest.sourceCsvPath || backtest.backtestCsvPath || '';
+  if (csvPath && fs.existsSync(csvPath)) {
+    // استخدم المسار المخصص للباكتيست
+  } else {
+    csvPath = ensureCsvPath(data);
+  }
   const result = importBacktestSignalsText(data, fs.readFileSync(csvPath, 'utf8'), backtest, csvPath, options);
   backtest.lastImportedAt = new Date().toISOString();
   backtest.lastDiagnostics = result.diagnostics;
@@ -426,10 +433,28 @@ async function fetchNews() {
   const data = read();
   try {
     newsCache = await fetchCalendar(data.settings.newsProvider || 'FMP', newsKey());
+    if (win) win.webContents.send('news:updated', newsCache);
     return newsCache;
   } catch (error) {
     throw localizeError(error, data.settings?.locale);
   }
+}
+
+function scheduleNewsAutoFetch() {
+  const attempt = async () => {
+    try {
+      const data = read();
+      const provider = data.settings?.newsProvider || 'FMP';
+      // FREE provider يعمل بدون مفتاح - هذا هو الحل لمشكلة FMP المجاني الذي لا يدعم التقويم
+      if (provider !== 'FREE' && !newsKey()) return;
+      await fetchNews();
+    } catch (e) {
+      logError('news:autoFetch', e);
+    }
+  };
+  // Fetch shortly after startup if configured, then hourly
+  setTimeout(attempt, 4000);
+  setInterval(attempt, 60 * 60 * 1000);
 }
 
 function validateRestorePayload(payload, locale) {
@@ -558,7 +583,12 @@ function registerHandlers() {
     return data;
   });
 
-  ipcMain.handle('news:status', () => ({ configured: !!newsKey(), count: newsCache.length }));
+  ipcMain.handle('news:status', () => {
+    const data = read();
+    const provider = data.settings?.newsProvider || 'FMP';
+    const isFree = provider === 'FREE';
+    return { configured: isFree || !!newsKey(), count: newsCache.length, provider };
+  });
   ipcMain.handle('news:provider', (_, provider) => {
     const data = read();
     data.settings.newsProvider = provider;
@@ -832,7 +862,8 @@ function registerHandlers() {
 
   ipcMain.handle('backtest:start', (_, payload) => {
     const data = read();
-    const csvPath = ensureCsvPath(data);
+    // إذا اختار المستخدم ملف CSV خاص بالباكتيست (من Replay JForex)، استخدمه، وإلا استخدم الملف الحي
+    const csvPath = payload.backtestCsvPath && fs.existsSync(payload.backtestCsvPath) ? payload.backtestCsvPath : ensureCsvPath(data);
     const backtest = {
       ...payload,
       id: crypto.randomUUID(),
@@ -840,6 +871,7 @@ function registerHandlers() {
       createdAt: new Date().toISOString(),
       accountId: payload.accountId,
       sourceCsvPath: csvPath,
+      backtestCsvPath: payload.backtestCsvPath || '',
       filters: {
         start: payload.start || '',
         end: payload.end || '',
@@ -1013,6 +1045,15 @@ function registerHandlers() {
     return read();
   });
 
+  ipcMain.handle('backtest:csv:choose', async () => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'CISD Backtest CSV', extensions: ['csv', 'txt'] }],
+    });
+    if (result.canceled) return { cancelled: true, path: '' };
+    return { cancelled: false, path: result.filePaths[0] };
+  });
+
   ipcMain.handle('signal:status', (_, id, accountId, status, reason) => {
     const data = read();
     const signal = data.signals.find((item) => item.SignalID === id);
@@ -1050,6 +1091,7 @@ if (!hasInstanceLock) {
     watchSignalsFile();
     watchAllFundedNextFolders();
     registerHandlers();
+    scheduleNewsAutoFetch();
   });
 
   app.on('window-all-closed', () => app.quit());

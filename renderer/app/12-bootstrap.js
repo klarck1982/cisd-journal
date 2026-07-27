@@ -95,6 +95,12 @@ function bindEvents() {
 
   $('#tradeForm').addEventListener('submit', saveTrade);
   $('#backtestForm').addEventListener('submit', startBacktest);
+  const chooseBacktestCsvBtn = $('#chooseBacktestCsvBtn');
+  if (chooseBacktestCsvBtn) chooseBacktestCsvBtn.onclick = chooseBacktestCsv;
+  const clearBacktestCsvBtn = $('#clearBacktestCsvBtn');
+  if (clearBacktestCsvBtn) clearBacktestCsvBtn.onclick = clearBacktestCsv;
+  const toggleDensityBtn = $('#toggleDensityBtn');
+  if (toggleDensityBtn) toggleDensityBtn.onclick = toggleDensity;
   $('#accountSettingsForm').addEventListener('submit', saveAccountSettings);
   $('#journalGuidanceBackBtn').onclick = () => {
     model.page = 'signals';
@@ -109,6 +115,7 @@ function bindEvents() {
     renderJournal();
   };
   $('#fundingAccessModeInput').addEventListener('change', toggleFundingAccessFields);
+  $('#newsProvider').addEventListener('change', toggleNewsFields);
   $('#saveFundingAccessBtn').onclick = saveFundingAccess;
   $('#syncFundingAccessBtn').onclick = syncFundingAccessNow;
   $('#openFundingAccessBtn').onclick = openFundingAccess;
@@ -172,6 +179,11 @@ function bindEvents() {
     button.onclick = () => chooseWelcomeLocale(button.dataset.welcomeLocale);
   });
 
+  const resetOrderBtn = $('#resetDashboardOrderBtn');
+  if (resetOrderBtn) resetOrderBtn.onclick = () => {
+    if (window.resetDashboardOrder) window.resetDashboardOrder();
+  };
+
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     if (!$('#accountModal').classList.contains('hidden')) closeAccountModal();
@@ -190,6 +202,7 @@ async function init() {
   await refreshStateAndRender();
   if (model.newsConfigured) await loadNews(true);
   render();
+  if (window.initDashboardOrder) window.initDashboardOrder();
   // Live monitoring.
   //
   // This tick used to only re-render from the cached snapshot, so it redrew the
@@ -220,6 +233,13 @@ async function init() {
     render();
     if ((state.signals?.length || 0) > previousSignalCount) toast(t('messages.newSignalArrived'), 'info');
   });
+
+  if (cisd.onNewsUpdated) {
+    cisd.onNewsUpdated((news) => {
+      model.news = news || [];
+      render();
+    });
+  }
 }
 
 init().catch((error) => {

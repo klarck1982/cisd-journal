@@ -136,10 +136,12 @@ function renderJournal() {
   renderJournalGuidance();
   const signals = allLiveSignalsForAccount();
   const tradeQuery = model.search.journal.trim().toLowerCase();
+  const isCompact = (model.state?.settings?.dashboardDensity || model.dashboardDensity) === 'compact';
+  const limit = isCompact ? 20 : 8;
   const trades = (model.state?.trades || [])
     .filter((trade) => trade.accountId === model.accountId)
     .filter((trade) => !tradeQuery || `${trade.symbol || ''} ${trade.side || ''} ${trade.source || ''} ${trade.tags || ''} ${trade.note || ''}`.toLowerCase().includes(tradeQuery))
-    .slice(0, 8);
+    .slice(0, limit);
 
   $('#tradeSignal').innerHTML = `<option value="">${escapeHtml(t('journal.form.noSignal'))}</option>${signals.map((signal) => `<option value="${escapeHtml(signal.SignalID)}">${escapeHtml(signal.Instrument || '')} · ${escapeHtml(signal.Direction || '')} · ${escapeHtml(signal.TF || '')}</option>`).join('')}`;
   renderTradePlaybookPicker();

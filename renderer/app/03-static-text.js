@@ -89,6 +89,16 @@ function applyStaticText() {
   $('#backtestEndLabel').textContent = t('backtest.create.end');
   $('#backtestSymbolLabel').textContent = t('backtest.create.symbol');
   $('#backtestTfLabel').textContent = t('backtest.create.tf');
+  const csvLabel = $('#backtestCsvLabel');
+  if (csvLabel) csvLabel.textContent = t('backtest.create.csvLabel');
+  const csvHint = $('#backtestCsvHint');
+  if (csvHint) csvHint.textContent = t('backtest.create.csvHint');
+  const chooseCsvBtn = $('#chooseBacktestCsvBtn');
+  if (chooseCsvBtn) chooseCsvBtn.textContent = t('backtest.create.chooseCsv');
+  const clearCsvBtn = $('#clearBacktestCsvBtn');
+  if (clearCsvBtn) clearCsvBtn.textContent = t('backtest.create.clearCsv');
+  const pathLabel = $('#backtestCsvPathLabel');
+  if (pathLabel && !pathLabel.textContent) pathLabel.textContent = t('backtest.create.defaultCsvHint');
   $('#backtestStartBtn').innerHTML = `${icon('backtest','button-icon')}${escapeHtml(t('backtest.create.save'))}`;
   $('#backtestLibraryTitle').innerHTML = iconText('backtest', t('backtest.library.title'));
   $('#backtestLibraryHint').textContent = t('backtest.library.hint');
