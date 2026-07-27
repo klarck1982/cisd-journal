@@ -13,7 +13,18 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
-const mainSource = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+/**
+ * Source files are read with line endings normalised.
+ *
+ * A Windows checkout with core.autocrlf=true delivers CRLF; any assertion that
+ * matches a literal '\n' against raw file text then behaves differently there
+ * than on Linux. These suites must judge the same thing on both platforms.
+ */
+function readSource(...segments) {
+  return fs.readFileSync(path.join(...segments), 'utf8').replace(/\r\n/g, '\n');
+}
+
+const mainSource = readSource(__dirname, '..', 'main.js');
 
 /**
  * Extracts a single ipcMain.handle('<channel>', ...) body plus its real
@@ -185,9 +196,9 @@ function runHandler(channel, state, args = []) {
   const rendererDir = path.join(__dirname, '..', 'renderer', 'app');
   const renderer = fs.readdirSync(rendererDir)
     .filter((name) => name.endsWith('.js'))
-    .map((name) => fs.readFileSync(path.join(rendererDir, name), 'utf8'))
+    .map((name) => readSource(rendererDir, name))
     .join('\n');
-  const html = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'index.html'), 'utf8');
+  const html = readSource(__dirname, '..', 'renderer', 'index.html');
 
   assert.ok(
     /onboardingComplete/.test(renderer),
@@ -201,11 +212,11 @@ function runHandler(channel, state, args = []) {
 // Nine channels used to be exposed with no caller: exactly the truncated
 // features (archive account, stop backtest, onboarding).
 {
-  const preload = fs.readFileSync(path.join(__dirname, '..', 'preload.js'), 'utf8');
+  const preload = readSource(__dirname, '..', 'preload.js');
   const rendererDir = path.join(__dirname, '..', 'renderer', 'app');
   const renderer = fs.readdirSync(rendererDir)
     .filter((name) => name.endsWith('.js'))
-    .map((name) => fs.readFileSync(path.join(rendererDir, name), 'utf8'))
+    .map((name) => readSource(rendererDir, name))
     .join('\n');
 
   const exposed = [...preload.matchAll(/^\s{2}(\w+):/gm)].map((match) => match[1]);

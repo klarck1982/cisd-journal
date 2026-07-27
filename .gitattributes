@@ -1,0 +1,22 @@
+# Normalise line endings in the repository to LF.
+#
+# Without this, a Windows checkout with core.autocrlf=true rewrites text files
+# to CRLF, and any test matching a literal "\n" against file contents behaves
+# differently there than on Linux. That produced a suite which passed CI on
+# ubuntu-latest and failed on windows-latest — the platform this app ships on.
+* text=auto eol=lf
+
+# Fonts and icons are binary: never touch their bytes.
+# -text -diff overrides the `* text=auto` above; a corrupted .woff2 would make
+# the bundled Arabic face fail to load with no obvious cause.
+*.woff2 -text -diff
+*.woff  -text -diff
+*.ttf   -text -diff
+*.otf   -text -diff
+*.ico   -text -diff
+*.png   -text -diff
+*.jpg   -text -diff
+*.exe   -text -diff
+
+# PowerShell is happiest with CRLF on Windows.
+*.ps1 text eol=crlf

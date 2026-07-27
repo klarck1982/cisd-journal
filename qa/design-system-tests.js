@@ -14,10 +14,17 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
-const css = fs.readFileSync(path.join(root, 'renderer', 'style.css'), 'utf8');
-const html = fs.readFileSync(path.join(root, 'renderer', 'index.html'), 'utf8');
 
 // Everything after the :root block is component territory.
+//
+// Line endings are normalised first: a Windows checkout with core.autocrlf=true
+// delivers CRLF, and matching a literal '\n}\n' silently found nothing there —
+// the whole token block was then scanned as component code and every token
+// definition was reported as a hardcoded value. The suite passed on Linux and
+// failed on Windows, which is exactly the platform the app ships on.
+const css = fs.readFileSync(path.join(root, 'renderer', 'style.css'), 'utf8').replace(/\r\n/g, '\n');
+const html = fs.readFileSync(path.join(root, 'renderer', 'index.html'), 'utf8').replace(/\r\n/g, '\n');
+
 const rootEnd = css.indexOf('\n}\n', css.indexOf(':root {')) + 3;
 const tokens = css.slice(0, rootEnd);
 const components = css.slice(rootEnd);
