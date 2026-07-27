@@ -82,48 +82,136 @@ function renderAnalytics() {
 function renderData() {
   const account = activeAccount();
   const signalDiagnostics = model.state?.settings?.lastSignalDiagnostics;
+  const lastSignalSync = model.state?.settings?.lastSignalSync;
+  const csvPath = model.state?.settings?.csvPath;
+  const accounts = model.state?.accounts || [];
+  const totalSignals = (model.state?.signals || []).length;
+  const todaySignals = (model.state?.signals || []).filter(s => {
+    const at = s.importedAt || s.signalAt;
+    if (!at) return false;
+    try {
+      const d = new Date(at);
+      const now = new Date();
+      return d.toDateString() === now.toDateString();
+    } catch { return false; }
+  }).length;
+
+  const fundedNextFolder = account?.fundedNextFolder || '';
+  const fundedNextWatcherActive = !!fundedNextFolder;
+  const mt5BridgeReady = model.runtimeReadiness?.mt5Bridge?.packagedExecutableExists || false;
+  const newsProvider = model.state?.settings?.newsProvider || 'FREE';
+  const isFreeNews = newsProvider === 'FREE';
+
+  // Health score: how many sources are configured
+  const configuredCount = [
+    !!csvPath,
+    !!fundedNextFolder,
+    !!account?.lastMT5Import,
+    !!(model.fundingAccess?.configured),
+    !!model.newsConfigured || isFreeNews
+  ].filter(Boolean).length;
+
+  // Render top health summary if container exists, otherwise inject before sources list
+  const healthContainerId = 'dataHealthCards';
+  if (!document.getElementById(healthContainerId)) {
+    const dataPage = document.querySelector('[data-page=\"data\"] .page-head');
+    if (dataPage && !document.getElementById(healthContainerId)) {
+      const healthSection = document.createElement('div');
+      healthSection.id = healthContainerId;
+      healthSection.className = 'metric-grid large';
+      healthSection.style.marginBottom = '18px';
+      dataPage.parentNode.insertBefore(healthSection, dataPage.nextSibling);
+    }
+  }
+  const healthEl = document.getElementById(healthContainerId);
+  if (healthEl) {
+    healthEl.innerHTML = [
+      metricCard('مصادر مهيأة', `${configuredCount}/5`, `${accounts.length} حساب`, configuredCount >= 4 ? 'good' : configuredCount >= 2 ? 'warn' : 'bad', 'source'),
+      metricCard('إشارات اليوم', String(todaySignals), `إجمالي ${totalSignals}`, todaySignals > 0 ? 'good' : 'neutral', 'signals'),
+      metricCard('حالة المراقبة', fundedNextWatcherActive && csvPath ? 'نشطة' : 'متوقفة', csvPath ? 'ملف CSV + مجلد FundedNext' : 'اختر ملف CSV', (fundedNextWatcherActive && csvPath) ? 'good' : 'warn', 'import'),
+      metricCard('الأخبار', isFreeNews ? 'FREE مجاني' : model.newsConfigured ? `${model.news?.length || 0} خبر` : 'غير مهيأ', newsProvider, isFreeNews || model.newsConfigured ? 'good' : 'warn', 'news'),
+    ].join('');
+  }
+
   const items = [
     {
       title: t('data.sources.cisd'),
       icon: 'signals',
-      status: model.state?.settings?.csvPath ? t('data.status.ready') : t('data.status.missing'),
-      meta: signalDiagnostics ? `${signalDiagnostics.added} ${t('signals.metrics.newSignals')} · ${signalDiagnostics.duplicates} ${t('signals.metrics.duplicates')}` : t('data.status.noRuns'),
-      cls: model.state?.settings?.csvPath ? 'blue' : 'neutral',
+      status: csvPath ? t('data.status.ready') : t('data.status.missing'),
+      meta: `${csvPath ? `📁 ${csvPath.split(/[\\/]/).pop()} • ` : ''}${lastSignalSync ? `آخر فحص: ${formatDateTime(lastSignalSync)} • ` : ''}${signalDiagnostics ? `${signalDiagnostics.added} جديد • ${signalDiagnostics.duplicates} مكرر • ${signalDiagnostics.invalidRows || 0} غير صالح` : t('data.status.noRuns')}`,
+      extra: `👀 المراقبة: ${csvPath ? 'نشطة كل ثانيتين' : 'متوقفة - اختر ملف'} • الإشارات اليوم: ${todaySignals}`,
+      cls: csvPath ? 'blue' : 'neutral',
+      actionLabel: csvPath ? 'تغيير الملف' : 'اختيار الملف',
+      btnAction: 'chooseCsv',
+    },
+    {
+      title: t('data.sources.fundedNext'),
+      icon: 'source',
+      status: account?.lastFundedNextImport ? formatDateTime(account.lastFundedNextImport) : fundedNextFolder ? 'يراقب...' : t('data.status.noRuns'),
+      meta: `${fundedNextFolder ? `📁 ${fundedNextFolder.split(/[\\/]/).pop()} • ` : ''}${account?.lastFundedNextDiagnostics ? `${account.lastFundedNextDiagnostics.added} مضاف • ${account.lastFundedNextDiagnostics.openPositions} مفتوحة • ${account.lastFundedNextDiagnostics.duplicates || 0} مكرر` : (account?.lastFundedNextError || (fundedNextFolder ? 'في انتظار ملفات جديدة...' : t('data.status.notConfigured')))}`,
+      extra: `👀 المراقبة: ${fundedNextWatcherActive ? 'نشطة' : 'متوقفة - اختر مجلد'} • الحسابات: ${accounts.filter(a=>a.fundedNextFolder).length} تراقب مجلدات`,
+      cls: account?.lastFundedNextError ? 'bad' : account?.fundedNextFolder ? 'safe' : 'neutral',
+      actionLabel: fundedNextFolder ? 'تغيير المجلد' : 'اختيار مجلد',
+      btnAction: 'watchFolder',
     },
     {
       title: t('data.sources.mt5'),
       icon: 'import',
       status: account?.lastMT5Import ? formatDateTime(account.lastMT5Import) : t('data.status.noRuns'),
-      meta: account?.lastMT5Diagnostics ? `${account.lastMT5Diagnostics.added} ${t('data.labels.added')} · ${account.lastMT5Diagnostics.duplicates} ${t('signals.metrics.duplicates')}` : (account?.lastMT5Error || t('data.status.notConfigured')),
+      meta: `${mt5BridgeReady ? '✅ جسر EXE جاهز • ' : '⚠️ جسر EXE مفقود • '}${account?.lastMT5Diagnostics ? `${account.lastMT5Diagnostics.added} مضاف • ${account.lastMT5Diagnostics.duplicates} مكرر • ${account.lastMT5Diagnostics.invalidRows || 0} غير صالح` : (account?.lastMT5Error || t('data.status.notConfigured'))}`,
+      extra: `الصيغ: HTML/CSV • آخر خطأ: ${account?.lastMT5Error ? account.lastMT5Error.slice(0,60) : 'لا يوجد'}`,
       cls: account?.lastMT5Error ? 'bad' : account?.lastMT5Import ? 'safe' : 'neutral',
-    },
-    {
-      title: t('data.sources.fundedNext'),
-      icon: 'source',
-      status: account?.lastFundedNextImport ? formatDateTime(account.lastFundedNextImport) : t('data.status.noRuns'),
-      meta: account?.lastFundedNextDiagnostics ? `${account.lastFundedNextDiagnostics.added} ${t('data.labels.added')} · ${account.lastFundedNextDiagnostics.openPositions} ${t('data.labels.openPositions')}` : (account?.lastFundedNextError || t('data.status.notConfigured')),
-      cls: account?.lastFundedNextError ? 'bad' : account?.fundedNextFolder ? 'safe' : 'neutral',
+      actionLabel: 'استيراد MT5',
+      btnAction: 'importMt5',
     },
     {
       title: t('data.sources.fundingAccess'),
       icon: 'link',
       status: account?.lastFundingSync ? formatDateTime(account.lastFundingSync) : (model.fundingAccess?.configured ? t('data.status.ready') : t('data.status.notConfigured')),
-      meta: account?.lastFundingError || (model.fundingAccess?.mode === 'investor_pass' ? t('funding.modes.investor') : model.fundingAccess?.mode === 'shared_url' ? t('funding.modes.sharedUrl') : t('funding.modes.none')),
+      meta: `${account?.lastFundingError ? `❌ ${account.lastFundingError.slice(0,80)}` : (model.fundingAccess?.mode === 'investor_pass' ? `🔑 Investor Pass • ${model.fundingAccess?.investorLogin || ''}` : model.fundingAccess?.mode === 'shared_url' ? `🔗 Shared URL • ${t('funding.modes.sharedUrl')}` : t('funding.modes.none'))}`,
+      extra: `الحسابات المهيأة: ${accounts.filter(a=>a.fundingAccessMode && a.fundingAccessMode!=='none').length}/${accounts.length} • الجسر: ${mt5BridgeReady ? 'جاهز' : 'غير موجود'}`,
       cls: account?.lastFundingError ? 'bad' : model.fundingAccess?.configured ? 'safe' : 'neutral',
+      actionLabel: model.fundingAccess?.configured ? 'مزامنة الآن' : 'إعداد',
+      btnAction: 'syncFunding',
+    },
+    {
+      title: `📰 الأخبار - ${isFreeNews ? 'FREE مجاني' : newsProvider}`,
+      icon: 'news',
+      status: model.newsConfigured || isFreeNews ? `${model.news?.length || 0} خبر عالي التأثير` : t('settings.newsDisconnected'),
+      meta: `${isFreeNews ? '✅ بدون مفتاح • ForexFactory • مجاني 100% • ' : `🔑 ${newsProvider} • `}${model.news?.length ? `آخر جلب: ${formatDateTime(new Date().toISOString())} • ` : ''}${model.news?.[0] ? `التالي: ${model.news[0].Country} - ${model.news[0].Event?.slice(0,30)}` : 'لا أخبار مجدولة'}`,
+      extra: isFreeNews ? '💡 المزود المجاني يعمل بدون مفتاح ولا يحتاج تسجيل - موصى به' : '⚠️ FMP المجاني لا يشمل التقويم الاقتصادي - استخدم FREE بدلاً منه',
+      cls: (model.newsConfigured || isFreeNews) ? 'safe' : 'warn',
+      actionLabel: isFreeNews ? 'تحديث الأخبار' : 'إعداد الأخبار',
+      btnAction: isFreeNews ? 'refreshNews' : 'openSettings',
     },
   ];
 
   $('#dataSourcesList').innerHTML = renderListRows(items, (item) => `
-    <article class="item diagnostic-card ${item.cls}">
+    <article class="item diagnostic-card ${item.cls}" style="padding:14px;">
       <div class="item-head">
-        <div>
+        <div style="flex:1; min-width:0;">
           <div class="item-title with-inline-icon">${icon(item.icon,'mini-inline-icon')}${escapeHtml(item.title)}</div>
-          <div class="item-subtitle">${escapeHtml(item.meta)}</div>
+          <div class="item-subtitle" style="white-space:normal; line-height:1.5;">${escapeHtml(item.meta)}</div>
+          <div class="inline-note" style="margin-top:6px; white-space:normal;">${escapeHtml(item.extra)}</div>
         </div>
-        <span class="chip ${item.cls}">${escapeHtml(item.status)}</span>
+        <div style="display:grid; gap:6px; justify-items:end;">
+          <span class="chip ${item.cls}">${escapeHtml(item.status)}</span>
+          ${item.actionLabel ? `<button class="ghost small" data-data-action="${item.btnAction}">${escapeHtml(item.actionLabel)}</button>` : ''}
+        </div>
       </div>
     </article>
   `);
+
+  // Bind data source actions
+  $$('[data-data-action]').forEach(btn => {
+    const act = btn.dataset.dataAction;
+    if (act === 'chooseCsv') btn.onclick = () => chooseCsv();
+    if (act === 'watchFolder') btn.onclick = () => watchFundedNext();
+    if (act === 'importMt5') btn.onclick = () => importMt5();
+    if (act === 'syncFunding') btn.onclick = () => syncFundingAccessNow();
+    if (act === 'refreshNews') btn.onclick = () => loadNews(false);
+    if (act === 'openSettings') btn.onclick = () => { model.page='settings'; persistUiState(); renderActivePage(); renderWorkspaceStatus(); };
+  });
 
   const history = (model.state?.importHistory || []).filter((entry) => !entry.accountId || entry.accountId === model.accountId).slice(0, 10);
   $('#dataImportHistory').innerHTML = renderListRows(history, (entry) => {
