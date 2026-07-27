@@ -1587,3 +1587,36 @@ body.density-compact .hero-insight { padding: 10px; }
 body.density-compact #recentTradesList .item { padding: 8px; }
 body.density-compact .status-dock { gap: 8px; margin-bottom: 12px; }
 body.density-compact .calendar-cell { min-height: 48px; padding: 4px 6px; }
+
+/* ===== Draggable Dashboard ===== */
+.dashboard-grid { display: grid; gap: 18px; position: relative; }
+.dashboard-row { position: relative; }
+.dashboard-handle {
+  position: absolute;
+  inset-inline-start: -4px;
+  inset-block-start: 8px;
+  width: 20px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: var(--s-2);
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  cursor: grab;
+  z-index: 2;
+  opacity: 0;
+  transition: var(--motion);
+  user-select: none;
+}
+.panel:hover .dashboard-handle,
+.dashboard-row:hover > .dashboard-handle,
+.dashboard-grid > section:hover > .dashboard-handle,
+.dashboard-grid > .panel:hover > .dashboard-handle {
+  opacity: 1;
+}
+.dashboard-handle:active { cursor: grabbing; background: var(--blue-wash); border-color: var(--blue-edge); }
+.dashboard-item.dragging { opacity: 0.4; transform: scale(0.98); }
+.dashboard-item.drag-over { outline: 2px dashed var(--blue-edge); outline-offset: 2px; border-radius: var(--radius); }
+#overviewDashboard .panel { position: relative; }

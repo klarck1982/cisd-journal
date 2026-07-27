@@ -179,6 +179,11 @@ function bindEvents() {
     button.onclick = () => chooseWelcomeLocale(button.dataset.welcomeLocale);
   });
 
+  const resetOrderBtn = $('#resetDashboardOrderBtn');
+  if (resetOrderBtn) resetOrderBtn.onclick = () => {
+    if (window.resetDashboardOrder) window.resetDashboardOrder();
+  };
+
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     if (!$('#accountModal').classList.contains('hidden')) closeAccountModal();
@@ -197,6 +202,7 @@ async function init() {
   await refreshStateAndRender();
   if (model.newsConfigured) await loadNews(true);
   render();
+  if (window.initDashboardOrder) window.initDashboardOrder();
   // Live monitoring.
   //
   // This tick used to only re-render from the cached snapshot, so it redrew the

@@ -9,6 +9,7 @@ function render() {
   renderWorkspaceStatus();
   renderAccounts();
   renderOverview();
+  if (window.applyDashboardOrder) window.applyDashboardOrder();
   renderSignalsPage();
   renderJournal();
   renderBacktest();
