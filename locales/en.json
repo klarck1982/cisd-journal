@@ -643,7 +643,16 @@
     "importNotFundedNext": "This is not a FundedNext CSV in the expected format.",
     "importNoMt5Table": "No MT5 trade table was found in this report.",
     "importMt5ColumnsMissing": "Required MT5 columns are missing from this report.",
-    "tradeNotFound": "Trade not found"
+    "tradeNotFound": "Trade not found",
+    "newsKeyInvalid": "FMP key invalid or expired. Free plan does NOT include Economic Calendar - use FREE provider from Settings instead.",
+    "newsKeyLimit": "FMP free key daily limit reached. Free plan does not support news calendar. Use FREE provider.",
+    "newsRateLimit": "News rate limited - wait a minute.",
+    "newsNetworkError": "Network error fetching news - check internet.",
+    "newsNetworkTimeout": "News fetch timed out - check internet/firewall.",
+    "newsServerError": "News server unavailable - try later or use FREE provider.",
+    "newsApiError": "News provider error - details in message.",
+    "newsParseError": "News provider returned invalid data.",
+    "newsFreeFailed": "Free provider also failed - check internet."
   },
   "funding": {
     "title": "Funding access",

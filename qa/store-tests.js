@@ -7,7 +7,7 @@ const legacy={version:0,accounts:[{id:'a',firm:'Test'}],trades:[],settings:{time
 fs.writeFileSync(path.join(dir,'journal-data.json'),JSON.stringify(legacy));
 let state=store.read();
 assert.equal(state.settings.timezone,'GMT');
-assert.equal(state.settings.newsProvider,'FMP');
+assert.equal(state.settings.newsProvider,'FREE');
 assert.ok(Array.isArray(state.openPositions));
 assert.ok(Array.isArray(state.backtestSignals));
 assert.ok(Array.isArray(state.importHistory));

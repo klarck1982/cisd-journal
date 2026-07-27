@@ -912,14 +912,18 @@
                 <label>
                   <span id="newsProviderLabel"></span>
                   <select id="newsProvider">
-                    <option value="FMP">FMP Free</option>
+                    <option value="FREE">✅ FREE - بدون مفتاح (موصى به)</option>
+                    <option value="FMP">FMP Free (يحتاج مفتاح مدفوع للتقويم)</option>
                     <option value="TE">Trading Economics</option>
                   </select>
                 </label>
-                <label class="full">
+                <label class="full" id="newsKeyWrap">
                   <span id="newsKeyLabel"></span>
                   <input id="newsKey" type="password" placeholder="API Key">
                 </label>
+                <div class="inline-note full" id="newsFreeHint" style="display:none; color: var(--green);">
+                  المزود المجاني يعمل بدون مفتاح ويجلب الأخبار عالية التأثير من ForexFactory مباشرة - لا يحتاج تسجيل.
+                </div>
                 <div class="form-actions full">
                   <button id="saveNewsSettingsBtn" class="ghost"></button>
                   <button id="testNewsBtn" class="ghost"></button>

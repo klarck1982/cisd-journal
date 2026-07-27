@@ -154,6 +154,15 @@ function toggleFundingAccessFields() {
   $$('.shared-url-field').forEach((el) => el.classList.toggle('hidden', mode !== 'shared_url'));
 }
 
+function toggleNewsFields() {
+  const provider = $('#newsProvider')?.value || 'FREE';
+  const isFree = provider === 'FREE';
+  const keyWrap = $('#newsKeyWrap');
+  const freeHint = $('#newsFreeHint');
+  if (keyWrap) keyWrap.style.display = isFree ? 'none' : 'grid';
+  if (freeHint) freeHint.style.display = isFree ? 'block' : 'none';
+}
+
 function renderSettings() {
   const account = activeAccount();
   const access = model.fundingAccess || { mode: 'none', syncScope: 'full_readonly', hasStoredPassword: false, configured: false };
@@ -194,7 +203,8 @@ function renderSettings() {
   $('#settingsLanguage').value = model.state?.settings?.locale || 'ar';
   $('#settingsTimezone').value = model.state?.settings?.timezone || 'America/New_York';
   $('#settingsNotifications').checked = model.state?.settings?.notifications !== false;
-  $('#newsProvider').value = model.state?.settings?.newsProvider || 'FMP';
+  $('#newsProvider').value = model.state?.settings?.newsProvider || 'FREE';
+  toggleNewsFields();
   $('#terminalPathLabel').textContent = account?.terminalPath || t('settings.noTerminal');
   $('#newsConnectionStatus').textContent = model.newsConfigured ? t('settings.newsConnected') : t('settings.newsDisconnected');
 }

@@ -442,14 +442,17 @@ async function fetchNews() {
 
 function scheduleNewsAutoFetch() {
   const attempt = async () => {
-    if (!newsKey()) return;
     try {
+      const data = read();
+      const provider = data.settings?.newsProvider || 'FMP';
+      // FREE provider يعمل بدون مفتاح - هذا هو الحل لمشكلة FMP المجاني الذي لا يدعم التقويم
+      if (provider !== 'FREE' && !newsKey()) return;
       await fetchNews();
     } catch (e) {
       logError('news:autoFetch', e);
     }
   };
-  // Fetch shortly after startup if key exists, then hourly
+  // Fetch shortly after startup if configured, then hourly
   setTimeout(attempt, 4000);
   setInterval(attempt, 60 * 60 * 1000);
 }
@@ -580,7 +583,12 @@ function registerHandlers() {
     return data;
   });
 
-  ipcMain.handle('news:status', () => ({ configured: !!newsKey(), count: newsCache.length }));
+  ipcMain.handle('news:status', () => {
+    const data = read();
+    const provider = data.settings?.newsProvider || 'FMP';
+    const isFree = provider === 'FREE';
+    return { configured: isFree || !!newsKey(), count: newsCache.length, provider };
+  });
   ipcMain.handle('news:provider', (_, provider) => {
     const data = read();
     data.settings.newsProvider = provider;

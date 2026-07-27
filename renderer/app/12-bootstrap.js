@@ -113,6 +113,7 @@ function bindEvents() {
     renderJournal();
   };
   $('#fundingAccessModeInput').addEventListener('change', toggleFundingAccessFields);
+  $('#newsProvider').addEventListener('change', toggleNewsFields);
   $('#saveFundingAccessBtn').onclick = saveFundingAccess;
   $('#syncFundingAccessBtn').onclick = syncFundingAccessNow;
   $('#openFundingAccessBtn').onclick = openFundingAccess;
