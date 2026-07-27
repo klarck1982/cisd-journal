@@ -4,41 +4,58 @@
  */
 
 /**
- * Equity curve with hover inspection.
+ * Equity curve with hover inspection + proper axis.
  *
- * A static curve shows the shape but hides the detail: which trade caused a drop, and
- * when. Each point gets an invisible hit area spanning its slice of the chart, so
- * pointing anywhere near it reveals that trade's date, result and running equity.
- * Hit areas are generous by design — a 4px dot is unhittable with a mouse.
+ * Fixes previous issues that made it look primitive:
+ * - preserveAspectRatio="none" caused non-uniform stretch → xMidYMid meet
+ * - stroke-width 4 + glow blurred line → 2px + non-scaling-stroke + no glow
+ * - No axis numbers → Y axis min/mid/max + X axis first/last date
  */
 function buildCurveSvg(points) {
   if (!points.length) return emptyState(t('analytics.emptyCurve'));
   const width = 920;
-  const height = 240;
-  const paddingX = 18;
+  const height = 260;
+  const paddingX = 56;
   const paddingY = 24;
-  const xs = points.map((_, index) => paddingX + index * ((width - paddingX * 2) / Math.max(1, points.length - 1)));
+  const chartWidth = width - paddingX * 2;
+  const chartHeight = height - paddingY * 2;
+  const xs = points.map((_, index) => paddingX + index * (chartWidth / Math.max(1, points.length - 1)));
   const values = points.map((point) => point.equity);
   const min = Math.min(...values, 0);
   const max = Math.max(...values, 0);
   const range = Math.max(1, max - min);
-  const yFor = (value) => height - paddingY - ((value - min) / range) * (height - paddingY * 2);
+  const yFor = (value) => height - paddingY - ((value - min) / range) * chartHeight;
   const polyline = values.map((value, index) => `${xs[index]},${yFor(value)}`).join(' ');
   const areaPoints = `${paddingX},${height - paddingY} ${polyline} ${width - paddingX},${height - paddingY}`;
   const lastX = xs[xs.length - 1];
   const lastY = yFor(values[values.length - 1]);
-  const gridLines = [0.2, 0.4, 0.6, 0.8].map((ratio) => {
-    const y = paddingY + ratio * (height - paddingY * 2);
-    return `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="rgba(255,255,255,.06)" stroke-dasharray="4 6" stroke-width="1"></line>`;
-  }).join('');
-  const dots = xs.map((x, index) => `<circle cx="${x}" cy="${yFor(values[index])}" r="2.5" fill="#9fd0ff" opacity="${index === values.length - 1 ? '0' : '.65'}"></circle>`).join('');
 
-  // One hit area per point, each covering half the gap to its neighbours.
-  const step = points.length > 1 ? (width - paddingX * 2) / (points.length - 1) : width;
+  const yLabels = [
+    { value: max, y: yFor(max) },
+    { value: (max + min) / 2, y: yFor((max + min) / 2) },
+    { value: min, y: yFor(min) },
+  ];
+  const gridLines = yLabels.map(({ y }) => {
+    return `<line x1="${paddingX}" y1="${y}" x2="${width - paddingX}" y2="${y}" stroke="rgba(148,178,214,0.10)" stroke-dasharray="4 6" stroke-width="1" vector-effect="non-scaling-stroke"></line>`;
+  }).join('');
+  const yAxisLabels = yLabels.map(({ value, y }) => {
+    return `<text x="${paddingX - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#7c8fa8" font-family="var(--font-num)">${value > 0 ? '+' : ''}${Math.round(value)}</text>`;
+  }).join('');
+
+  const firstAt = points[0]?.at ? formatShortDate(points[0].at) : '';
+  const lastAt = points[points.length - 1]?.at ? formatShortDate(points[points.length - 1].at) : '';
+  const xAxisLabels = `
+    <text x="${paddingX}" y="${height - 6}" text-anchor="start" font-size="11" fill="#7c8fa8">${escapeHtml(firstAt)}</text>
+    <text x="${width - paddingX}" y="${height - 6}" text-anchor="end" font-size="11" fill="#7c8fa8">${escapeHtml(lastAt)}</text>
+  `;
+
+  const dots = xs.map((x, index) => `<circle cx="${x}" cy="${yFor(values[index])}" r="2.5" fill="#9fd0ff" opacity="${index === values.length - 1 ? '0' : '.55'}" vector-effect="non-scaling-stroke"></circle>`).join('');
+
+  const step = points.length > 1 ? chartWidth / (points.length - 1) : width;
   const hotspots = xs.map((x, index) => {
     const point = points[index];
     const left = index === 0 ? 0 : x - step / 2;
-    const slice = index === 0 || index === xs.length - 1 ? step / 2 + paddingX : step;
+    const slice = index === 0 || index === xs.length - 1 ? step / 2 + paddingX / 2 : step;
     return `<rect class="curve-hit" x="${Math.max(0, left)}" y="0" width="${slice}" height="${height}"
       fill="transparent"
       data-curve-index="${index}"
@@ -50,26 +67,25 @@ function buildCurveSvg(points) {
   }).join('');
 
   return `
-    <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="curve-svg">
+    <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" class="curve-svg">
       <defs>
         <linearGradient id="curveFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.34"></stop>
+          <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.22"></stop>
           <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"></stop>
         </linearGradient>
-        <filter id="curveGlow">
-          <feGaussianBlur stdDeviation="4" result="blur"></feGaussianBlur>
-          <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-        </filter>
       </defs>
       ${gridLines}
-      <line x1="${paddingX}" y1="${height - paddingY}" x2="${width - paddingX}" y2="${height - paddingY}" stroke="rgba(255,255,255,.09)" stroke-width="1"></line>
+      ${yAxisLabels}
+      ${xAxisLabels}
+      <line x1="${paddingX}" y1="${paddingY}" x2="${paddingX}" y2="${height - paddingY}" stroke="rgba(148,178,214,0.18)" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+      <line x1="${paddingX}" y1="${height - paddingY}" x2="${width - paddingX}" y2="${height - paddingY}" stroke="rgba(148,178,214,0.18)" stroke-width="1" vector-effect="non-scaling-stroke"></line>
       <polygon points="${areaPoints}" fill="url(#curveFill)"></polygon>
-      <polyline points="${polyline}" fill="none" stroke="#58a6ff" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" filter="url(#curveGlow)"></polyline>
+      <polyline points="${polyline}" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
       ${dots}
-      <circle cx="${lastX}" cy="${lastY}" r="6" fill="#58a6ff" stroke="#d9f0ff" stroke-width="2"></circle>
+      <circle cx="${lastX}" cy="${lastY}" r="5" fill="#58a6ff" stroke="#d9f0ff" stroke-width="2" vector-effect="non-scaling-stroke"></circle>
       <line class="curve-cursor hidden" x1="0" y1="${paddingY}" x2="0" y2="${height - paddingY}"
-            stroke="rgba(88,166,255,.5)" stroke-width="1" stroke-dasharray="3 4"></line>
-      <circle class="curve-marker hidden" r="5" fill="#d9f0ff" stroke="#58a6ff" stroke-width="2"></circle>
+            stroke="rgba(88,166,255,.5)" stroke-width="1" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"></line>
+      <circle class="curve-marker hidden" r="5" fill="#d9f0ff" stroke="#58a6ff" stroke-width="2" vector-effect="non-scaling-stroke"></circle>
       ${hotspots}
     </svg>
   `;
@@ -77,7 +93,6 @@ function buildCurveSvg(points) {
 
 /**
  * Attaches hover inspection to a rendered curve.
- * Safe to call repeatedly: listeners live on the freshly rendered nodes.
  */
 function bindCurveTooltip(containerSelector, unitLabel = '') {
   const container = $(containerSelector);
@@ -120,12 +135,11 @@ function bindCurveTooltip(containerSelector, unitLabel = '') {
         </span>
       `;
 
-      // Position within the container, clamped so it never leaves the panel.
       const bounds = container.getBoundingClientRect();
       const ratio = x / 920;
       const left = Math.min(Math.max(ratio * bounds.width, 70), bounds.width - 70);
       tooltip.style.insetInlineStart = `${left}px`;
-      tooltip.style.top = `${(y / 240) * bounds.height}px`;
+      tooltip.style.top = `${(y / 260) * bounds.height}px`;
       tooltip.classList.remove('hidden');
     });
   });

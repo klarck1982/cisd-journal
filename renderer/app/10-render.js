@@ -5,6 +5,7 @@
 function render() {
   applyStaticText();
   fillPeriodOptions();
+  applyDensity();
   renderWorkspaceStatus();
   renderAccounts();
   renderOverview();
@@ -25,6 +26,15 @@ function render() {
   renderWelcome();
   renderActivePage();
   bindEmptyStateActions();
+}
+
+function applyDensity() {
+  const density = model.state?.settings?.dashboardDensity || model.dashboardDensity || 'comfortable';
+  document.body.classList.toggle('density-compact', density === 'compact');
+  const btn = document.getElementById('toggleDensityBtn');
+  if (btn) {
+    btn.textContent = density === 'compact' ? '☰ مريح' : '☰ مكثف';
+  }
 }
 
 async function refreshRuntimeReadiness() {

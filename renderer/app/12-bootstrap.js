@@ -99,6 +99,8 @@ function bindEvents() {
   if (chooseBacktestCsvBtn) chooseBacktestCsvBtn.onclick = chooseBacktestCsv;
   const clearBacktestCsvBtn = $('#clearBacktestCsvBtn');
   if (clearBacktestCsvBtn) clearBacktestCsvBtn.onclick = clearBacktestCsv;
+  const toggleDensityBtn = $('#toggleDensityBtn');
+  if (toggleDensityBtn) toggleDensityBtn.onclick = toggleDensity;
   $('#accountSettingsForm').addEventListener('submit', saveAccountSettings);
   $('#journalGuidanceBackBtn').onclick = () => {
     model.page = 'signals';

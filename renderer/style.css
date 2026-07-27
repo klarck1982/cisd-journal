@@ -1568,3 +1568,22 @@ button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .item .item-actions { opacity: .75; transition: opacity var(--motion); }
 .item:hover .item-actions,
 .item:focus-within .item-actions { opacity: 1; }
+
+/* ===== Density Modes - مكثف vs مريح ===== */
+body.density-compact .content { padding: 16px 16px 80px 16px; }
+body.density-compact .grid { gap: 12px; }
+body.density-compact .panel { padding: 12px; }
+body.density-compact .metric-grid { gap: 8px; }
+body.density-compact .metric-card { padding: 10px; gap: 4px; }
+body.density-compact .metric-card strong { font-size: var(--t-lg); }
+body.density-compact .metric-card .mini { font-size: var(--t-xs); }
+body.density-compact .list, 
+body.density-compact .signal-list { gap: 6px; }
+body.density-compact .item { padding: 10px; }
+body.density-compact .page { gap: 12px; }
+body.density-compact .overview-hero { gap: 12px; }
+body.density-compact .hero-clock, 
+body.density-compact .hero-insight { padding: 10px; }
+body.density-compact #recentTradesList .item { padding: 8px; }
+body.density-compact .status-dock { gap: 8px; margin-bottom: 12px; }
+body.density-compact .calendar-cell { min-height: 48px; padding: 4px 6px; }

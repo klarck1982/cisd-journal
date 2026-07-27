@@ -1,7 +1,6 @@
 /**
  * User actions: everything that writes through IPC and then re-renders.
  */
-
 async function saveAccountSettings(event) {
   event?.preventDefault();
   const account = activeAccount();
@@ -24,7 +23,6 @@ async function saveAccountSettings(event) {
   render();
   toast(t('messages.accountSettingsSaved'), 'success');
 }
-
 async function saveFundingAccess() {
   try {
     const result = await runBusy(t('ui.loading'), () => cisd.saveFundingAccess(model.accountId, {
@@ -171,6 +169,22 @@ function clearBacktestCsv() {
   model.backtestCsvPath = '';
   $('#backtestCsvPathLabel').textContent = t('backtest.create.defaultCsvHint') || 'يستخدم الملف الحي الافتراضي';
   $('#clearBacktestCsvBtn').classList.add('hidden');
+}
+
+async function toggleDensity() {
+  const current = model.state?.settings?.dashboardDensity || model.dashboardDensity || 'comfortable';
+  const next = current === 'compact' ? 'comfortable' : 'compact';
+  model.dashboardDensity = next;
+  try {
+    const updated = await cisd.updateSettings({ dashboardDensity: next });
+    model.state.settings = updated;
+  } catch (e) {
+    // local fallback if IPC fails
+    model.state.settings.dashboardDensity = next;
+  }
+  persistUiState();
+  render();
+  toast(next === 'compact' ? 'وضع مكثف - معلومات أكثر في نفس المساحة' : 'وضع مريح - قراءة أوضح', 'info');
 }
 
 async function startBacktest(event) {
