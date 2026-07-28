@@ -32,10 +32,6 @@ const store = createStore(app);
 const { dataFile, initial, logError, read, save } = store;
 const execFileAsync = promisify(execFile);
 
-function secretFile() {
-  return path.join(app.getPath('userData'), 'news-api-key.bin');
-}
-
 function accountSecretFile(accountId, kind) {
   return path.join(app.getPath('userData'), `${kind}-${accountId}.bin`);
 }
@@ -249,30 +245,6 @@ function watchAllFundedNextFolders() {
   }
 }
 
-function newsKey() {
-  try {
-    const encrypted = fs.readFileSync(secretFile());
-    return safeStorage.isEncryptionAvailable() ? safeStorage.decryptString(encrypted) : encrypted.toString();
-  } catch {
-    return '';
-  }
-}
-
-function setNewsKey(value) {
-  if (!value) {
-    try {
-      fs.unlinkSync(secretFile());
-    } catch {}
-    return;
-  }
-
-  const payload = safeStorage.isEncryptionAvailable()
-    ? safeStorage.encryptString(value)
-    : Buffer.from(value);
-
-  fs.writeFileSync(secretFile(), payload);
-}
-
 function readEncryptedSecret(filePath) {
   try {
     const encrypted = fs.readFileSync(filePath);
@@ -432,10 +404,15 @@ async function syncFundingAccess(accountId) {
 async function fetchNews() {
   const data = read();
   try {
-    newsCache = await fetchCalendar(data.settings.newsProvider || 'FMP', newsKey());
+    newsCache = await fetchCalendar();
+    data.settings.lastNewsSync = new Date().toISOString();
+    data.settings.lastNewsError = '';
+    save(data);
     if (win) win.webContents.send('news:updated', newsCache);
     return newsCache;
   } catch (error) {
+    data.settings.lastNewsError = error.message;
+    save(data);
     throw localizeError(error, data.settings?.locale);
   }
 }
@@ -455,9 +432,6 @@ function scheduleNewsAutoFetch() {
   const attempt = async () => {
     try {
       const data = read();
-      const provider = data.settings?.newsProvider || 'FMP';
-      // FREE provider يعمل بدون مفتاح - هذا هو الحل لمشكلة FMP المجاني الذي لا يدعم التقويم
-      if (provider !== 'FREE' && !newsKey()) return;
       await fetchNews();
     } catch (e) {
       logError('news:autoFetch', e);
@@ -596,21 +570,10 @@ function registerHandlers() {
 
   ipcMain.handle('news:status', () => {
     const data = read();
-    const provider = data.settings?.newsProvider || 'FMP';
-    const isFree = provider === 'FREE';
-    return { configured: isFree || !!newsKey(), count: newsCache.length, provider };
-  });
-  ipcMain.handle('news:provider', (_, provider) => {
-    const data = read();
-    data.settings.newsProvider = provider;
-    save(data);
-    return data.settings;
-  });
-  ipcMain.handle('news:key', (_, key) => {
-    setNewsKey(key);
-    return { configured: !!newsKey() };
+    return { configured: true, count: newsCache.length, provider: 'FOREX_FACTORY', lastSync: data.settings?.lastNewsSync || '', lastError: data.settings?.lastNewsError || '' };
   });
   ipcMain.handle('news:fetch', async () => fetchNews());
+
 
   ipcMain.handle('image:choose', async () => {
     const result = await dialog.showOpenDialog(win, {

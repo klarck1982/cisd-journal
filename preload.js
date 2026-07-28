@@ -13,8 +13,6 @@ contextBridge.exposeInMainWorld('cisd', {
   updateSettings: (patch) => ipcRenderer.invoke('settings:update', patch),
   completeOnboarding: () => ipcRenderer.invoke('onboarding:complete'),
   newsStatus: () => ipcRenderer.invoke('news:status'),
-  saveNewsProvider: (provider) => ipcRenderer.invoke('news:provider', provider),
-  saveNewsKey: (key) => ipcRenderer.invoke('news:key', key),
   fetchNews: () => ipcRenderer.invoke('news:fetch'),
   restore: () => ipcRenderer.invoke('data:restore'),
   exportTrades: (id) => ipcRenderer.invoke('trades:export', id),

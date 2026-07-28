@@ -99,8 +99,8 @@ function renderData() {
   const fundedNextFolder = account?.fundedNextFolder || '';
   const fundedNextWatcherActive = !!fundedNextFolder;
   const mt5BridgeReady = model.runtimeReadiness?.mt5Bridge?.packagedExecutableExists || false;
-  const newsProvider = model.state?.settings?.newsProvider || 'FREE';
-  const isFreeNews = newsProvider === 'FREE';
+  const newsProvider = 'Forex Factory';
+  const isFreeNews = true;
 
   // Health score: how many sources are configured
   const configuredCount = [
@@ -129,7 +129,7 @@ function renderData() {
       metricCard('مصادر مهيأة', `${configuredCount}/5`, `${accounts.length} حساب`, configuredCount >= 4 ? 'good' : configuredCount >= 2 ? 'warn' : 'bad', 'source'),
       metricCard('إشارات اليوم', String(todaySignals), `إجمالي ${totalSignals}`, todaySignals > 0 ? 'good' : 'neutral', 'signals'),
       metricCard('حالة المراقبة', fundedNextWatcherActive && csvPath ? 'نشطة' : 'متوقفة', csvPath ? 'ملف CSV + مجلد FundedNext' : 'اختر ملف CSV', (fundedNextWatcherActive && csvPath) ? 'good' : 'warn', 'import'),
-      metricCard('الأخبار', isFreeNews ? 'FREE مجاني' : model.newsConfigured ? `${model.news?.length || 0} خبر` : 'غير مهيأ', newsProvider, isFreeNews || model.newsConfigured ? 'good' : 'warn', 'news'),
+      metricCard('الأخبار', model.newsConfigured ? `${model.news?.length || 0} خبر` : 'قيد التحديث', 'Forex Factory · High impact', model.newsConfigured ? 'good' : 'warn', 'news'),
     ].join('');
   }
 
@@ -175,14 +175,14 @@ function renderData() {
       btnAction: 'syncFunding',
     },
     {
-      title: `📰 الأخبار - ${isFreeNews ? 'FREE مجاني' : newsProvider}`,
+      title: '📰 الأخبار - Forex Factory',
       icon: 'news',
-      status: model.newsConfigured || isFreeNews ? `${model.news?.length || 0} خبر عالي التأثير` : t('settings.newsDisconnected'),
-      meta: `${isFreeNews ? '✅ بدون مفتاح • ForexFactory • مجاني 100% • ' : `🔑 ${newsProvider} • `}${model.news?.length ? `آخر جلب: ${formatDateTime(new Date().toISOString())} • ` : ''}${model.news?.[0] ? `التالي: ${model.news[0].Country} - ${model.news[0].Event?.slice(0,30)}` : 'لا أخبار مجدولة'}`,
-      extra: isFreeNews ? '💡 المزود المجاني يعمل بدون مفتاح ولا يحتاج تسجيل - موصى به' : '⚠️ FMP المجاني لا يشمل التقويم الاقتصادي - استخدم FREE بدلاً منه',
-      cls: (model.newsConfigured || isFreeNews) ? 'safe' : 'warn',
-      actionLabel: isFreeNews ? 'تحديث الأخبار' : 'إعداد الأخبار',
-      btnAction: isFreeNews ? 'refreshNews' : 'openSettings',
+      status: model.newsConfigured ? `${model.news?.length || 0} خبر عالي التأثير` : 'قيد التحديث',
+      meta: `✅ بدون مفتاح • ${model.news?.length ? `آخر جلب: ${formatDateTime(model.state?.settings?.lastNewsSync)} • ` : ''}${model.news?.[0] ? `التالي: ${model.news[0].Country} - ${model.news[0].Event?.slice(0,30)}` : 'لا أخبار مجدولة'}`,
+      extra: model.state?.settings?.lastNewsError ? `⚠️ ${model.state.settings.lastNewsError}` : 'المصدر الوحيد للأخبار في التطبيق.',
+      cls: model.state?.settings?.lastNewsError ? 'warn' : 'safe',
+      actionLabel: 'تحديث الأخبار',
+      btnAction: 'refreshNews',
     },
   ];
 
@@ -242,15 +242,6 @@ function toggleFundingAccessFields() {
   $$('.shared-url-field').forEach((el) => el.classList.toggle('hidden', mode !== 'shared_url'));
 }
 
-function toggleNewsFields() {
-  const provider = $('#newsProvider')?.value || 'FREE';
-  const isFree = provider === 'FREE';
-  const keyWrap = $('#newsKeyWrap');
-  const freeHint = $('#newsFreeHint');
-  if (keyWrap) keyWrap.style.display = isFree ? 'none' : 'grid';
-  if (freeHint) freeHint.style.display = isFree ? 'block' : 'none';
-}
-
 function renderSettings() {
   const account = activeAccount();
   const access = model.fundingAccess || { mode: 'none', syncScope: 'full_readonly', hasStoredPassword: false, configured: false };
@@ -291,10 +282,13 @@ function renderSettings() {
   $('#settingsLanguage').value = model.state?.settings?.locale || 'ar';
   $('#settingsTimezone').value = model.state?.settings?.timezone || 'America/New_York';
   $('#settingsNotifications').checked = model.state?.settings?.notifications !== false;
-  $('#newsProvider').value = model.state?.settings?.newsProvider || 'FREE';
-  toggleNewsFields();
   $('#terminalPathLabel').textContent = account?.terminalPath || t('settings.noTerminal');
-  $('#newsConnectionStatus').textContent = model.newsConfigured ? t('settings.newsConnected') : t('settings.newsDisconnected');
+  const newsStatus = model.state?.settings?.lastNewsError
+    ? `${t('settings.newsUpdateFailed')}: ${model.state.settings.lastNewsError}`
+    : model.state?.settings?.lastNewsSync
+      ? `${t('settings.newsLastSync')}: ${formatDateTime(model.state.settings.lastNewsSync)}`
+      : t('settings.newsDisconnected');
+  $('#newsConnectionStatus').textContent = newsStatus;
 }
 
 function renderActivePage() {

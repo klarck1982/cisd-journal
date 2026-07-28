@@ -538,7 +538,11 @@
     "lastAccountBlocked": "لا يمكن حذف الحساب الأخير. أنشئ حساباً آخر أولاً.",
     "resetKeepsLimits": "تبقى حدود المخاطرة (الهدف والخسارة اليومية والتراجع) كما هي.",
     "archivedTitle": "حسابات مؤرشفة",
-    "restoreAccount": "استعادة"
+    "restoreAccount": "استعادة",
+    "newsSettingsTitle": "الأخبار الاقتصادية",
+    "forexFactoryOnly": "Forex Factory هو مصدر الأخبار الوحيد. لا يحتاج مفتاحًا أو تسجيلًا؛ تظهر الأخبار عالية التأثير فقط.",
+    "newsLastSync": "آخر تحديث ناجح",
+    "newsUpdateFailed": "تعذر التحديث"
   },
   "warnings": {
     "ALL_CLEAR": "لا توجد تحذيرات مخاطرة نشطة.",

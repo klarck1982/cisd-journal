@@ -116,7 +116,6 @@ function bindEvents() {
     renderJournal();
   };
   $('#fundingAccessModeInput').addEventListener('change', toggleFundingAccessFields);
-  $('#newsProvider').addEventListener('change', toggleNewsFields);
   $('#saveFundingAccessBtn').onclick = saveFundingAccess;
   $('#syncFundingAccessBtn').onclick = syncFundingAccessNow;
   $('#openFundingAccessBtn').onclick = openFundingAccess;
@@ -137,7 +136,6 @@ function bindEvents() {
   $('#savePreferencesBtn').onclick = savePreferences;
   $('#chooseTerminalBtn').onclick = chooseTerminal;
   $('#openTerminalBtn').onclick = openTerminal;
-  $('#saveNewsSettingsBtn').onclick = saveNewsSettings;
   $('#testNewsBtn').onclick = () => loadNews(false);
   $('#backupBtn').onclick = backupData;
   $('#restoreBtn').onclick = restoreData;

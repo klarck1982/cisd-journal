@@ -538,7 +538,11 @@
     "lastAccountBlocked": "The last account cannot be deleted. Create another account first.",
     "resetKeepsLimits": "Your risk limits (target, daily loss, drawdown) are preserved.",
     "archivedTitle": "Archived accounts",
-    "restoreAccount": "Restore"
+    "restoreAccount": "Restore",
+    "newsSettingsTitle": "Economic news",
+    "forexFactoryOnly": "Forex Factory is the only news source. No API key or sign-up is needed; only high-impact events are shown.",
+    "newsLastSync": "Last successful update",
+    "newsUpdateFailed": "Update failed"
   },
   "warnings": {
     "ALL_CLEAR": "No active risk warnings.",

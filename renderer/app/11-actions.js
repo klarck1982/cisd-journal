@@ -92,16 +92,11 @@ async function savePreferences() {
 }
 
 async function saveNewsSettings() {
+  // Forex Factory is the one built-in source: this button now simply verifies
+  // and refreshes it, with no provider choice or private API key to manage.
   try {
-    await runBusy(t('ui.loading'), async () => {
-      await cisd.saveNewsProvider($('#newsProvider').value);
-      const key = $('#newsKey').value.trim();
-      if (key) await cisd.saveNewsKey(key);
-    });
-    $('#newsKey').value = '';
+    await loadNews(false);
     await refreshStateAndRender();
-    await loadNews(true);
-    toast(t('messages.newsSettingsSaved'), 'success');
   } catch (error) {
     toast(`${t('ui.error')}: ${error.message}`, 'error');
   }

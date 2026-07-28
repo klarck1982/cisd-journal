@@ -198,10 +198,8 @@ function applyStaticText() {
   $('#chooseTerminalBtn').innerHTML = `${icon('terminal','button-icon')}${escapeHtml(t('settings.chooseTerminal'))}`;
   $('#openTerminalBtn').innerHTML = `${icon('terminal','button-icon')}${escapeHtml(t('settings.openTerminal'))}`;
   $('#newsSettingsTitle').innerHTML = iconText('news', t('settings.newsTitle'));
-  $('#newsProviderLabel').textContent = t('settings.newsProvider');
-  $('#newsKeyLabel').textContent = t('settings.newsKey');
-  $('#saveNewsSettingsBtn').innerHTML = `${icon('news','button-icon')}${escapeHtml(t('settings.saveNews'))}`;
   $('#testNewsBtn').innerHTML = `${icon('news','button-icon')}${escapeHtml(t('settings.testNews'))}`;
+  $('#newsFreeHint').textContent = t('settings.forexFactoryOnly');
   $('#maintenanceTitle').innerHTML = iconText('maintenance', t('settings.maintenanceTitle'));
   $('#backupBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.backup'))}`;
   $('#restoreBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.restore'))}`;
