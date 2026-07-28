@@ -1293,6 +1293,19 @@
         </section>
 
         <section class="welcome-step hidden" data-step="3">
+          <h3 id="welcomeConnectionTitle"></h3>
+          <p class="muted" id="welcomeConnectionHint"></p>
+          <div class="form-grid compact-form">
+            <label class="full"><span id="welcomeConnectionModeLabel"></span><select id="welcomeConnectionMode"><option value="none">لاحقًا</option><option value="investor_pass">Investor Pass</option><option value="shared_url">رابط لوحة الشركة</option></select></label>
+            <label class="investor-field"><span id="welcomeInvestorLoginLabel"></span><input id="welcomeInvestorLogin"></label>
+            <label class="investor-field"><span id="welcomeInvestorServerLabel"></span><input id="welcomeInvestorServer"></label>
+            <label class="investor-field full"><span id="welcomeInvestorPasswordLabel"></span><input id="welcomeInvestorPassword" type="password"></label>
+            <label class="shared-url-field full"><span id="welcomeSharedUrlLabel"></span><input id="welcomeSharedUrl" type="url" placeholder="https://"></label>
+            <div class="inline-note full" id="welcomeConnectionStatus"></div>
+          </div>
+        </section>
+
+        <section class="welcome-step hidden" data-step="4">
           <h3 id="welcomeCsvTitle"></h3>
           <p class="muted" id="welcomeCsvHint"></p>
           <div class="button-row">

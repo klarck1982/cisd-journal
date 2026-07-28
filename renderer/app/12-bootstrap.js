@@ -179,6 +179,7 @@ function bindEvents() {
   $('#welcomeBack').onclick = welcomeBack;
   $('#welcomeSkip').onclick = finishWelcome;
   $('#welcomeChooseCsv').onclick = chooseWelcomeCsv;
+  $('#welcomeConnectionMode').onchange = toggleWelcomeConnectionFields;
   $$('[data-welcome-locale]').forEach((button) => {
     button.onclick = () => chooseWelcomeLocale(button.dataset.welcomeLocale);
   });

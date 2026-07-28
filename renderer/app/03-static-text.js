@@ -247,6 +247,13 @@ function applyStaticText() {
   $('#welcomeTargetLabel').textContent = t('accountModal.target');
   $('#welcomeDailyLossLabel').textContent = t('accountModal.dailyLoss');
   $('#welcomeDrawdownLabel').textContent = t('accountModal.maxDrawdown');
+  $('#welcomeConnectionTitle').textContent = t('welcome.connection.title');
+  $('#welcomeConnectionHint').textContent = t('welcome.connection.hint');
+  $('#welcomeConnectionModeLabel').textContent = t('welcome.connection.mode');
+  $('#welcomeInvestorLoginLabel').textContent = t('welcome.connection.login');
+  $('#welcomeInvestorServerLabel').textContent = t('welcome.connection.server');
+  $('#welcomeInvestorPasswordLabel').textContent = t('welcome.connection.password');
+  $('#welcomeSharedUrlLabel').textContent = t('welcome.connection.url');
   $('#welcomeCsvTitle').textContent = t('welcome.csv.title');
   $('#welcomeCsvHint').textContent = t('welcome.csv.hint');
   $('#welcomeChooseCsv').textContent = t('signals.actions.chooseCsv');

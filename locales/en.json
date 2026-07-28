@@ -973,7 +973,7 @@
   "welcome": {
     "kicker": "Welcome",
     "title": "Let us set up CISD Journal in a minute",
-    "subtitle": "Four short steps. Everything can be changed later in Settings.",
+    "subtitle": "Five short steps. You can change everything later in Settings.",
     "skip": "Skip for now",
     "back": "Back",
     "next": "Next",
@@ -996,7 +996,17 @@
       "hint": "Optional. You can link it later from the Signals page.",
       "none": "No file selected"
     },
-    "done": "Setup complete ✓"
+    "done": "Setup complete ✓",
+    "connection": {
+      "title": "Connect account data",
+      "hint": "Optional for now. Use Investor Pass or a firm dashboard link, or connect later.",
+      "mode": "Connection method",
+      "login": "Account number",
+      "server": "Server name",
+      "password": "Investor Pass",
+      "url": "Firm dashboard link",
+      "later": "You can finish connecting from Settings at any time."
+    }
   },
   "alerts": {
     "nearDailyLoss": "Approaching the daily loss limit — {{remaining}} left",
