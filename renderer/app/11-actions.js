@@ -151,7 +151,6 @@ async function saveTrade(event) {
   render();
   toast(t('messages.tradeSaved'), 'success');
 }
-
 async function chooseBacktestCsv() {
   try {
     const result = await cisd.chooseBacktestCsv();
@@ -164,13 +163,11 @@ async function chooseBacktestCsv() {
     toast(`${t('ui.error')}: ${error.message}`, 'error');
   }
 }
-
 function clearBacktestCsv() {
   model.backtestCsvPath = '';
   $('#backtestCsvPathLabel').textContent = t('backtest.create.defaultCsvHint') || 'يستخدم الملف الحي الافتراضي';
   $('#clearBacktestCsvBtn').classList.add('hidden');
 }
-
 async function toggleDensity() {
   const current = model.state?.settings?.dashboardDensity || model.dashboardDensity || 'comfortable';
   const next = current === 'compact' ? 'comfortable' : 'compact';
@@ -193,6 +190,7 @@ async function startBacktest(event) {
     name: $('#backtestName').value.trim() || t('backtest.create.defaultName'),
     startingCapital: Number($('#backtestCapital').value || 100000),
     currency: $('#backtestCurrency').value,
+    riskPerR: Number($('#backtestRiskPerR').value || 0),
     start: $('#backtestStart').value,
     end: $('#backtestEnd').value,
     session: $('#backtestSession').value,

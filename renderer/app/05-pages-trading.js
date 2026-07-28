@@ -212,8 +212,10 @@ function renderBacktestSpotlight(selected, reviewSignals) {
   const avg = scored.length ? net / scored.length : 0;
 
   const virtualTrades = (model.state?.backtestTrades || []).filter((trade) => trade.backtestId === selected.id);
+  const virtualPnl = virtualTrades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
   $('#backtestSpotlightCards').innerHTML = [
-    metricCard(t('backtest.create.capital'), formatCurrency(selected.currentBalance ?? selected.startingCapital ?? 0, selected.currency || 'USD'), t('backtest.create.separateHint'), '', 'capital'),
+    metricCard(t('backtest.create.virtualBalance'), formatCurrency(selected.currentBalance ?? selected.startingCapital ?? 0, selected.currency || 'USD'), t('backtest.create.separateHint'), '', 'capital'),
+    metricCard(t('backtest.create.virtualPnL'), `${virtualPnl >= 0 ? '+' : ''}${formatCurrency(virtualPnl, selected.currency || 'USD')}`, `${virtualTrades.length} ${t('journal.recentTrades.title')}`, virtualPnl >= 0 ? 'good' : 'bad', 'curve'),
     metricCard(t('backtest.spotlight.matched'), String(reviewSignals.length), t('backtest.spotlight.matchedHint'), '', 'signals'),
     metricCard(t('backtest.spotlight.reviewed'), `${reviewed.length}/${reviewSignals.length || 0}`, t('backtest.spotlight.reviewedHint'), reviewed.length === reviewSignals.length && reviewSignals.length ? 'good' : 'warn', 'backtest'),
     metricCard(t('backtest.spotlight.winRate'), scored.length ? formatPercent(wins / scored.length) : '—', t('backtest.spotlight.winRateHint'), wins / Math.max(scored.length, 1) >= 0.5 ? 'good' : 'warn', 'analytics'),
@@ -234,6 +236,14 @@ function renderBacktest() {
   $('#backtestSearch').value = model.search.backtest;
   if (selected) model.selectedBacktestId = selected.id;
   else model.selectedBacktestId = null;
+
+  const manualForm = $('#backtestManualTradeForm');
+  const manualButton = $('#backtestManualSaveBtn');
+  if (manualForm && manualButton) {
+    const canLog = !!selected && selected.status !== 'FINISHED';
+    [...manualForm.elements].forEach((element) => { element.disabled = !canLog; });
+    manualButton.disabled = !canLog;
+  }
 
   $('#backtestLibrary').innerHTML = renderListRows(sessions, (session) => {
     const signals = (model.state?.backtestSignals || []).filter((item) => item.backtestId === session.id);
@@ -371,4 +381,26 @@ function populateFilterSelect(selectId, options, current, defaultLabel) {
   if (!select) return;
   select.innerHTML = `<option value="all">${escapeHtml(defaultLabel)}</option>${options.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('')}`;
   select.value = current || 'all';
+}
+
+
+async function saveManualBacktestTrade(event) {
+  event.preventDefault();
+  const session = selectedBacktest();
+  const symbol = $('#backtestManualSymbol').value.trim().toUpperCase();
+  if (!session) { toast(t('backtest.spotlight.empty'), 'warn'); return; }
+  if (!symbol) { $('#backtestManualSymbol').focus(); return; }
+  try {
+    model.state = await runBusy(t('ui.loading'), () => cisd.addBacktestTrade(session.id, {
+      symbol,
+      side: $('#backtestManualSide').value,
+      resultR: Number($('#backtestManualResult').value || 0),
+      note: $('#backtestManualNote').value.trim(),
+    }));
+    $('#backtestManualTradeForm').reset();
+    await refreshStateAndRender();
+    toast(t('backtest.create.manualSaved'), 'success');
+  } catch (error) {
+    toast(`${t('ui.error')}: ${error.message}`, 'error');
+  }
 }

@@ -235,7 +235,18 @@
       "clearCsv": "Clear",
       "capital": "Virtual starting capital",
       "currency": "Backtest currency",
-      "separateHint": "A separate virtual account — never affects a live account"
+      "separateHint": "A separate virtual account — never affects a live account",
+      "riskPerR": "Risk amount per 1R",
+      "manualTitle": "Add a manual backtest trade",
+      "manualHint": "Saved here only; it never enters live-account records",
+      "manualSymbol": "Symbol",
+      "manualSide": "Direction",
+      "manualResult": "Result (R)",
+      "manualNote": "Note",
+      "manualSave": "Save backtest trade",
+      "manualSaved": "Backtest trade saved and virtual balance updated ✓",
+      "virtualBalance": "Virtual balance",
+      "virtualPnL": "Backtest profit/loss"
     },
     "library": {
       "title": "Backtest library",

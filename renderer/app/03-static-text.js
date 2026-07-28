@@ -92,6 +92,14 @@ function applyStaticText() {
   $('#backtestCapitalLabel').textContent = t('backtest.create.capital');
   $('#backtestCurrencyLabel').textContent = t('backtest.create.currency');
   $('#backtestSeparateHint').textContent = t('backtest.create.separateHint');
+  $('#backtestRiskPerRLabel').textContent = t('backtest.create.riskPerR');
+  $('#backtestManualTitle').textContent = t('backtest.create.manualTitle');
+  $('#backtestManualHint').textContent = t('backtest.create.manualHint');
+  $('#backtestManualSymbolLabel').textContent = t('backtest.create.manualSymbol');
+  $('#backtestManualSideLabel').textContent = t('backtest.create.manualSide');
+  $('#backtestManualResultLabel').textContent = t('backtest.create.manualResult');
+  $('#backtestManualNoteLabel').textContent = t('backtest.create.manualNote');
+  $('#backtestManualSaveBtn').textContent = t('backtest.create.manualSave');
   const csvLabel = $('#backtestCsvLabel');
   if (csvLabel) csvLabel.textContent = t('backtest.create.csvLabel');
   const csvHint = $('#backtestCsvHint');

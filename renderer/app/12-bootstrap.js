@@ -95,6 +95,7 @@ function bindEvents() {
 
   $('#tradeForm').addEventListener('submit', saveTrade);
   $('#backtestForm').addEventListener('submit', startBacktest);
+  $('#backtestManualTradeForm').addEventListener('submit', saveManualBacktestTrade);
   const chooseBacktestCsvBtn = $('#chooseBacktestCsvBtn');
   if (chooseBacktestCsvBtn) chooseBacktestCsvBtn.onclick = chooseBacktestCsv;
   const clearBacktestCsvBtn = $('#clearBacktestCsvBtn');

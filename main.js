@@ -872,6 +872,7 @@ function registerHandlers() {
       startingCapital: Number(payload.startingCapital) || 100000,
       currentBalance: Number(payload.startingCapital) || 100000,
       currency: String(payload.currency || 'USD'),
+      riskPerR: Math.max(0, Number(payload.riskPerR) || 0),
       sourceCsvPath: csvPath,
       backtestCsvPath: payload.backtestCsvPath || '',
       filters: {
@@ -942,9 +943,16 @@ function registerHandlers() {
     if (!trade.symbol) throw new Error('Backtest trade requires a symbol');
     data.backtestTrades = data.backtestTrades || [];
     data.backtestTrades.unshift(trade);
-    // R is deliberately kept as the performance unit; capital changes only
-    // when the trader supplies a risk amount in a later execution layer.
-    backtest.currentBalance = Number(backtest.currentBalance || backtest.startingCapital || 0);
+    // The virtual ledger changes only this virtual balance. Risk per R is
+    // configured when the session begins, so a +1.5R decision has a clear
+    // monetary meaning without touching any funded account.
+    const riskPerR = Number(backtest.riskPerR || 0);
+    const totalPnl = data.backtestTrades
+      .filter((item) => item.backtestId === backtestId)
+      .reduce((sum, item) => sum + (Number(item.resultR) || 0) * riskPerR, 0);
+    trade.pnl = resultR * riskPerR;
+    backtest.currentBalance = Number(backtest.startingCapital || 0) + totalPnl;
+    backtest.updatedAt = new Date().toISOString();
     save(data);
     return data;
   });
