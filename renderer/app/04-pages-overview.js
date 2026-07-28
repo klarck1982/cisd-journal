@@ -71,6 +71,32 @@ function renderOverviewHero(account, dashboard) {
   `;
 }
 
+function renderAttentionQueue(account, dashboard) {
+  const today = model.daily?.todaySummary;
+  const pendingSignals = allLiveSignalsForAccount().filter((signal) => signalDisplayState(signal).key === 'pending').length;
+  const items = [];
+  if (dashboard.risk.warnings?.length) items.push({ tone: 'bad', title: t('overview.attentionRisk'), hint: t('overview.attentionRiskHint'), page: 'overview' });
+  if (dashboard.risk.openPositions?.count) items.push({ tone: 'warn', title: `${t('overview.attentionPositions')} · ${dashboard.risk.openPositions.count}`, hint: t('overview.attentionPositionsHint'), page: 'data' });
+  if (pendingSignals) items.push({ tone: 'warn', title: `${t('overview.attentionSignals')} · ${pendingSignals}`, hint: t('overview.attentionSignalsHint'), page: 'signals' });
+  if (!today?.reviewedAt) items.push({ tone: 'neutral', title: t('overview.attentionPlan'), hint: t('overview.attentionPlanHint'), page: 'daily' });
+  if (!items.length) items.push({ tone: 'safe', title: t('overview.attentionClear'), hint: t('overview.attentionClearHint'), page: '' });
+
+  $('#overviewAttentionList').innerHTML = items.map((item) => `
+    <article class="attention-item ${item.tone}">
+      <div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.hint)}</span></div>
+      ${item.page ? `<button class="ghost small" data-attention-page="${escapeHtml(item.page)}">${escapeHtml(t('overview.attentionOpen'))}</button>` : ''}
+    </article>
+  `).join('');
+  $$('[data-attention-page]').forEach((button) => {
+    button.onclick = () => {
+      model.page = button.dataset.attentionPage;
+      persistUiState();
+      renderActivePage();
+      renderWorkspaceStatus();
+    };
+  });
+}
+
 function renderQuickStart() {
   const panel = $('#quickStartPanel');
   const account = activeAccount();
@@ -135,6 +161,7 @@ function renderOverview() {
   if (!account || !dashboard) return;
 
   renderQuickStart();
+  renderAttentionQueue(account, dashboard);
   renderOverviewHero(account, dashboard);
 
   $('#overviewHealthCards').innerHTML = [

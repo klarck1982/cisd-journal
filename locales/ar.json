@@ -102,7 +102,20 @@
       "done": "اكتمل الإعداد",
       "dismiss": "إخفاء"
     },
-    "accountsHint": "اختر حسابًا لرؤية حالته، مراكزه، وما يحتاج انتباهك الآن."
+    "accountsHint": "اختر حسابًا لرؤية حالته، مراكزه، وما يحتاج انتباهك الآن.",
+    "attentionTitle": "ما الذي يحتاج انتباهك الآن؟",
+    "attentionHint": "ابدأ بالعنصر الأهم، ثم أكمل يومك بهدوء.",
+    "attentionClear": "كل شيء تحت السيطرة اليوم",
+    "attentionClearHint": "لا توجد تنبيهات أو إجراءات معلقة الآن.",
+    "attentionRisk": "تحذير المخاطرة",
+    "attentionRiskHint": "راجع حدود الحساب قبل أي قرار جديد.",
+    "attentionPositions": "مراكز مفتوحة",
+    "attentionPositionsHint": "راجع المراكز الحالية قبل دخول جديد.",
+    "attentionSignals": "إشارات جديدة",
+    "attentionSignalsHint": "هناك إشارات من CISD تحتاج قرارك.",
+    "attentionPlan": "خطة اليوم",
+    "attentionPlanHint": "لم تبدأ خطة اليوم أو لم تكمل مراجعة اليوم بعد.",
+    "attentionOpen": "افتح الآن"
   },
   "signals": {
     "kicker": "مراجعة تنفيذ الإشارات",

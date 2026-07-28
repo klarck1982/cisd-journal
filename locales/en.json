@@ -102,7 +102,20 @@
       "done": "Setup complete",
       "dismiss": "Hide this"
     },
-    "accountsHint": "Choose an account to see its status, open positions, and what needs attention now."
+    "accountsHint": "Choose an account to see its status, open positions, and what needs attention now.",
+    "attentionTitle": "What needs your attention now?",
+    "attentionHint": "Start with the most important item, then continue your day calmly.",
+    "attentionClear": "Everything is under control today",
+    "attentionClearHint": "There are no alerts or pending actions right now.",
+    "attentionRisk": "Risk warning",
+    "attentionRiskHint": "Review account limits before making another decision.",
+    "attentionPositions": "Open positions",
+    "attentionPositionsHint": "Review current positions before entering a new one.",
+    "attentionSignals": "New signals",
+    "attentionSignalsHint": "CISD signals are waiting for your decision.",
+    "attentionPlan": "Today’s plan",
+    "attentionPlanHint": "You have not started today’s plan or completed its review.",
+    "attentionOpen": "Open now"
   },
   "signals": {
     "kicker": "Signal execution review",
