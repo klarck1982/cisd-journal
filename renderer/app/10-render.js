@@ -58,7 +58,7 @@ async function refreshSnapshots() {
   model.analytics = await cisd.analyticsSnapshot(model.accountId, model.filters);
   model.edge = await cisd.edgeSnapshot(model.accountId, { risk: { today: todayKey() } });
   model.playbooks = await cisd.playbooksOverview(model.accountId);
-  model.daily = await cisd.dailySnapshot(model.accountId, { today: todayKey() });
+  model.daily = await cisd.dailySnapshot(model.accountId, { today: model.dailyDay || todayKey() });
   model.calendar = await cisd.calendarMonth(model.accountId, model.calendarMonth ? { month: model.calendarMonth } : {});
 }
 

@@ -62,19 +62,17 @@ function renderCalendar() {
   const rows = calendar.weeks.map((week) => {
     const cells = week.cells.map((cell) => {
       if (cell.empty) return '<div class="calendar-cell empty"></div>';
-      if (!cell.traded) {
-        return `<div class="calendar-cell quiet"><span class="calendar-day">${cell.dayNumber}</span></div>`;
-      }
+      const isToday = cell.day === todayKey();
       const tone = calendarTone(cell.value);
       const isBest = calendar.best && calendar.best.day === cell.day;
       const isWorst = calendar.worst && calendar.worst.day === cell.day;
       return `
-        <div class="calendar-cell ${tone}${isBest ? ' best' : ''}${isWorst ? ' worst' : ''}"
-             title="${escapeHtml(cell.day)} · ${cell.count} ${escapeHtml(t('playbooks.card.trades'))}">
+        <button class="calendar-cell ${cell.traded ? tone : 'quiet'}${isToday ? ' today' : ''}${isBest ? ' best' : ''}${isWorst ? ' worst' : ''}"
+             data-calendar-day="${escapeHtml(cell.day)}"
+             title="${escapeHtml(cell.day)} · ${cell.count || 0} ${escapeHtml(t('playbooks.card.trades'))}">
           <span class="calendar-day">${cell.dayNumber}</span>
-          <span class="calendar-value">${escapeHtml(calendarValueLabel(cell.value, unit))}</span>
-          <span class="calendar-count">${cell.count}</span>
-        </div>
+          ${cell.traded ? `<span class="calendar-value">${escapeHtml(calendarValueLabel(cell.value, unit))}</span><span class="calendar-count">${cell.count}</span>` : ''}
+        </button>
       `;
     }).join('');
 
@@ -92,6 +90,16 @@ function renderCalendar() {
     </div>
     ${rows}
   `;
+
+  $$('[data-calendar-day]').forEach((button) => {
+    button.onclick = async () => {
+      model.dailyDay = button.dataset.calendarDay;
+      model.page = 'daily';
+      persistUiState();
+      await refreshSnapshots();
+      render();
+    };
+  });
 
   // Weekday performance strip: the pattern most traders never notice.
   const traded = calendar.weekdays.filter((item) => item.days > 0);

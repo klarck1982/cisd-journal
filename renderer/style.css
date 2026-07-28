@@ -1653,3 +1653,7 @@ body.density-compact .calendar-cell { min-height: 48px; padding: 4px 6px; }
 .trade-detail-image { min-height: 190px; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--s-2); color: var(--muted); }
 .trade-detail-image img { display: block; width: 100%; max-height: 360px; object-fit: contain; }
 @media (max-width: 700px) { .trade-detail-summary, .trade-detail-charts { grid-template-columns: 1fr; } }
+
+.calendar-cell { cursor: pointer; text-align: inherit; font: inherit; color: inherit; }
+.calendar-cell.today { outline: 2px solid var(--blue); outline-offset: -2px; box-shadow: 0 0 0 3px var(--blue-wash); }
+.calendar-cell.today .calendar-day { color: var(--blue); font-weight: 800; }

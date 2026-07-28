@@ -18,6 +18,8 @@ const model = {
   calendar: null,
   calendarMonth: null,
   dailyDraft: { mood: '' },
+  // Empty means today; set from the calendar when reviewing an earlier day.
+  dailyDay: '',
   fundingAccess: null,
   runtimeReadiness: null,
   page: 'overview',
@@ -77,6 +79,7 @@ function persistUiState() {
       signalsView: model.signalsView,
       quickStartDismissed: model.quickStartDismissed,
       calendarMonth: model.calendarMonth,
+      dailyDay: model.dailyDay,
       dashboardDensity: model.dashboardDensity,
     }));
   } catch {}
@@ -95,6 +98,7 @@ function restoreUiState() {
     if (saved.signalsView) model.signalsView = saved.signalsView;
     if (saved.quickStartDismissed) model.quickStartDismissed = true;
     if (saved.calendarMonth) model.calendarMonth = saved.calendarMonth;
+    if (saved.dailyDay) model.dailyDay = saved.dailyDay;
     if (saved.dashboardDensity) model.dashboardDensity = saved.dashboardDensity;
   } catch {}
 }
