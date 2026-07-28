@@ -246,7 +246,10 @@
       "manualSave": "Save backtest trade",
       "manualSaved": "Backtest trade saved and virtual balance updated ✓",
       "virtualBalance": "Virtual balance",
-      "virtualPnL": "Backtest profit/loss"
+      "virtualPnL": "Backtest profit/loss",
+      "ledgerTitle": "Backtest trade ledger",
+      "ledgerHint": "Trades in this centre only — never shown in the live journal",
+      "ledgerDelete": "Delete from backtest"
     },
     "library": {
       "title": "Backtest library",

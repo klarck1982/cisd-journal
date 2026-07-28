@@ -281,6 +281,7 @@ function renderBacktest() {
   const reviewQuery = model.search.backtest.trim().toLowerCase();
   const reviewSignals = backtestSignalsForSelected().filter((signal) => !reviewQuery || `${signal.SignalID || ''} ${signal.Instrument || ''} ${signal.Direction || ''} ${signal.Session || ''} ${signal.TF || ''} ${signal.reviewNote || ''}`.toLowerCase().includes(reviewQuery));
   renderBacktestSpotlight(selected, backtestSignalsForSelected());
+  renderBacktestLedger(selected);
   $('#backtestReviewList').innerHTML = renderListRows(reviewSignals, (signal) => {
     const reviewed = ['WIN', 'LOSS', 'BE', 'MISSED'].includes(String(signal.status || '').toUpperCase());
     return `

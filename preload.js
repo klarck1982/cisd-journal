@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('cisd', {
   chooseBacktestCsv: () => ipcRenderer.invoke('backtest:csv:choose'),
   reviewBacktestSignal: (signalId, payload) => ipcRenderer.invoke('backtest:review-signal', signalId, payload),
   addBacktestTrade: (backtestId, payload) => ipcRenderer.invoke('backtest:trade:add', backtestId, payload),
+  deleteBacktestTrade: (tradeId) => ipcRenderer.invoke('backtest:trade:delete', tradeId),
   saveDaily: (day, payload) => ipcRenderer.invoke('daily:save', day, payload),
   addTrade: (trade) => ipcRenderer.invoke('trade:add', trade),
   updateTrade: (id, patch) => ipcRenderer.invoke('trade:update', id, patch),

@@ -100,6 +100,8 @@ function applyStaticText() {
   $('#backtestManualResultLabel').textContent = t('backtest.create.manualResult');
   $('#backtestManualNoteLabel').textContent = t('backtest.create.manualNote');
   $('#backtestManualSaveBtn').textContent = t('backtest.create.manualSave');
+  $('#backtestLedgerTitle').textContent = t('backtest.create.ledgerTitle');
+  $('#backtestLedgerHint').textContent = t('backtest.create.ledgerHint');
   const csvLabel = $('#backtestCsvLabel');
   if (csvLabel) csvLabel.textContent = t('backtest.create.csvLabel');
   const csvHint = $('#backtestCsvHint');

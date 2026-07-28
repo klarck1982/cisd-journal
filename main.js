@@ -440,6 +440,17 @@ async function fetchNews() {
   }
 }
 
+function recalculateBacktestBalance(data, backtestId) {
+  const backtest = (data.backtests || []).find((item) => item.id === backtestId);
+  if (!backtest) return null;
+  const riskPerR = Number(backtest.riskPerR || 0);
+  const trades = (data.backtestTrades || []).filter((item) => item.backtestId === backtestId);
+  for (const trade of trades) trade.pnl = (Number(trade.resultR) || 0) * riskPerR;
+  backtest.currentBalance = Number(backtest.startingCapital || 0) + trades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
+  backtest.updatedAt = new Date().toISOString();
+  return backtest;
+}
+
 function scheduleNewsAutoFetch() {
   const attempt = async () => {
     try {
@@ -925,6 +936,29 @@ function registerHandlers() {
     signal.resultR = payload.resultR !== undefined ? Number(payload.resultR) : signal.resultR;
     signal.reviewNote = payload.note || '';
     signal.reviewedAt = new Date().toISOString();
+
+    // A scored signal is a real decision in this simulation. Mirror it into
+    // the isolated ledger so signal-based and manual entries share one P&L.
+    const resultStatuses = ['WIN', 'LOSS', 'BE'];
+    const backtest = (data.backtests || []).find((item) => item.id === signal.backtestId);
+    data.backtestTrades = data.backtestTrades || [];
+    const index = data.backtestTrades.findIndex((item) => item.backtestId === signal.backtestId && item.signalId === signal.id);
+    if (backtest && resultStatuses.includes(String(signal.status).toUpperCase())) {
+      const row = {
+        backtestId: signal.backtestId, signalId: signal.id,
+        symbol: String(signal.Instrument || '').toUpperCase(),
+        side: String(signal.Direction || '').startsWith('-') ? 'Sell' : 'Buy',
+        resultR: Number(signal.resultR || 0), note: signal.reviewNote,
+        date: String(signal.signalAt || signal.importedAt || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
+        updatedAt: new Date().toISOString(), source: 'signal',
+      };
+      if (index >= 0) data.backtestTrades[index] = { ...data.backtestTrades[index], ...row };
+      else data.backtestTrades.unshift({ ...row, id: crypto.randomUUID(), createdAt: new Date().toISOString() });
+      recalculateBacktestBalance(data, signal.backtestId);
+    } else if (index >= 0) {
+      data.backtestTrades.splice(index, 1);
+      recalculateBacktestBalance(data, signal.backtestId);
+    }
     save(data);
     return data;
   });
@@ -943,16 +977,18 @@ function registerHandlers() {
     if (!trade.symbol) throw new Error('Backtest trade requires a symbol');
     data.backtestTrades = data.backtestTrades || [];
     data.backtestTrades.unshift(trade);
-    // The virtual ledger changes only this virtual balance. Risk per R is
-    // configured when the session begins, so a +1.5R decision has a clear
-    // monetary meaning without touching any funded account.
-    const riskPerR = Number(backtest.riskPerR || 0);
-    const totalPnl = data.backtestTrades
-      .filter((item) => item.backtestId === backtestId)
-      .reduce((sum, item) => sum + (Number(item.resultR) || 0) * riskPerR, 0);
-    trade.pnl = resultR * riskPerR;
-    backtest.currentBalance = Number(backtest.startingCapital || 0) + totalPnl;
-    backtest.updatedAt = new Date().toISOString();
+    // The virtual ledger changes only this simulation balance.
+    recalculateBacktestBalance(data, backtestId);
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('backtest:trade:delete', (_, tradeId) => {
+    const data = read();
+    const trade = (data.backtestTrades || []).find((item) => item.id === tradeId);
+    if (!trade) throw new Error('Backtest trade not found');
+    data.backtestTrades = data.backtestTrades.filter((item) => item.id !== tradeId);
+    recalculateBacktestBalance(data, trade.backtestId);
     save(data);
     return data;
   });
