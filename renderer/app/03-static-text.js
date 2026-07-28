@@ -28,6 +28,7 @@ function applyStaticText() {
   $('#overviewKicker').textContent = t('overview.kicker');
   $('#overviewTitle').textContent = t('overview.title');
   $('#overviewDescription').textContent = t('overview.description');
+  $('#overviewAccountsHint').textContent = t('overview.accountsHint');
   $('#overviewOpenTerminal').innerHTML = `${icon('terminal','button-icon')}${escapeHtml(t('overview.actions.openTerminal'))}`;
   $('#overviewLoadNews').innerHTML = `${icon('news','button-icon')}${escapeHtml(t('overview.actions.refreshNews'))}`;
   $('#overviewGoSignals').innerHTML = `${icon('signals','button-icon')}${escapeHtml(t('overview.actions.reviewSignals'))}`;

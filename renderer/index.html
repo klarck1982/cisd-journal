@@ -26,12 +26,6 @@
 
     <div class="workspace">
       <aside class="sidebar">
-        <div class="sidebar-top">
-          <div class="section-kicker" id="accountsKicker">Accounts</div>
-          <button id="newAccountBtn" class="primary small">+ Challenge</button>
-        </div>
-        <div id="accountRail" class="account-rail"></div>
-
         <nav class="nav">
           <button class="nav-link active" data-page="overview" id="navOverview"></button>
           <button class="nav-link" data-page="signals" id="navSignals"></button>
@@ -89,6 +83,14 @@
               <button id="overviewGoSignals" class="primary"></button>
             </div>
           </div>
+
+          <section class="overview-accounts" aria-label="Accounts">
+            <div class="overview-accounts-head">
+              <div><div class="section-kicker" id="accountsKicker">Accounts</div><p class="panel-hint" id="overviewAccountsHint"></p></div>
+              <button id="newAccountBtn" class="primary small">+ Challenge</button>
+            </div>
+            <div id="accountRail" class="account-rail"></div>
+          </section>
 
           <section class="panel slim quick-start hidden" id="quickStartPanel">
             <div class="panel-head">

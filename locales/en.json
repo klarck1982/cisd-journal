@@ -101,7 +101,8 @@
       "newsAction": "Open settings",
       "done": "Setup complete",
       "dismiss": "Hide this"
-    }
+    },
+    "accountsHint": "Choose an account to see its status, open positions, and what needs attention now."
   },
   "signals": {
     "kicker": "Signal execution review",
