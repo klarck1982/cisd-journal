@@ -168,6 +168,7 @@ function renderJournal() {
         ${(trade.tags || '').split(',').filter(Boolean).slice(0, 3).map((tag) => `<span class="tag neutral">${escapeHtml(tag.trim())}</span>`).join('')}
       </div>
       <div class="item-actions">
+        <button class="ghost small" data-trade-open="${escapeHtml(trade.id || '')}">${escapeHtml(t('journal.detailOpen'))}</button>
         <button class="ghost small" data-trade-edit="${escapeHtml(trade.id || '')}">${escapeHtml(t('journal.edit'))}</button>
         <button class="ghost small danger" data-trade-delete="${escapeHtml(trade.id || '')}">${escapeHtml(t('journal.delete'))}</button>
       </div>

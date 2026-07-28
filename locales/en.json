@@ -227,7 +227,15 @@
     "updated": "Trade updated ✓",
     "deleted": "Trade deleted ✓",
     "saveEdit": "Save changes",
-    "cancelEdit": "Cancel"
+    "cancelEdit": "Cancel",
+    "detailTitle": "Trade details",
+    "detailEdit": "Edit trade",
+    "detailBefore": "Chart before entry",
+    "detailAfter": "Chart after exit",
+    "detailNoImage": "No image attached",
+    "detailClose": "Close",
+    "detailOpen": "Open details",
+    "detailSignal": "Linked to a CISD signal"
   },
   "backtest": {
     "kicker": "Practice Table - Train Before Live",

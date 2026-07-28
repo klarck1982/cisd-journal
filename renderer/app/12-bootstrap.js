@@ -167,6 +167,10 @@ function bindEvents() {
   $('#tradeEditModal').addEventListener('click', (event) => {
     if (event.target.id === 'tradeEditModal') closeTradeEditModal();
   });
+  $('#closeTradeDetailModal').onclick = closeTradeDetailModal;
+  $('#tradeDetailCloseBtn').onclick = closeTradeDetailModal;
+  $('#tradeDetailEditBtn').onclick = () => { const id = model.detailTradeId; closeTradeDetailModal(); if (id) openTradeEditModal(id); };
+  $('#tradeDetailModal').addEventListener('click', (event) => { if (event.target.id === 'tradeDetailModal') closeTradeDetailModal(); });
 
   // --- Account lifecycle -----------------------------------------------------
   $('#archiveAccountBtn').onclick = archiveCurrentAccount;

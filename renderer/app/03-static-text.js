@@ -354,4 +354,9 @@ function applyStaticText() {
   $('#saveBacktestReviewBtn').textContent = t('backtest.review.save');
   $('#backtestReviewResultInput').placeholder = t('backtest.review.resultPlaceholder');
   $('#backtestReviewNoteInput').placeholder = t('backtest.review.notePlaceholder');
+  $('#tradeDetailTitle').textContent = t('journal.detailTitle');
+  $('#tradeDetailBeforeTitle').textContent = t('journal.detailBefore');
+  $('#tradeDetailAfterTitle').textContent = t('journal.detailAfter');
+  $('#tradeDetailEditBtn').textContent = t('journal.detailEdit');
+  $('#tradeDetailCloseBtn').textContent = t('journal.detailClose');
 }

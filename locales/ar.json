@@ -227,7 +227,15 @@
     "updated": "تم تحديث الصفقة ✓",
     "deleted": "تم حذف الصفقة ✓",
     "saveEdit": "حفظ التعديل",
-    "cancelEdit": "إلغاء"
+    "cancelEdit": "إلغاء",
+    "detailTitle": "تفاصيل الصفقة",
+    "detailEdit": "تعديل الصفقة",
+    "detailBefore": "الشارت قبل الدخول",
+    "detailAfter": "الشارت بعد الخروج",
+    "detailNoImage": "لا توجد صورة مرفقة",
+    "detailClose": "إغلاق",
+    "detailOpen": "فتح التفاصيل",
+    "detailSignal": "مرتبطة بإشارة CISD"
   },
   "backtest": {
     "kicker": "طاولة الاختبار - تدرب قبل الحقيقي",

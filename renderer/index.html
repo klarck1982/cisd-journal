@@ -1188,6 +1188,18 @@
     </div>
   </div>
 
+  <div id="tradeDetailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tradeDetailTitle">
+    <div class="modal-card trade-detail-card">
+      <div class="panel-head"><h3 id="tradeDetailTitle"></h3><button id="closeTradeDetailModal" class="ghost icon" aria-label="Close">×</button></div>
+      <div id="tradeDetailSummary" class="trade-detail-summary"></div>
+      <div class="trade-detail-charts">
+        <section><h4 id="tradeDetailBeforeTitle"></h4><div id="tradeDetailBefore" class="trade-detail-image"></div></section>
+        <section><h4 id="tradeDetailAfterTitle"></h4><div id="tradeDetailAfter" class="trade-detail-image"></div></section>
+      </div>
+      <div class="form-actions"><button id="tradeDetailEditBtn" class="primary" type="button"></button><button id="tradeDetailCloseBtn" class="ghost" type="button"></button></div>
+    </div>
+  </div>
+
   <div id="tradeEditModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tradeEditTitle">
     <div class="modal-card">
       <div class="panel-head">
