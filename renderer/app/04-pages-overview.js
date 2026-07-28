@@ -78,7 +78,16 @@ function renderAttentionQueue(account, dashboard) {
   if (dashboard.risk.warnings?.length) items.push({ tone: 'bad', title: t('overview.attentionRisk'), hint: t('overview.attentionRiskHint'), page: 'overview' });
   if (dashboard.risk.openPositions?.count) items.push({ tone: 'warn', title: `${t('overview.attentionPositions')} · ${dashboard.risk.openPositions.count}`, hint: t('overview.attentionPositionsHint'), page: 'data' });
   if (pendingSignals) items.push({ tone: 'warn', title: `${t('overview.attentionSignals')} · ${pendingSignals}`, hint: t('overview.attentionSignalsHint'), page: 'signals' });
-  if (!today?.reviewedAt) items.push({ tone: 'neutral', title: t('overview.attentionPlan'), hint: t('overview.attentionPlanHint'), page: 'daily' });
+  // Planning and review are distinct steps. A saved morning plan must be
+  // visible as progress, while an unfinished evening review remains actionable.
+  if (!today?.plan) {
+    items.push({ tone: 'neutral', title: t('overview.attentionPlan'), hint: t('overview.attentionPlanHint'), page: 'daily' });
+  } else if (!today?.reviewedAt) {
+    items.push({ tone: 'safe', title: t('overview.attentionPlanReady'), hint: t('overview.attentionPlanReadyHint'), page: 'daily' });
+    items.push({ tone: 'neutral', title: t('overview.attentionReview'), hint: t('overview.attentionReviewHint'), page: 'daily' });
+  } else {
+    items.push({ tone: 'safe', title: t('overview.attentionReviewDone'), hint: t('overview.attentionReviewDoneHint'), page: 'daily' });
+  }
   if (!items.length) items.push({ tone: 'safe', title: t('overview.attentionClear'), hint: t('overview.attentionClearHint'), page: '' });
 
   $('#overviewAttentionList').innerHTML = items.map((item) => `

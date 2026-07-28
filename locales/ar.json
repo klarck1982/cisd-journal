@@ -115,7 +115,13 @@
     "attentionSignalsHint": "هناك إشارات من CISD تحتاج قرارك.",
     "attentionPlan": "خطة اليوم",
     "attentionPlanHint": "لم تبدأ خطة اليوم أو لم تكمل مراجعة اليوم بعد.",
-    "attentionOpen": "افتح الآن"
+    "attentionOpen": "افتح الآن",
+    "attentionReview": "مراجعة اليوم",
+    "attentionReviewHint": "سجّل ما نجح وما تريد تحسينه قبل إنهاء اليوم.",
+    "attentionPlanReady": "خطة اليوم جاهزة",
+    "attentionPlanReadyHint": "خطة اليوم محفوظة. ركّز الآن على التنفيذ المنضبط.",
+    "attentionReviewDone": "مراجعة اليوم مكتملة",
+    "attentionReviewDoneHint": "تم حفظ درس اليوم ويمكنك الرجوع إليه من التقويم."
   },
   "signals": {
     "kicker": "مراجعة تنفيذ الإشارات",

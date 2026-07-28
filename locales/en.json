@@ -115,7 +115,13 @@
     "attentionSignalsHint": "CISD signals are waiting for your decision.",
     "attentionPlan": "Today’s plan",
     "attentionPlanHint": "You have not started today’s plan or completed its review.",
-    "attentionOpen": "Open now"
+    "attentionOpen": "Open now",
+    "attentionReview": "Daily review",
+    "attentionReviewHint": "Record what worked and what to improve before closing the day.",
+    "attentionPlanReady": "Today’s plan is ready",
+    "attentionPlanReadyHint": "Your plan is saved. Focus on disciplined execution now.",
+    "attentionReviewDone": "Daily review complete",
+    "attentionReviewDoneHint": "Today’s lesson is saved and available from the calendar."
   },
   "signals": {
     "kicker": "Signal execution review",
