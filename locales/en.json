@@ -121,7 +121,10 @@
     "attentionPlanReady": "Today’s plan is ready",
     "attentionPlanReadyHint": "Your plan is saved. Focus on disciplined execution now.",
     "attentionReviewDone": "Daily review complete",
-    "attentionReviewDoneHint": "Today’s lesson is saved and available from the calendar."
+    "attentionReviewDoneHint": "Today’s lesson is saved and available from the calendar.",
+    "positionsTitle": "Open positions",
+    "positionsHint": "Trades that are still open on this account",
+    "noPositions": "No open positions right now"
   },
   "signals": {
     "kicker": "Signal execution review",

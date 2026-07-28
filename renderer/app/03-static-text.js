@@ -31,6 +31,8 @@ function applyStaticText() {
   $('#overviewAccountsHint').textContent = t('overview.accountsHint');
   $('#overviewAttentionTitle').textContent = t('overview.attentionTitle');
   $('#overviewAttentionHint').textContent = t('overview.attentionHint');
+  $('#overviewPositionsTitle').textContent = t('overview.positionsTitle');
+  $('#overviewPositionsHint').textContent = t('overview.positionsHint');
   $('#overviewOpenTerminal').innerHTML = `${icon('terminal','button-icon')}${escapeHtml(t('overview.actions.openTerminal'))}`;
   $('#overviewLoadNews').innerHTML = `${icon('news','button-icon')}${escapeHtml(t('overview.actions.refreshNews'))}`;
   $('#overviewGoSignals').innerHTML = `${icon('signals','button-icon')}${escapeHtml(t('overview.actions.reviewSignals'))}`;

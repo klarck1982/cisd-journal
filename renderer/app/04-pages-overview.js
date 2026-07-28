@@ -214,6 +214,14 @@ function renderOverview() {
     <div class="stack-row"><span class="label">${escapeHtml(t('overview.challenge.remaining'))}</span><span class="value">${dashboard.risk.challenge.challengeRemaining === null ? '—' : escapeHtml(formatCurrency(dashboard.risk.challenge.challengeRemaining, account.currency))}</span></div>
   `;
 
+  const positions = (model.state?.openPositions || []).filter((position) => position.accountId === account.id);
+  $('#overviewPositionsList').innerHTML = positions.length ? positions.map((position) => `
+    <article class="item">
+      <div class="item-head"><div><div class="item-title">${escapeHtml(position.symbol || '')} · ${escapeHtml(position.side || '')}</div><div class="item-subtitle">${escapeHtml(position.ticket || '')}</div></div><strong class="${classForSigned(position.netProfit)}">${Number(position.netProfit) > 0 ? '+' : ''}${escapeHtml(formatCurrency(position.netProfit || 0, account.currency))}</strong></div>
+      <div class="item-meta"><span class="tag neutral">${escapeHtml(t('overview.health.openPnl'))}: ${escapeHtml(formatNumber(position.netProfit || 0, 2))}</span>${position.sl ? `<span class="tag neutral">SL ${escapeHtml(String(position.sl))}</span>` : ''}${position.tp ? `<span class="tag neutral">TP ${escapeHtml(String(position.tp))}</span>` : ''}</div>
+    </article>
+  `).join('') : emptyState(t('overview.noPositions'));
+
   $('#overviewNewsStatus').textContent = model.newsConfigured ? t('overview.news.live') : t('overview.news.notConfigured');
   $('#overviewNewsList').innerHTML = model.news.length
     ? model.news.slice(0, 4).map((item) => `

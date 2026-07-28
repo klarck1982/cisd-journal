@@ -121,7 +121,10 @@
     "attentionPlanReady": "خطة اليوم جاهزة",
     "attentionPlanReadyHint": "خطة اليوم محفوظة. ركّز الآن على التنفيذ المنضبط.",
     "attentionReviewDone": "مراجعة اليوم مكتملة",
-    "attentionReviewDoneHint": "تم حفظ درس اليوم ويمكنك الرجوع إليه من التقويم."
+    "attentionReviewDoneHint": "تم حفظ درس اليوم ويمكنك الرجوع إليه من التقويم.",
+    "positionsTitle": "المراكز المفتوحة",
+    "positionsHint": "حالة الصفقات التي ما زالت مفتوحة على هذا الحساب",
+    "noPositions": "لا توجد مراكز مفتوحة الآن"
   },
   "signals": {
     "kicker": "مراجعة تنفيذ الإشارات",
