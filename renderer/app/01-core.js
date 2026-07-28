@@ -40,7 +40,7 @@ const model = {
   welcomeStep: 0,
   welcomeCsvPath: '',
   backtestCsvPath: '',
-  dashboardDensity: 'comfortable',
+  dashboardDensity: 'compact',
   signalsView: 'pending',
   search: {
     signals: '',
