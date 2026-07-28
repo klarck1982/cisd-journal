@@ -190,8 +190,9 @@ async function toggleDensity() {
 async function startBacktest(event) {
   event.preventDefault();
   const payload = {
-    accountId: model.accountId,
     name: $('#backtestName').value.trim() || t('backtest.create.defaultName'),
+    startingCapital: Number($('#backtestCapital').value || 100000),
+    currency: $('#backtestCurrency').value,
     start: $('#backtestStart').value,
     end: $('#backtestEnd').value,
     session: $('#backtestSession').value,

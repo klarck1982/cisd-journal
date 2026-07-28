@@ -176,9 +176,9 @@ function renderJournal() {
 
 
 function backtestsForAccount() {
-  return (model.state?.backtests || [])
-    .filter((item) => item.accountId === model.accountId)
-    .filter((item) => !item.archived);
+  // Backtests are a dedicated simulation centre, not children of the selected
+  // funded account. Their only shared input is the CISD signal file.
+  return (model.state?.backtests || []).filter((item) => item.status !== 'ARCHIVED' && !item.archived);
 }
 
 function selectedBacktest() {
@@ -211,11 +211,13 @@ function renderBacktestSpotlight(selected, reviewSignals) {
   const net = scored.reduce((sum, signal) => sum + (Number(signal.resultR) || 0), 0);
   const avg = scored.length ? net / scored.length : 0;
 
+  const virtualTrades = (model.state?.backtestTrades || []).filter((trade) => trade.backtestId === selected.id);
   $('#backtestSpotlightCards').innerHTML = [
+    metricCard(t('backtest.create.capital'), formatCurrency(selected.currentBalance ?? selected.startingCapital ?? 0, selected.currency || 'USD'), t('backtest.create.separateHint'), '', 'capital'),
     metricCard(t('backtest.spotlight.matched'), String(reviewSignals.length), t('backtest.spotlight.matchedHint'), '', 'signals'),
     metricCard(t('backtest.spotlight.reviewed'), `${reviewed.length}/${reviewSignals.length || 0}`, t('backtest.spotlight.reviewedHint'), reviewed.length === reviewSignals.length && reviewSignals.length ? 'good' : 'warn', 'backtest'),
     metricCard(t('backtest.spotlight.winRate'), scored.length ? formatPercent(wins / scored.length) : '—', t('backtest.spotlight.winRateHint'), wins / Math.max(scored.length, 1) >= 0.5 ? 'good' : 'warn', 'analytics'),
-    metricCard(t('backtest.spotlight.net'), `${net > 0 ? '+' : ''}${formatNumber(net, 2)}R`, `${t('backtest.spotlight.avg')} ${avg > 0 ? '+' : ''}${formatNumber(avg, 2)}R`, net >= 0 ? 'good' : 'bad', 'curve'),
+    metricCard(t('backtest.spotlight.net'), `${net > 0 ? '+' : ''}${formatNumber(net, 2)}R`, `${virtualTrades.length} ${t('journal.recentTrades.title')}`, net >= 0 ? 'good' : 'bad', 'curve'),
   ].join('');
 
   $('#backtestSpotlightTags').innerHTML = [
@@ -242,7 +244,7 @@ function renderBacktest() {
         <div class="item-head">
           <div>
             <div class="item-title">${escapeHtml(session.name || t('backtest.create.defaultName'))}</div>
-            <div class="item-subtitle">${escapeHtml(session.filters?.start || '')} → ${escapeHtml(session.filters?.end || '')}</div>
+            <div class="item-subtitle">${escapeHtml(session.filters?.start || '')} → ${escapeHtml(session.filters?.end || '')} · ${escapeHtml(formatCurrency(session.currentBalance ?? session.startingCapital ?? 0, session.currency || 'USD'))}</div>
           </div>
           <div class="playbook-actions">
             <span class="chip ${session.status === 'FINISHED' ? 'neutral' : 'safe'}">${escapeHtml(session.status === 'FINISHED' ? t('backtest.status.finished') : t('backtest.status.active'))}</span>

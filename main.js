@@ -766,9 +766,8 @@ function registerHandlers() {
     data.trades = data.trades.filter((item) => item.accountId !== accountId);
     data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== accountId);
 
-    const backtestIds = data.backtests.filter((item) => item.accountId === accountId).map((item) => item.id);
-    data.backtests = data.backtests.filter((item) => item.accountId !== accountId);
-    data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    // Backtest sessions are a separate simulation centre. Resetting a real
+    // account must never remove a trader's research or virtual capital.
     data.daily = data.daily.filter((item) => item.accountId !== accountId);
 
     const account = data.accounts.find((item) => item.id === accountId);
@@ -832,9 +831,8 @@ function registerHandlers() {
 
     closeFundedNextWatcher(id);
 
-    const backtestIds = (data.backtests || []).filter((item) => item.accountId === id).map((item) => item.id);
-    data.backtests = (data.backtests || []).filter((item) => item.accountId !== id);
-    data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    // Simulation sessions do not belong to a live account and survive account
+    // deletion; this prevents research from being silently destroyed.
     data.trades = (data.trades || []).filter((item) => item.accountId !== id);
     data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== id);
     data.daily = (data.daily || []).filter((item) => item.accountId !== id);
@@ -869,7 +867,11 @@ function registerHandlers() {
       id: crypto.randomUUID(),
       status: 'ACTIVE',
       createdAt: new Date().toISOString(),
-      accountId: payload.accountId,
+      // A backtest is a standalone virtual account. It only reads CISD
+      // signals; no real account, trade, balance or risk record is referenced.
+      startingCapital: Number(payload.startingCapital) || 100000,
+      currentBalance: Number(payload.startingCapital) || 100000,
+      currency: String(payload.currency || 'USD'),
       sourceCsvPath: csvPath,
       backtestCsvPath: payload.backtestCsvPath || '',
       filters: {
@@ -897,6 +899,7 @@ function registerHandlers() {
   ipcMain.handle('backtest:reset', (_, id) => {
     const data = read();
     data.backtestSignals = (data.backtestSignals || []).filter((item) => item.backtestId !== id);
+    data.backtestTrades = (data.backtestTrades || []).filter((item) => item.backtestId !== id);
     data.backtests = data.backtests.filter((item) => item.id !== id);
     if (data.activeBacktestId === id) data.activeBacktestId = null;
     save(data);
@@ -921,6 +924,27 @@ function registerHandlers() {
     signal.resultR = payload.resultR !== undefined ? Number(payload.resultR) : signal.resultR;
     signal.reviewNote = payload.note || '';
     signal.reviewedAt = new Date().toISOString();
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('backtest:trade:add', (_, backtestId, payload = {}) => {
+    const data = read();
+    const backtest = (data.backtests || []).find((item) => item.id === backtestId && item.status !== 'ARCHIVED');
+    if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
+    const resultR = Number(payload.resultR || 0);
+    const trade = {
+      id: crypto.randomUUID(), backtestId, symbol: String(payload.symbol || '').toUpperCase(),
+      side: payload.side === 'Sell' ? 'Sell' : 'Buy', resultR,
+      note: String(payload.note || ''), signalId: String(payload.signalId || ''),
+      date: payload.date || new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString(),
+    };
+    if (!trade.symbol) throw new Error('Backtest trade requires a symbol');
+    data.backtestTrades = data.backtestTrades || [];
+    data.backtestTrades.unshift(trade);
+    // R is deliberately kept as the performance unit; capital changes only
+    // when the trader supplies a risk amount in a later execution layer.
+    backtest.currentBalance = Number(backtest.currentBalance || backtest.startingCapital || 0);
     save(data);
     return data;
   });

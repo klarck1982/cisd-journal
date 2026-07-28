@@ -223,8 +223,8 @@ function runHandler(channel, state, args = []) {
   assert.equal(state.trades.length, 1, 'only this account\'s trades are cleared');
   assert.equal(state.trades[0].accountId, 'b', 'another account\'s trades survive');
   assert.equal(state.openPositions.length, 0);
-  assert.equal(state.backtests.length, 0);
-  assert.equal(state.backtestSignals.length, 0);
+  assert.equal(state.backtests.length, 1, 'a backtest is a separate virtual account and survives a real-account reset');
+  assert.equal(state.backtestSignals.length, 1, 'backtest signal history is never real-account history');
 }
 
 // --- 2) trade:update corrects a trade without touching identity --------------
@@ -257,7 +257,7 @@ function runHandler(channel, state, args = []) {
   assert.deepEqual(state.trades.map((trade) => trade.id), ['t1']);
 }
 
-// --- 4) account:delete removes the account and everything referencing it -----
+// --- 4) account:delete removes real-account records, never simulation research ---
 // An orphaned trade would keep feeding the analytics of an account that no
 // longer exists.
 {
@@ -279,8 +279,8 @@ function runHandler(channel, state, args = []) {
   assert.deepEqual(state.accounts.map((item) => item.id), ['b']);
   assert.equal(state.trades.length, 1, 'no orphaned trades survive');
   assert.equal(state.openPositions.length, 0);
-  assert.equal(state.backtests.length, 0);
-  assert.equal(state.backtestSignals.length, 0, 'backtest signals of the deleted account go too');
+  assert.equal(state.backtests.length, 1, 'the separate simulation account survives live-account deletion');
+  assert.equal(state.backtestSignals.length, 1, 'simulation signals are not owned by a live account');
   assert.equal(state.playbooks.length, 1);
   assert.equal(state.importHistory.length, 0);
   assert.equal(state.signals[0].decisions.a, undefined, 'per-account signal decisions are cleared');

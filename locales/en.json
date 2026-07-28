@@ -232,7 +232,10 @@
       "csvLabel": "Backtest CSV (optional)",
       "csvHint": "If empty, uses live file but filters only your chosen period to match JForex",
       "chooseCsv": "Choose Backtest CSV",
-      "clearCsv": "Clear"
+      "clearCsv": "Clear",
+      "capital": "Virtual starting capital",
+      "currency": "Backtest currency",
+      "separateHint": "A separate virtual account — never affects a live account"
     },
     "library": {
       "title": "Backtest library",
