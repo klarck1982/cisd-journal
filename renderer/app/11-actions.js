@@ -211,14 +211,15 @@ async function startBacktest(event) {
 }
 
 function openAccountModal() {
-  $('#accountModalFirm').value = 'FundingPips';
+  // A new account must start as the trader's account, not as a hidden demo.
+  $('#accountModalFirm').value = '';
   $('#accountModalName').value = '';
-  $('#accountModalCapital').value = '100000';
+  $('#accountModalCapital').value = '';
   $('#accountModalCurrency').value = 'USD';
   $('#accountModalPhase').value = 'Challenge';
-  $('#accountModalTarget').value = '10';
-  $('#accountModalDailyLoss').value = '5';
-  $('#accountModalDrawdown').value = '10';
+  $('#accountModalTarget').value = '';
+  $('#accountModalDailyLoss').value = '';
+  $('#accountModalDrawdown').value = '';
   $('#accountModal').classList.remove('hidden');
   $('#accountModalFirm').focus();
 }
