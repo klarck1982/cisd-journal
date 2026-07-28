@@ -167,7 +167,10 @@
         "late": "Late execution",
         "rule-break": "Rule conflict"
       }
-    }
+    },
+    "filterNew": "New signals only",
+    "filterAll": "All signals",
+    "newFirstHint": "Shows signals that need your decision first"
   },
   "journal": {
     "kicker": "Execution journal",

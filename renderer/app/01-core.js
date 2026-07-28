@@ -39,6 +39,7 @@ const model = {
   welcomeCsvPath: '',
   backtestCsvPath: '',
   dashboardDensity: 'comfortable',
+  signalsView: 'pending',
   search: {
     signals: '',
     journal: '',
@@ -73,6 +74,7 @@ function persistUiState() {
       selectedBacktestId: model.selectedBacktestId,
       filters: model.filters,
       search: model.search,
+      signalsView: model.signalsView,
       quickStartDismissed: model.quickStartDismissed,
       calendarMonth: model.calendarMonth,
       dashboardDensity: model.dashboardDensity,
@@ -90,6 +92,7 @@ function restoreUiState() {
     if (saved.selectedBacktestId) model.selectedBacktestId = saved.selectedBacktestId;
     if (saved.filters) model.filters = { ...model.filters, ...saved.filters };
     if (saved.search) model.search = { ...model.search, ...saved.search };
+    if (saved.signalsView) model.signalsView = saved.signalsView;
     if (saved.quickStartDismissed) model.quickStartDismissed = true;
     if (saved.calendarMonth) model.calendarMonth = saved.calendarMonth;
     if (saved.dashboardDensity) model.dashboardDensity = saved.dashboardDensity;

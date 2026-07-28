@@ -121,6 +121,7 @@ function bindEvents() {
   $('#syncFundingAccessBtn').onclick = syncFundingAccessNow;
   $('#openFundingAccessBtn').onclick = openFundingAccess;
   $('#signalsSearch').addEventListener('input', () => { model.search.signals = $('#signalsSearch').value; persistUiState(); renderSignalsPage(); });
+  $('#signalsViewFilter').addEventListener('change', () => { model.signalsView = $('#signalsViewFilter').value; persistUiState(); renderSignalsPage(); });
   $('#journalSearch').addEventListener('input', () => { model.search.journal = $('#journalSearch').value; persistUiState(); renderJournal(); });
   $('#backtestSearch').addEventListener('input', () => { model.search.backtest = $('#backtestSearch').value; persistUiState(); renderBacktest(); });
   $('#tradeSignal').addEventListener('change', () => {
