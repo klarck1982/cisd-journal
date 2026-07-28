@@ -309,6 +309,13 @@ async function runMt5ReadonlyBridge(payload) {
     preferExecutable: true,
   });
 
+  // A packaged Windows app must contain the read-only helper. Without it,
+  // an Investor Pass cannot be queried; fail with an instruction instead of a
+  // cryptic Windows “spawn ENOENT” message.
+  if (app.isPackaged && !fs.existsSync(plan.exePath)) {
+    throw new Error('ميزة Investor Pass غير جاهزة في هذه النسخة: ملف الربط الخاص بـ MT5 غير موجود. أعد تثبيت نسخة كاملة من التطبيق.');
+  }
+
   let lastError = null;
   for (const candidate of plan.candidates) {
     try {
@@ -326,10 +333,17 @@ async function runMt5ReadonlyBridge(payload) {
     }
   }
 
-  const fallback = app.isPackaged
-    ? 'Bundled MT5 bridge EXE was not found or failed to run. Build/ship bridges/mt5_readonly_sync.exe with the desktop app.'
-    : 'MT5 readonly bridge could not run. Build the helper EXE or make Python + MetaTrader5 available.';
-  throw lastError || new Error(fallback);
+  if (lastError?.killed || lastError?.code === 'ETIMEDOUT') {
+    throw new Error('انتهت مهلة الاتصال بـ MT5. تأكد أن منصة MT5 مثبتة ومفتوحة ثم أعد المحاولة.');
+  }
+  const detail = String(lastError?.message || '');
+  if (/initialize|terminal|MetaTrader/i.test(detail)) {
+    throw new Error('لم يتمكن التطبيق من فتح MT5. تأكد من تثبيت منصة MT5 الخاصة بالشركة، ثم افتحها مرة واحدة وأعد المحاولة.');
+  }
+  if (/authorization|login|password|server/i.test(detail)) {
+    throw new Error('تعذر تسجيل الدخول للقراءة فقط. راجع رقم الحساب واسم الخادم وInvestor Pass.');
+  }
+  throw new Error('تعذر الاتصال بحساب MT5 عبر Investor Pass. تحقق من الإنترنت وبيانات الحساب واسم الخادم، ثم أعد المحاولة.');
 }
 
 async function syncFundingAccess(accountId) {
