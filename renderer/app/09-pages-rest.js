@@ -96,20 +96,7 @@ function renderData() {
     } catch { return false; }
   }).length;
 
-  const fundedNextFolder = account?.fundedNextFolder || '';
-  const fundedNextWatcherActive = !!fundedNextFolder;
-  const mt5BridgeReady = model.runtimeReadiness?.mt5Bridge?.packagedExecutableExists || false;
-  const newsProvider = 'Forex Factory';
-  const isFreeNews = true;
-
-  // Health score: how many sources are configured
-  const configuredCount = [
-    !!csvPath,
-    !!fundedNextFolder,
-    !!account?.lastMT5Import,
-    !!(model.fundingAccess?.configured),
-    !!model.newsConfigured || isFreeNews
-  ].filter(Boolean).length;
+  const configuredCount = [!!csvPath, !!model.fundingAccess?.configured, !!model.newsConfigured].filter(Boolean).length;
 
   // Render top health summary if container exists, otherwise inject before sources list
   const healthContainerId = 'dataHealthCards';
@@ -126,63 +113,36 @@ function renderData() {
   const healthEl = document.getElementById(healthContainerId);
   if (healthEl) {
     healthEl.innerHTML = [
-      metricCard('مصادر مهيأة', `${configuredCount}/5`, `${accounts.length} حساب`, configuredCount >= 4 ? 'good' : configuredCount >= 2 ? 'warn' : 'bad', 'source'),
+      metricCard('الاتصالات الجاهزة', `${configuredCount}/3`, `${accounts.length} حساب`, configuredCount === 3 ? 'good' : configuredCount >= 1 ? 'warn' : 'bad', 'source'),
       metricCard('إشارات اليوم', String(todaySignals), `إجمالي ${totalSignals}`, todaySignals > 0 ? 'good' : 'neutral', 'signals'),
-      metricCard('حالة المراقبة', fundedNextWatcherActive && csvPath ? 'نشطة' : 'متوقفة', csvPath ? 'ملف CSV + مجلد FundedNext' : 'اختر ملف CSV', (fundedNextWatcherActive && csvPath) ? 'good' : 'warn', 'import'),
+      metricCard('الحساب النشط', model.fundingAccess?.configured ? 'متصل' : 'غير مربوط', model.fundingAccess?.mode === 'shared_url' ? 'رابط لوحة الشركة' : model.fundingAccess?.mode === 'investor_pass' ? 'Investor Pass' : 'اختر طريقة الربط', model.fundingAccess?.configured ? 'good' : 'warn', 'link'),
       metricCard('الأخبار', model.newsConfigured ? `${model.news?.length || 0} خبر` : 'قيد التحديث', 'Forex Factory · High impact', model.newsConfigured ? 'good' : 'warn', 'news'),
     ].join('');
   }
 
   const items = [
     {
-      title: t('data.sources.cisd'),
-      icon: 'signals',
-      status: csvPath ? t('data.status.ready') : t('data.status.missing'),
-      meta: `${csvPath ? `📁 ${csvPath.split(/[\\/]/).pop()} • ` : ''}${lastSignalSync ? `آخر فحص: ${formatDateTime(lastSignalSync)} • ` : ''}${signalDiagnostics ? `${signalDiagnostics.added} جديد • ${signalDiagnostics.duplicates} مكرر • ${signalDiagnostics.invalidRows || 0} غير صالح` : t('data.status.noRuns')}`,
-      extra: `👀 المراقبة: ${csvPath ? 'نشطة كل ثانيتين' : 'متوقفة - اختر ملف'} • الإشارات اليوم: ${todaySignals}`,
-      cls: csvPath ? 'blue' : 'neutral',
-      actionLabel: csvPath ? 'تغيير الملف' : 'اختيار الملف',
-      btnAction: 'chooseCsv',
-    },
-    {
-      title: t('data.sources.fundedNext'),
-      icon: 'source',
-      status: account?.lastFundedNextImport ? formatDateTime(account.lastFundedNextImport) : fundedNextFolder ? 'يراقب...' : t('data.status.noRuns'),
-      meta: `${fundedNextFolder ? `📁 ${fundedNextFolder.split(/[\\/]/).pop()} • ` : ''}${account?.lastFundedNextDiagnostics ? `${account.lastFundedNextDiagnostics.added} مضاف • ${account.lastFundedNextDiagnostics.openPositions} مفتوحة • ${account.lastFundedNextDiagnostics.duplicates || 0} مكرر` : (account?.lastFundedNextError || (fundedNextFolder ? 'في انتظار ملفات جديدة...' : t('data.status.notConfigured')))}`,
-      extra: `👀 المراقبة: ${fundedNextWatcherActive ? 'نشطة' : 'متوقفة - اختر مجلد'} • الحسابات: ${accounts.filter(a=>a.fundedNextFolder).length} تراقب مجلدات`,
-      cls: account?.lastFundedNextError ? 'bad' : account?.fundedNextFolder ? 'safe' : 'neutral',
-      actionLabel: fundedNextFolder ? 'تغيير المجلد' : 'اختيار مجلد',
-      btnAction: 'watchFolder',
-    },
-    {
-      title: t('data.sources.mt5'),
-      icon: 'import',
-      status: account?.lastMT5Import ? formatDateTime(account.lastMT5Import) : t('data.status.noRuns'),
-      meta: `${mt5BridgeReady ? '✅ جسر EXE جاهز • ' : '⚠️ جسر EXE مفقود • '}${account?.lastMT5Diagnostics ? `${account.lastMT5Diagnostics.added} مضاف • ${account.lastMT5Diagnostics.duplicates} مكرر • ${account.lastMT5Diagnostics.invalidRows || 0} غير صالح` : (account?.lastMT5Error || t('data.status.notConfigured'))}`,
-      extra: `الصيغ: HTML/CSV • آخر خطأ: ${account?.lastMT5Error ? account.lastMT5Error.slice(0,60) : 'لا يوجد'}`,
-      cls: account?.lastMT5Error ? 'bad' : account?.lastMT5Import ? 'safe' : 'neutral',
-      actionLabel: 'استيراد MT5',
-      btnAction: 'importMt5',
-    },
-    {
-      title: t('data.sources.fundingAccess'),
-      icon: 'link',
-      status: account?.lastFundingSync ? formatDateTime(account.lastFundingSync) : (model.fundingAccess?.configured ? t('data.status.ready') : t('data.status.notConfigured')),
-      meta: `${account?.lastFundingError ? `❌ ${account.lastFundingError.slice(0,80)}` : (model.fundingAccess?.mode === 'investor_pass' ? `🔑 Investor Pass • ${model.fundingAccess?.investorLogin || ''}` : model.fundingAccess?.mode === 'shared_url' ? `🔗 Shared URL • ${t('funding.modes.sharedUrl')}` : t('funding.modes.none'))}`,
-      extra: `الحسابات المهيأة: ${accounts.filter(a=>a.fundingAccessMode && a.fundingAccessMode!=='none').length}/${accounts.length} • الجسر: ${mt5BridgeReady ? 'جاهز' : 'غير موجود'}`,
+      title: 'بيانات الحساب', icon: 'link',
+      status: model.fundingAccess?.configured ? 'متصل' : 'يحتاج إعدادًا',
+      meta: account?.lastFundingError ? `❌ ${account.lastFundingError.slice(0,100)}` : model.fundingAccess?.mode === 'investor_pass' ? `Investor Pass · ${model.fundingAccess.investorLogin || ''}` : model.fundingAccess?.mode === 'shared_url' ? 'رابط لوحة التحكم الخاصة بالشركة' : 'اختر Investor Pass أو رابط لوحة التحكم.',
+      extra: account?.lastFundingSync ? `آخر تحديث: ${formatDateTime(account.lastFundingSync)}` : 'لن تظهر بيانات الشركة قبل نجاح الاتصال.',
       cls: account?.lastFundingError ? 'bad' : model.fundingAccess?.configured ? 'safe' : 'neutral',
-      actionLabel: model.fundingAccess?.configured ? 'مزامنة الآن' : 'إعداد',
-      btnAction: 'syncFunding',
+      actionLabel: model.fundingAccess?.configured ? 'مزامنة الآن' : 'إعداد الربط',
+      btnAction: model.fundingAccess?.configured ? 'syncFunding' : 'openSettings',
     },
     {
-      title: '📰 الأخبار - Forex Factory',
-      icon: 'news',
-      status: model.newsConfigured ? `${model.news?.length || 0} خبر عالي التأثير` : 'قيد التحديث',
-      meta: `✅ بدون مفتاح • ${model.news?.length ? `آخر جلب: ${formatDateTime(model.state?.settings?.lastNewsSync)} • ` : ''}${model.news?.[0] ? `التالي: ${model.news[0].Country} - ${model.news[0].Event?.slice(0,30)}` : 'لا أخبار مجدولة'}`,
-      extra: model.state?.settings?.lastNewsError ? `⚠️ ${model.state.settings.lastNewsError}` : 'المصدر الوحيد للأخبار في التطبيق.',
-      cls: model.state?.settings?.lastNewsError ? 'warn' : 'safe',
-      actionLabel: 'تحديث الأخبار',
-      btnAction: 'refreshNews',
+      title: 'إشارات CISD', icon: 'signals',
+      status: csvPath ? 'تعمل' : 'يحتاج ملف الإشارات',
+      meta: csvPath ? `📁 ${csvPath.split(/[\\/]/).pop()}` : 'اختر ملف إشارات JForex مرة واحدة.',
+      extra: csvPath ? `${lastSignalSync ? `آخر فحص: ${formatDateTime(lastSignalSync)} · ` : ''}${todaySignals} إشارة اليوم` : 'بعد الاختيار سيبدأ التطبيق المراقبة تلقائيًا.',
+      cls: csvPath ? 'safe' : 'neutral', actionLabel: csvPath ? 'تغيير الملف' : 'اختيار الملف', btnAction: 'chooseCsv',
+    },
+    {
+      title: 'الأخبار الاقتصادية', icon: 'news',
+      status: model.state?.settings?.lastNewsError ? 'يحتاج إعادة محاولة' : `${model.news?.length || 0} خبر عالي التأثير`,
+      meta: model.state?.settings?.lastNewsError ? `⚠️ ${model.state.settings.lastNewsError}` : 'Forex Factory · بدون مفتاح أو تسجيل.',
+      extra: model.state?.settings?.lastNewsSync ? `آخر تحديث: ${formatDateTime(model.state.settings.lastNewsSync)}` : 'سيتم التحديث عند فتح التطبيق.',
+      cls: model.state?.settings?.lastNewsError ? 'warn' : 'safe', actionLabel: 'تحديث الأخبار', btnAction: 'refreshNews',
     },
   ];
 
@@ -206,8 +166,6 @@ function renderData() {
   $$('[data-data-action]').forEach(btn => {
     const act = btn.dataset.dataAction;
     if (act === 'chooseCsv') btn.onclick = () => chooseCsv();
-    if (act === 'watchFolder') btn.onclick = () => watchFundedNext();
-    if (act === 'importMt5') btn.onclick = () => importMt5();
     if (act === 'syncFunding') btn.onclick = () => syncFundingAccessNow();
     if (act === 'refreshNews') btn.onclick = () => loadNews(false);
     if (act === 'openSettings') btn.onclick = () => { model.page='settings'; persistUiState(); renderActivePage(); renderWorkspaceStatus(); };
