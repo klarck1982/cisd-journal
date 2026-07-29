@@ -270,6 +270,8 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     private long lastChartPeriodMs = -1;
     private long latestBarTime = 0;
     private int lastCalculatedIndex = -1;
+    // Historical reconstruction must draw signals but never behave like live alerts.
+    private boolean cisdHistoryReady = false;
     private long lastCheckedRetestTime = 0;
     private long fibCacheWaveStart = -1;
     private double[] fibCacheResult = null;
@@ -1136,6 +1138,7 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             }
             lastChartPeriodMs = currentPeriodMs;
             lastCalculatedIndex = -1;
+            cisdHistoryReady = false;
             fibCacheWaveStart = -1;
             fibCacheResult = null;
             pendingBullish.active = false; pendingBullish.waveStartIdx = -1;
@@ -1203,6 +1206,9 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             }
         }
 
+        // From the next calculation onward, signals are genuinely new and may
+        // alert, enter the shared panel and be exported to Windows.
+        cisdHistoryReady = true;
         return new IndicatorResult(startIndex, length);
     }
 
@@ -1597,12 +1603,16 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
                         cisdStoredHTFActive[i], cisdStoredMomVolActive[i]));
         }});
         trimCisdStorageIfNeeded();
-        if (!cisdAlertSound.equals("None")) playSound(cisdAlertSound);
-        lastAlertStartTime = startTime;
-        lastAlertLevel = entry;
-
-        writeSharedCISDLine(bullish, entry, breakoutTime, confirmed);
-        writeCisdSignalToCsv(idx);
+        // During startup, a TF/instrument switch or settings rebuild, the
+        // indicator reconstructs history. Keep it visible, but do not create a
+        // burst of alerts, overwrite the live CSV or flood the Shared panel.
+        if (cisdHistoryReady) {
+            if (!cisdAlertSound.equals("None")) playSound(cisdAlertSound);
+            lastAlertStartTime = startTime;
+            lastAlertLevel = entry;
+            writeSharedCISDLine(bullish, entry, breakoutTime, confirmed);
+            writeCisdSignalToCsv(idx);
+        }
         if (saveLoadCISD) saveCisdToFile();
     }
 
