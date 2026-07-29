@@ -1142,26 +1142,38 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             pendingBearish.active = false; pendingBearish.waveStartIdx = -1;
         }
 
+        // Process only the last live bar plus newly arrived bars. The previous
+        // version replayed the entire history on redraw, which could move HTF
+        // layer state backwards and produce irregular candles after a TF change.
+        int processFrom = startIndex;
+        if (lastCalculatedIndex >= startIndex) processFrom = Math.max(startIndex, lastCalculatedIndex);
         for (LayerData layer : layers) {
             if (!layer.enabled) continue;
-            for (int i = startIndex; i <= endIndex && i < bars.length; i++) {
+            for (int i = processFrom; i <= endIndex && i < bars.length; i++) {
                 if (bars[i].getTime() <= 0) continue;
                 processChartBar(layer, bars[i]);
             }
         }
 
-        int detectionIndex = endIndex;
-        if (detectionIndex == bars.length - 1) {
-            long barEndTime = bars[detectionIndex].getTime() + currentPeriodMs;
-            if (System.currentTimeMillis() < barEndTime) {
-                detectionIndex = Math.max(0, detectionIndex - 1);
-            }
+        // A fast Replay or reconnect may deliver several bars at once. Evaluate
+        // every newly closed bar in order, instead of evaluating only the final
+        // one and silently missing valid CISD confirmations in between.
+        int lastClosedIndex = endIndex;
+        if (lastClosedIndex == bars.length - 1
+                && System.currentTimeMillis() < bars[lastClosedIndex].getTime() + currentPeriodMs) {
+            lastClosedIndex--;
         }
-        detectCISDFinal(bars, detectionIndex);
+        int detectFrom = Math.max(1, startIndex);
+        if (lastCalculatedIndex >= detectFrom) detectFrom = lastCalculatedIndex + 1;
+        for (int detectionIndex = detectFrom; detectionIndex <= lastClosedIndex; detectionIndex++) {
+            detectCISDFinal(bars, detectionIndex);
+        }
 
-        updateCisdStates(bars[endIndex].getTime());
-
-        latestBarTime = bars[endIndex].getTime();
+        if (endIndex >= 0) {
+            updateCisdStates(bars[endIndex].getTime());
+            latestBarTime = bars[endIndex].getTime();
+        }
+        lastCalculatedIndex = endIndex;
 
         long chartInterval = context.getFeedDescriptor().getPeriod().getInterval();
         LayerData validPrimaryLayer = null;
