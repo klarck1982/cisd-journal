@@ -49,6 +49,8 @@ function applyStaticText() {
   $('#signalsDescription').textContent = t('signals.description');
   $('#chooseCsvBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('signals.actions.chooseCsv'))}`;
   $('#refreshSnapshotsBtn').innerHTML = `${icon('source','button-icon')}${escapeHtml(t('signals.actions.refresh'))}`;
+  $('#signalsResetDecisionsBtn').textContent = t('signals.reset.resetDecisions');
+  $('#signalsFreshStartBtn').textContent = t('signals.reset.freshStart');
   $('#signalsSourceTitle').innerHTML = iconText('source', t('signals.sourceTitle'));
   $('#signalsSummaryTitle').innerHTML = iconText('discipline', t('signals.summaryTitle'));
   $('#signalsSummaryHint').textContent = t('signals.summaryHint');
