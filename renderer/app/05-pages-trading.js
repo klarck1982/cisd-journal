@@ -73,7 +73,9 @@ function bindSignalActions() {
   $$('[data-action="ignored"]').forEach((button) => {
     button.onclick = async () => {
       model.state = await runBusy(t('ui.loading'), () => cisd.signalStatus(button.dataset.signalId, model.accountId, 'IGNORED', t('signals.actions.ignoredHint')));
-      await refreshSnapshots(); render(); toast('تم تسجيل الإشارة كضعيفة ✓', 'info');
+      await refreshSnapshots(); render();
+      const exportError = model.state?.settings?.lastDecisionExportError;
+      toast(exportError ? `تم حفظ قرارك داخل التطبيق، لكن لم يُكتب على الشارت: ${exportError}` : 'تم تسجيل الإشارة كضعيفة ✓', exportError ? 'warn' : 'success');
     };
   });
 

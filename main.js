@@ -1145,7 +1145,15 @@ function registerHandlers() {
         reason: reason || '',
         updatedAt: new Date().toISOString(),
       };
-      writeSignalDecisionsFile(data, accountId);
+      // A locked JForex folder must never make the trader's decision vanish.
+      // Save locally first, then report an export problem for the chart layer.
+      try {
+        writeSignalDecisionsFile(data, accountId);
+        data.settings.lastDecisionExportError = '';
+      } catch (error) {
+        data.settings.lastDecisionExportError = error.message || 'Could not write the chart decisions file';
+        logError('writeSignalDecisionsFile', error);
+      }
       save(data);
     }
     return data;
