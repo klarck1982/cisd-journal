@@ -1142,23 +1142,6 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             pendingBearish.active = false; pendingBearish.waveStartIdx = -1;
         }
 
-        // JForex requests startIndex=0 when an option or data range changes.
-        // Rebuild the HTF candle state cleanly in that case; otherwise an old
-        // partial candle can be mixed with historical bars and look irregular.
-        boolean fullLayerRebuild = startIndex == 0 && lastCalculatedIndex >= 0;
-        if (fullLayerRebuild) {
-            for (LayerData layer : layers) {
-                layer.historicalCandles.clear();
-                layer.currentOpen = Double.NaN;
-                layer.currentHigh = Double.NaN;
-                layer.currentLow = Double.NaN;
-                layer.currentClose = Double.NaN;
-                layer.currentCandleActive = false;
-                layer.currentPeriodStart = 0;
-                layer.lsActive = false;
-            }
-        }
-
         for (LayerData layer : layers) {
             if (!layer.enabled) continue;
             for (int i = startIndex; i <= endIndex && i < bars.length; i++) {
@@ -1179,7 +1162,6 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         updateCisdStates(bars[endIndex].getTime());
 
         latestBarTime = bars[endIndex].getTime();
-        lastCalculatedIndex = endIndex;
 
         long chartInterval = context.getFeedDescriptor().getPeriod().getInterval();
         LayerData validPrimaryLayer = null;
