@@ -135,7 +135,10 @@
       "refresh": "Refresh snapshots",
       "entered": "Entered",
       "missed": "Missed",
-      "logTrade": "Log trade"
+      "logTrade": "Log trade",
+      "ignored": "Ignored",
+      "ignoredHint": "Weak signal",
+      "review": "Review later"
     },
     "sourceTitle": "Signal source",
     "summaryTitle": "Discipline snapshot",
@@ -150,7 +153,8 @@
       "pending": "Pending",
       "executed": "Entered",
       "missed": "Missed",
-      "review": "Review later"
+      "review": "Review later",
+      "ignored": "Ignored"
     },
     "metrics": {
       "total": "Signals",

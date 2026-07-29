@@ -36,7 +36,8 @@ function renderSignalCard(signal) {
       <div class="item-actions">
         ${canAct ? `<button class="ghost" data-action="entered" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.entered'))}</button>` : ''}
         ${canAct ? `<button class="ghost" data-action="missed" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.missed'))}</button>` : ''}
-        ${canAct ? `<button class="ghost" data-action="review" data-signal-id="${escapeHtml(signal.SignalID)}">REVIEW</button>` : ''}
+        ${canAct ? `<button class="ghost" data-action="review" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.review'))}</button>` : ''}
+        ${canAct ? `<button class="ghost" data-action="ignored" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.ignored'))}</button>` : ''}
         <button class="ghost" data-action="journal" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.logTrade'))}</button>
       </div>
     </article>
@@ -64,6 +65,13 @@ function bindSignalActions() {
       await refreshSnapshots();
       render();
       toast('تم وضع الإشارة للمراجعة لاحقًا ✓', 'info');
+    };
+  });
+
+  $$('[data-action="ignored"]').forEach((button) => {
+    button.onclick = async () => {
+      model.state = await runBusy(t('ui.loading'), () => cisd.signalStatus(button.dataset.signalId, model.accountId, 'IGNORED', t('signals.actions.ignoredHint')));
+      await refreshSnapshots(); render(); toast('تم تسجيل الإشارة كضعيفة ✓', 'info');
     };
   });
 

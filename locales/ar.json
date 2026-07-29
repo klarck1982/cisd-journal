@@ -135,7 +135,10 @@
       "refresh": "تحديث اللقطات",
       "entered": "دخلت",
       "missed": "فاتتني",
-      "logTrade": "تسجيل صفقة"
+      "logTrade": "تسجيل صفقة",
+      "ignored": "تجاهلتها",
+      "ignoredHint": "إشارة ضعيفة",
+      "review": "مراجعة لاحقًا"
     },
     "sourceTitle": "مصدر الإشارات",
     "summaryTitle": "ملخص الانضباط",
@@ -150,7 +153,8 @@
       "pending": "معلقة",
       "executed": "تم الدخول",
       "missed": "فائتة",
-      "review": "مراجعة لاحقًا"
+      "review": "مراجعة لاحقًا",
+      "ignored": "تجاهلتها"
     },
     "metrics": {
       "total": "الإشارات",
