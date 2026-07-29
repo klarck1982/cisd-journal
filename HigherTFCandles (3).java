@@ -321,6 +321,9 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     private boolean cisdLoaded = false;
     private Timer settingsSaveTimer = null;
     private long sharedFileLastModified = 0;
+    // Decisions are written by CISD Journal, never into the original signal file.
+    private final Map<String, String> journalDecisions = new HashMap<>();
+    private long journalDecisionsLastModified = 0;
 
     @Override
     public void onStart(IIndicatorContext context) {
@@ -425,10 +428,12 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             new IntegerListDescription(0, RESET_STATS_VALUES, RESET_STATS_NAMES)));
         setterList.add(v -> {
             int val = (Integer) v;
-            if (val == 1) {
-                saveSettings();
-            }
+            if (val == 1) saveSettings();
         });
+
+        optList.add(new OptInputParameterInfo("[CISD] Reset CISD Signals", OptInputParameterInfo.Type.OTHER,
+            new IntegerListDescription(0, RESET_STATS_VALUES, RESET_STATS_NAMES)));
+        setterList.add(v -> { if ((Integer) v == 1) resetCISDData(); });
 
         optList.add(new OptInputParameterInfo("[CISD] Momentum Filter", OptInputParameterInfo.Type.OTHER,
             new IntegerListDescription(momentumFilter, MOMENTUM_FILTER_VALUES, MOMENTUM_FILTER_NAMES)));
@@ -633,7 +638,13 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             if (sharedFile.exists()) sharedFile.delete();
             File backupFile = new File(context.getFilesDir(), "cisd_backup.ser");
             if (backupFile.exists()) backupFile.delete();
-            context.getConsole().getOut().println("All CISD data and statistics have been reset.");
+            File signalFile = new File(context.getFilesDir(), "HigherTF_Signals.csv");
+            if (signalFile.exists()) signalFile.delete();
+            File decisionsFile = new File(context.getFilesDir(), "CISD_Journal_Decisions.csv");
+            if (decisionsFile.exists()) decisionsFile.delete();
+            journalDecisions.clear();
+            journalDecisionsLastModified = 0;
+            context.getConsole().getOut().println("CISD chart, signal history and Journal decisions have been reset.");
         } catch (Exception e) {
             context.getConsole().getErr().println("Error during CISD reset: " + e.getMessage());
         }
@@ -1885,6 +1896,48 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         } catch (IOException e) { }
     }
 
+    private String getJournalDecisionsPath() {
+        return context.getFilesDir() + File.separator + "CISD_Journal_Decisions.csv";
+    }
+
+    private void updateJournalDecisionsFromFile() {
+        File file = new File(getJournalDecisionsPath());
+        long modified = file.exists() ? file.lastModified() : 0;
+        if (modified == journalDecisionsLastModified) return;
+        journalDecisionsLastModified = modified;
+        journalDecisions.clear();
+        if (!file.exists()) return;
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line; boolean header = true;
+            while ((line = reader.readLine()) != null) {
+                if (header) { header = false; continue; }
+                String[] parts = line.replace("\"", "").split(",", 4);
+                if (parts.length >= 2 && parts[0].trim().length() > 0) {
+                    journalDecisions.put(parts[0].trim(), parts[1].trim().toUpperCase());
+                }
+            }
+        } catch (IOException ignored) { }
+    }
+
+    private String getSignalId(int index) {
+        String instrument = context.getFeedDescriptor().getInstrument().toString().replace("/", "_").replace(".", "_");
+        String direction = cisdStoredBullish[index] ? "BUY" : "SELL";
+        return instrument + "_" + getCurrentTFShortName() + "_" + direction + "_" + cisdStoredEndTimes[index];
+    }
+
+    private void drawJournalDecision(Graphics2D g2, String decision, int x, int y, boolean bullish, Font oldFont) {
+        if (decision == null || decision.length() == 0) return;
+        Color color = "ENTERED".equals(decision) ? new Color(0, 170, 80) :
+                "SKIPPED".equals(decision) ? new Color(220, 75, 75) :
+                "IGNORED".equals(decision) ? new Color(130, 130, 130) : new Color(220, 165, 0);
+        String label = "ENTERED".equals(decision) ? "✓ ENTERED" :
+                "SKIPPED".equals(decision) ? "× SKIPPED" :
+                "IGNORED".equals(decision) ? "— IGNORED" : "⌛ REVIEW";
+        g2.setFont(oldFont.deriveFont(Font.BOLD, 9f));
+        g2.setColor(color);
+        g2.drawString(label, x, bullish ? y + 16 : y - 16);
+    }
+
     private String getSharedCISDPath() {
         return context.getFilesDir() + File.separator + "SharedCISD.csv";
     }
@@ -2542,6 +2595,7 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     private void drawCISDLines(Graphics2D g2, IIndicatorDrawingSupport support, float slot, Font oldFont) {
         if (!showCISD || cisdStoredCount == 0) return;
         String tfShort = getCurrentTFShortName();
+        updateJournalDecisionsFromFile();
         for (int i = 0; i < cisdStoredCount; i++) {
             long sigStart = cisdStoredStartTimes[i];
             long sigEnd = cisdStoredEndTimes[i];
@@ -2572,6 +2626,7 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
                         cisTextX = support.getChartWidth() - fmMain.stringWidth(mainLabel) - 10;
                     g2.setColor(lineColor);
                     g2.drawString(mainLabel, cisTextX, cisTextY);
+                    drawJournalDecision(g2, journalDecisions.get(getSignalId(i)), cisTextX, cisTextY, sigBullish, oldFont);
                     int curX = cisTextX + fmMain.stringWidth(mainLabel) + 4;
 
                     if (cisdStoredRetestPlayed[i]) {
