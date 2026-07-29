@@ -273,6 +273,7 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     // Historical reconstruction must draw signals but never behave like live alerts.
     private boolean cisdHistoryReady = false;
     private long lastCheckedRetestTime = 0;
+    private long lastRetestSoundBarTime = -1;
     private long fibCacheWaveStart = -1;
     private double[] fibCacheResult = null;
 
@@ -1207,7 +1208,9 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         }
 
         // From the next calculation onward, signals are genuinely new and may
-        // alert, enter the shared panel and be exported to Windows.
+        // alert, enter the shared panel and be exported to Windows. Suppress
+        // retest sound for the already-loaded current bar.
+        if (!cisdHistoryReady) lastRetestSoundBarTime = latestBarTime;
         cisdHistoryReady = true;
         return new IndicatorResult(startIndex, length);
     }
@@ -1622,6 +1625,10 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     private void checkRetestFrequent(IBar currentBar) {
         if (cisdStoredCount == 0 || currentBar == null || cisdRetestSound.equals("None")) return;
         long currentBarTime = currentBar.getTime();
+        // drawOutput runs on every repaint, including settings changes. A
+        // retest sound is permitted only once for a genuinely newer chart bar.
+        if (!cisdHistoryReady || currentBarTime <= lastRetestSoundBarTime) return;
+        lastRetestSoundBarTime = currentBarTime;
 
         for (int i = 0; i < cisdStoredCount; i++) {
             if (cisdStoredRetestPlayed[i]) continue;
