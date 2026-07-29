@@ -12,7 +12,6 @@ function allLiveSignalsForAccount() {
 function liveSignalsForAccount() {
   const query = model.search.signals.trim().toLowerCase();
   return allLiveSignalsForAccount()
-    .filter((signal) => model.signalsView === 'all' || signalDisplayState(signal).key === 'pending')
     .filter((signal) => !query || `${signal.SignalID || ''} ${signal.Instrument || ''} ${signal.Direction || ''} ${signal.Session || ''} ${signal.TF || ''}`.toLowerCase().includes(query));
 }
 
@@ -79,7 +78,6 @@ function renderSignalsPage() {
   const diagnostics = model.state?.settings?.lastSignalDiagnostics;
   $('#signalsCsvPath').textContent = model.state?.settings?.csvPath || t('signals.noCsv');
   $('#signalsSearch').value = model.search.signals;
-  $('#signalsLiveHint').textContent = model.signalsView === 'pending' ? t('signals.newFirstHint') : '';
   $('#signalsSummaryCards').innerHTML = [
     metricCard(t('signals.metrics.total'), String(model.dashboard?.discipline?.totals?.signals || 0), t('signals.metrics.totalHint'), '', 'signals'),
     metricCard(t('signals.metrics.executed'), String(model.dashboard?.discipline?.totals?.executed || 0), t('signals.metrics.executedHint'), 'good', 'discipline'),
@@ -87,7 +85,7 @@ function renderSignalsPage() {
     metricCard(t('signals.metrics.coverage'), formatPercent(model.dashboard?.discipline?.rates?.decisionCoverage || 0), diagnostics ? `${diagnostics.added} ${t('signals.metrics.newSignals')}` : t('signals.metrics.coverageHint'), 'warn', 'source'),
   ].join('');
   const diagnosticsHint = diagnostics ? `${diagnostics.added} ${t('signals.metrics.newSignals')} · ${diagnostics.duplicates} ${t('signals.metrics.duplicates')}` : t('signals.summaryHint');
-  $('#signalsLiveHint').textContent = model.signalsView === 'pending' ? `${t('signals.newFirstHint')} · ${diagnosticsHint}` : diagnosticsHint;
+  $('#signalsLiveHint').textContent = diagnosticsHint;
   renderSignalBoard(liveSignalsForAccount());
   bindSignalActions();
 }
