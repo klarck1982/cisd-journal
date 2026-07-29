@@ -1658,3 +1658,35 @@ body.density-compact .calendar-cell { min-height: 48px; padding: 4px 6px; }
 .calendar-cell.today { outline: 2px solid var(--blue); outline-offset: -2px; box-shadow: 0 0 0 3px var(--blue-wash); }
 .calendar-cell.today .calendar-day { color: var(--blue); font-weight: 800; }
 .signal-timeframe-board{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:10px;overflow-x:auto}.signal-tf-column{min-width:220px;padding:10px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--s-2)}.signal-tf-column h4{margin:0 0 8px;color:var(--blue)}
+
+/* Signal board: each timeframe owns a fixed-width vertical lane. This prevents
+   action buttons and long instrument names from spilling into neighbouring lanes. */
+.signal-timeframe-board {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 2px 2px 12px;
+  scroll-snap-type: x proximity;
+}
+.signal-tf-column {
+  flex: 0 0 260px;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.signal-tf-column .signal-card { min-width: 0; overflow: hidden; }
+.signal-tf-column .item-title,
+.signal-tf-column .item-subtitle { overflow-wrap: anywhere; }
+.signal-tf-column .item-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.signal-tf-column .item-actions button {
+  min-width: 0;
+  width: 100%;
+  padding-inline: 7px;
+  white-space: normal;
+  line-height: 1.25;
+  font-size: var(--t-xs);
+}
