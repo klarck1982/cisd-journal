@@ -1166,16 +1166,16 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
                 && System.currentTimeMillis() < bars[lastClosedIndex].getTime() + currentPeriodMs) {
             lastClosedIndex--;
         }
+        // Set the newest chart time before detection so storeCisdSignal can
+        // distinguish a genuinely current signal from a historical rebuild.
+        if (endIndex >= 0) latestBarTime = bars[endIndex].getTime();
         int detectFrom = Math.max(1, startIndex);
         if (lastCalculatedIndex >= detectFrom) detectFrom = lastCalculatedIndex + 1;
         for (int detectionIndex = detectFrom; detectionIndex <= lastClosedIndex; detectionIndex++) {
             detectCISDFinal(bars, detectionIndex);
         }
 
-        if (endIndex >= 0) {
-            updateCisdStates(bars[endIndex].getTime());
-            latestBarTime = bars[endIndex].getTime();
-        }
+        if (endIndex >= 0) updateCisdStates(bars[endIndex].getTime());
         lastCalculatedIndex = endIndex;
 
         long chartInterval = context.getFeedDescriptor().getPeriod().getInterval();
@@ -1606,7 +1606,10 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         // During startup, a TF/instrument switch or settings rebuild, the
         // indicator reconstructs history. Keep it visible, but do not create a
         // burst of alerts, overwrite the live CSV or flood the Shared panel.
-        if (cisdHistoryReady) {
+        // Only the most recent chart bar may generate external effects.
+        // This stays safe even when JForex feeds historical bars in chunks.
+        boolean isCurrentSignal = endTime >= latestBarTime - getCurrentChartPeriodMs();
+        if (cisdHistoryReady && isCurrentSignal) {
             if (!cisdAlertSound.equals("None")) playSound(cisdAlertSound);
             lastAlertStartTime = startTime;
             lastAlertLevel = entry;
