@@ -270,10 +270,7 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     private long lastChartPeriodMs = -1;
     private long latestBarTime = 0;
     private int lastCalculatedIndex = -1;
-    // Historical reconstruction must draw signals but never behave like live alerts.
-    private boolean cisdHistoryReady = false;
     private long lastCheckedRetestTime = 0;
-    private long lastRetestSoundBarTime = -1;
     private long fibCacheWaveStart = -1;
     private double[] fibCacheResult = null;
 
@@ -1139,44 +1136,49 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             }
             lastChartPeriodMs = currentPeriodMs;
             lastCalculatedIndex = -1;
-            cisdHistoryReady = false;
             fibCacheWaveStart = -1;
             fibCacheResult = null;
             pendingBullish.active = false; pendingBullish.waveStartIdx = -1;
             pendingBearish.active = false; pendingBearish.waveStartIdx = -1;
         }
 
-        // Process only the last live bar plus newly arrived bars. The previous
-        // version replayed the entire history on redraw, which could move HTF
-        // layer state backwards and produce irregular candles after a TF change.
-        int processFrom = startIndex;
-        if (lastCalculatedIndex >= startIndex) processFrom = Math.max(startIndex, lastCalculatedIndex);
+        // JForex requests startIndex=0 when an option or data range changes.
+        // Rebuild the HTF candle state cleanly in that case; otherwise an old
+        // partial candle can be mixed with historical bars and look irregular.
+        boolean fullLayerRebuild = startIndex == 0 && lastCalculatedIndex >= 0;
+        if (fullLayerRebuild) {
+            for (LayerData layer : layers) {
+                layer.historicalCandles.clear();
+                layer.currentOpen = Double.NaN;
+                layer.currentHigh = Double.NaN;
+                layer.currentLow = Double.NaN;
+                layer.currentClose = Double.NaN;
+                layer.currentCandleActive = false;
+                layer.currentPeriodStart = 0;
+                layer.lsActive = false;
+            }
+        }
+
         for (LayerData layer : layers) {
             if (!layer.enabled) continue;
-            for (int i = processFrom; i <= endIndex && i < bars.length; i++) {
+            for (int i = startIndex; i <= endIndex && i < bars.length; i++) {
                 if (bars[i].getTime() <= 0) continue;
                 processChartBar(layer, bars[i]);
             }
         }
 
-        // A fast Replay or reconnect may deliver several bars at once. Evaluate
-        // every newly closed bar in order, instead of evaluating only the final
-        // one and silently missing valid CISD confirmations in between.
-        int lastClosedIndex = endIndex;
-        if (lastClosedIndex == bars.length - 1
-                && System.currentTimeMillis() < bars[lastClosedIndex].getTime() + currentPeriodMs) {
-            lastClosedIndex--;
+        int detectionIndex = endIndex;
+        if (detectionIndex == bars.length - 1) {
+            long barEndTime = bars[detectionIndex].getTime() + currentPeriodMs;
+            if (System.currentTimeMillis() < barEndTime) {
+                detectionIndex = Math.max(0, detectionIndex - 1);
+            }
         }
-        // Set the newest chart time before detection so storeCisdSignal can
-        // distinguish a genuinely current signal from a historical rebuild.
-        if (endIndex >= 0) latestBarTime = bars[endIndex].getTime();
-        int detectFrom = Math.max(1, startIndex);
-        if (lastCalculatedIndex >= detectFrom) detectFrom = lastCalculatedIndex + 1;
-        for (int detectionIndex = detectFrom; detectionIndex <= lastClosedIndex; detectionIndex++) {
-            detectCISDFinal(bars, detectionIndex);
-        }
+        detectCISDFinal(bars, detectionIndex);
 
-        if (endIndex >= 0) updateCisdStates(bars[endIndex].getTime());
+        updateCisdStates(bars[endIndex].getTime());
+
+        latestBarTime = bars[endIndex].getTime();
         lastCalculatedIndex = endIndex;
 
         long chartInterval = context.getFeedDescriptor().getPeriod().getInterval();
@@ -1207,11 +1209,6 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             }
         }
 
-        // From the next calculation onward, signals are genuinely new and may
-        // alert, enter the shared panel and be exported to Windows. Suppress
-        // retest sound for the already-loaded current bar.
-        if (!cisdHistoryReady) lastRetestSoundBarTime = latestBarTime;
-        cisdHistoryReady = true;
         return new IndicatorResult(startIndex, length);
     }
 
@@ -1606,29 +1603,18 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
                         cisdStoredHTFActive[i], cisdStoredMomVolActive[i]));
         }});
         trimCisdStorageIfNeeded();
-        // During startup, a TF/instrument switch or settings rebuild, the
-        // indicator reconstructs history. Keep it visible, but do not create a
-        // burst of alerts, overwrite the live CSV or flood the Shared panel.
-        // Only the most recent chart bar may generate external effects.
-        // This stays safe even when JForex feeds historical bars in chunks.
-        boolean isCurrentSignal = endTime >= latestBarTime - getCurrentChartPeriodMs();
-        if (cisdHistoryReady && isCurrentSignal) {
-            if (!cisdAlertSound.equals("None")) playSound(cisdAlertSound);
-            lastAlertStartTime = startTime;
-            lastAlertLevel = entry;
-            writeSharedCISDLine(bullish, entry, breakoutTime, confirmed);
-            writeCisdSignalToCsv(idx);
-        }
+        if (!cisdAlertSound.equals("None")) playSound(cisdAlertSound);
+        lastAlertStartTime = startTime;
+        lastAlertLevel = entry;
+
+        writeSharedCISDLine(bullish, entry, breakoutTime, confirmed);
+        writeCisdSignalToCsv(idx);
         if (saveLoadCISD) saveCisdToFile();
     }
 
     private void checkRetestFrequent(IBar currentBar) {
         if (cisdStoredCount == 0 || currentBar == null || cisdRetestSound.equals("None")) return;
         long currentBarTime = currentBar.getTime();
-        // drawOutput runs on every repaint, including settings changes. A
-        // retest sound is permitted only once for a genuinely newer chart bar.
-        if (!cisdHistoryReady || currentBarTime <= lastRetestSoundBarTime) return;
-        lastRetestSoundBarTime = currentBarTime;
 
         for (int i = 0; i < cisdStoredCount; i++) {
             if (cisdStoredRetestPlayed[i]) continue;
