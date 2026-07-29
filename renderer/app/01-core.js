@@ -328,6 +328,7 @@ function signalDisplayState(signal) {
 
   const status = String(decision?.status || 'NEW').toUpperCase();
   if (status === 'MISSED') return { key: 'missed', cls: 'bad', label: t('signals.status.missed'), decision };
+  if (status === 'REVIEW') return { key: 'review', cls: 'warn', label: t('signals.status.review'), decision };
   if (['ORDER_PLACED', 'EXECUTED', 'ENTERED', 'FILLED', 'TAKEN'].includes(status)) return { key: 'executed', cls: 'safe', label: t('signals.status.executed'), decision };
   return { key: 'pending', cls: 'warn', label: t('signals.status.pending'), decision: null };
 }

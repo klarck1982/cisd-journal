@@ -149,7 +149,8 @@
     "status": {
       "pending": "معلقة",
       "executed": "تم الدخول",
-      "missed": "فائتة"
+      "missed": "فائتة",
+      "review": "مراجعة لاحقًا"
     },
     "metrics": {
       "total": "الإشارات",

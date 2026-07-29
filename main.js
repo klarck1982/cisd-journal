@@ -148,6 +148,21 @@ function syncSignalsFromFile() {
   }
 }
 
+function writeSignalDecisionsFile(data, accountId) {
+  const source = data.settings?.csvPath || '';
+  if (!source) return;
+  const target = path.join(path.dirname(source), 'CISD_Journal_Decisions.csv');
+  const rows = ['SignalID,Decision,Reason,UpdatedAt'];
+  for (const signal of data.signals || []) {
+    const decision = signal.decisions?.[accountId];
+    if (!decision || !['ORDER_PLACED', 'MISSED', 'REVIEW'].includes(decision.status)) continue;
+    const state = decision.status === 'ORDER_PLACED' ? 'ENTERED' : decision.status === 'MISSED' ? 'SKIPPED' : 'REVIEW';
+    const clean = (value) => `"${String(value || '').replace(/"/g, '""')}"`;
+    rows.push([signal.SignalID, state, decision.reason || '', decision.updatedAt || ''].map(clean).join(','));
+  }
+  fs.writeFileSync(target, rows.join('\n'), 'utf8');
+}
+
 function watchSignalsFile() {
   if (signalWatchPath) fs.unwatchFile(signalWatchPath);
   signalWatchPath = read().settings.csvPath;
@@ -1109,6 +1124,7 @@ function registerHandlers() {
         reason: reason || '',
         updatedAt: new Date().toISOString(),
       };
+      writeSignalDecisionsFile(data, accountId);
       save(data);
     }
     return data;

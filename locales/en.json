@@ -149,7 +149,8 @@
     "status": {
       "pending": "Pending",
       "executed": "Entered",
-      "missed": "Missed"
+      "missed": "Missed",
+      "review": "Review later"
     },
     "metrics": {
       "total": "Signals",
