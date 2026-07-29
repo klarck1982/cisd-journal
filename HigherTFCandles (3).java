@@ -1925,6 +1925,21 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         return instrument + "_" + getCurrentTFShortName() + "_" + direction + "_" + cisdStoredEndTimes[index];
     }
 
+    private String findJournalDecision(int index) {
+        String exact = journalDecisions.get(getSignalId(index));
+        if (exact != null) return exact;
+        // A trader may switch chart timeframe after the signal. The decision
+        // still belongs to the same instrument, direction and confirmation bar,
+        // so fall back to those stable parts of SignalID.
+        String instrument = context.getFeedDescriptor().getInstrument().toString().replace("/", "_").replace(".", "_");
+        String direction = cisdStoredBullish[index] ? "BUY" : "SELL";
+        String suffix = "_" + direction + "_" + cisdStoredEndTimes[index];
+        for (Map.Entry<String, String> entry : journalDecisions.entrySet()) {
+            if (entry.getKey().startsWith(instrument + "_") && entry.getKey().endsWith(suffix)) return entry.getValue();
+        }
+        return null;
+    }
+
     private void drawJournalDecision(Graphics2D g2, String decision, int x, int y, boolean bullish, Font oldFont) {
         if (decision == null || decision.length() == 0) return;
         Color color = "ENTERED".equals(decision) ? new Color(0, 170, 80) :
@@ -2626,7 +2641,7 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
                         cisTextX = support.getChartWidth() - fmMain.stringWidth(mainLabel) - 10;
                     g2.setColor(lineColor);
                     g2.drawString(mainLabel, cisTextX, cisTextY);
-                    drawJournalDecision(g2, journalDecisions.get(getSignalId(i)), cisTextX, cisTextY, sigBullish, oldFont);
+                    drawJournalDecision(g2, findJournalDecision(i), cisTextX, cisTextY, sigBullish, oldFont);
                     int curX = cisTextX + fmMain.stringWidth(mainLabel) + 4;
 
                     if (cisdStoredRetestPlayed[i]) {
