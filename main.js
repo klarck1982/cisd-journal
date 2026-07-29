@@ -156,7 +156,10 @@ function writeSignalDecisionsFile(data, accountId) {
   for (const signal of data.signals || []) {
     const decision = signal.decisions?.[accountId];
     if (!decision || !['ORDER_PLACED', 'MISSED', 'IGNORED', 'REVIEW'].includes(decision.status)) continue;
-    const state = decision.status === 'ORDER_PLACED' ? 'ENTERED' : decision.status === 'MISSED' ? 'SKIPPED' : 'REVIEW';
+    const state = decision.status === 'ORDER_PLACED' ? 'ENTERED'
+      : decision.status === 'MISSED' ? 'SKIPPED'
+      : decision.status === 'IGNORED' ? 'IGNORED'
+      : 'REVIEW';
     const clean = (value) => `"${String(value || '').replace(/"/g, '""')}"`;
     rows.push([signal.SignalID, state, decision.reason || '', decision.updatedAt || ''].map(clean).join(','));
   }
