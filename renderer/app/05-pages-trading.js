@@ -79,7 +79,6 @@ function renderSignalsPage() {
   const diagnostics = model.state?.settings?.lastSignalDiagnostics;
   $('#signalsCsvPath').textContent = model.state?.settings?.csvPath || t('signals.noCsv');
   $('#signalsSearch').value = model.search.signals;
-  $('#signalsViewFilter').value = model.signalsView;
   $('#signalsLiveHint').textContent = model.signalsView === 'pending' ? t('signals.newFirstHint') : '';
   $('#signalsSummaryCards').innerHTML = [
     metricCard(t('signals.metrics.total'), String(model.dashboard?.discipline?.totals?.signals || 0), t('signals.metrics.totalHint'), '', 'signals'),
@@ -89,13 +88,7 @@ function renderSignalsPage() {
   ].join('');
   const diagnosticsHint = diagnostics ? `${diagnostics.added} ${t('signals.metrics.newSignals')} · ${diagnostics.duplicates} ${t('signals.metrics.duplicates')}` : t('signals.summaryHint');
   $('#signalsLiveHint').textContent = model.signalsView === 'pending' ? `${t('signals.newFirstHint')} · ${diagnosticsHint}` : diagnosticsHint;
-  $('#signalList').innerHTML = renderListRows(
-    liveSignalsForAccount(),
-    renderSignalCard,
-    model.search.signals.trim()
-      ? { key: 'signalsFiltered', action: 'clearSignalSearch' }
-      : { key: 'signals', action: 'chooseCsv' }
-  );
+  renderSignalBoard(liveSignalsForAccount());
   bindSignalActions();
 }
 

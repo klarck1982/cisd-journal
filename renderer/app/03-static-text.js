@@ -55,7 +55,6 @@ function applyStaticText() {
   $('#signalsLiveTitle').innerHTML = iconText('signals', t('signals.liveTitle'));
   $('#signalsLiveHint').textContent = t('signals.liveHint');
   $('#signalsSearch').placeholder = t('signals.searchPlaceholder');
-  $('#signalsViewFilter').innerHTML = `<option value="pending">${escapeHtml(t('signals.filterNew'))}</option><option value="all">${escapeHtml(t('signals.filterAll'))}</option>`;
 
   $('#journalKicker').textContent = t('journal.kicker');
   $('#journalTitle').textContent = t('journal.title');

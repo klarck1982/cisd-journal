@@ -210,27 +210,9 @@
             </div>
           </div>
 
-          <div class="grid three">
-            <section class="panel">
-              <div class="panel-head">
-                <h3 id="signalsSummaryTitle"></h3>
-                <span class="panel-hint" id="signalsSummaryHint"></span>
-              </div>
-              <div id="signalsSummaryCards" class="metric-grid compact"></div>
-            </section>
-
-            <section class="panel span-two">
-              <div class="panel-head">
-                <h3 id="signalsLiveTitle"></h3>
-                <span class="panel-hint" id="signalsLiveHint"></span>
-              </div>
-              <div class="toolbar-inline">
-                <select id="signalsViewFilter" class="filter-select"></select>
-                <input id="signalsSearch" class="search-input" type="search" placeholder="Search signals">
-              </div>
-              <div id="signalList" class="signal-list"></div>
-            </section>
-          </div>
+          <section class="panel"><div class="panel-head"><h3 id="signalsSummaryTitle"></h3><span class="panel-hint" id="signalsSummaryHint"></span></div><div id="signalsSummaryCards" class="metric-grid compact"></div></section>
+          <section class="panel"><div class="panel-head"><h3 id="signalsLatestTitle">آخر 5 إشارات</h3><span id="signalsLiveHint" class="panel-hint"></span></div><div id="signalsLatestList" class="signal-list"></div></section>
+          <section class="panel"><div class="panel-head"><h3 id="signalsLiveTitle"></h3><input id="signalsSearch" class="search-input" type="search" placeholder="Search signals"></div><div id="signalTimeframeBoard" class="signal-timeframe-board"></div></section>
         </section>
 
         <section class="page" data-page="journal">
@@ -1339,6 +1321,7 @@
   <script src="app/05-pages-trading.js"></script>
   <script src="app/05a-trade-edit.js"></script>
   <script src="app/05b-backtest-ledger.js"></script>
+  <script src="app/05c-signal-board.js"></script>
   <script src="app/06-pages-daily.js"></script>
   <script src="app/07-pages-playbooks.js"></script>
   <script src="app/08-pages-edge.js"></script>
