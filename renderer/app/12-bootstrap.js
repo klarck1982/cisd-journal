@@ -92,6 +92,18 @@ function bindEvents() {
     await refreshStateAndRender();
     toast(t('messages.refreshed'), 'success');
   };
+  $('#signalsResetDecisionsBtn').onclick = async () => {
+    const ok = await openConfirm({ title: t('signals.reset.resetDecisions'), text: t('signals.reset.resetDecisionsConfirm'), confirmLabel: t('signals.reset.resetDecisions') });
+    if (!ok) return;
+    model.state = await runBusy(t('ui.loading'), () => cisd.resetSignalDecisions(model.accountId));
+    await refreshSnapshots(); render(); toast('تم تصفير قرارات الإشارات ✓', 'success');
+  };
+  $('#signalsFreshStartBtn').onclick = async () => {
+    const ok = await openConfirm({ title: t('signals.reset.freshStart'), text: t('signals.reset.freshStartConfirm'), confirmLabel: t('signals.reset.freshStart') });
+    if (!ok) return;
+    model.state = await runBusy(t('ui.loading'), () => cisd.freshSignalStart(model.accountId));
+    await refreshSnapshots(); render(); toast('بدأت متابعة جديدة من الآن ✓', 'success');
+  };
 
   $('#tradeForm').addEventListener('submit', saveTrade);
   $('#backtestForm').addEventListener('submit', startBacktest);

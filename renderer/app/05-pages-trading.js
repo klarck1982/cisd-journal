@@ -3,8 +3,10 @@
  */
 
 function allLiveSignalsForAccount() {
+  const freshSince = activeAccount()?.signalFreshSince || '';
   return (model.state?.signals || [])
     .filter((signal) => (signal.mode || 'LIVE') === 'LIVE')
+    .filter((signal) => !freshSince || String(signal.importedAt || signal.SignalTimeNY || '') >= freshSince)
     .slice()
     .sort((a, b) => String(b.importedAt || '').localeCompare(String(a.importedAt || '')));
 }

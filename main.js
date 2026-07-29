@@ -1114,6 +1114,27 @@ function registerHandlers() {
     return { cancelled: false, path: result.filePaths[0] };
   });
 
+  ipcMain.handle('signals:reset-decisions', (_, accountId) => {
+    const data = read();
+    for (const signal of data.signals || []) {
+      if (signal.decisions) delete signal.decisions[accountId];
+    }
+    writeSignalDecisionsFile(data, accountId);
+    save(data);
+    return data;
+  });
+  ipcMain.handle('signals:fresh-start', (_, accountId) => {
+    const data = read();
+    const account = ensureAccount(data, accountId);
+    account.signalFreshSince = new Date().toISOString();
+    for (const signal of data.signals || []) {
+      if (signal.decisions) delete signal.decisions[accountId];
+    }
+    writeSignalDecisionsFile(data, accountId);
+    save(data);
+    return data;
+  });
+
   ipcMain.handle('signal:status', (_, id, accountId, status, reason) => {
     const data = read();
     const signal = data.signals.find((item) => item.SignalID === id);

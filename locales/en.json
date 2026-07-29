@@ -184,7 +184,13 @@
     },
     "filterNew": "New signals only",
     "filterAll": "All signals",
-    "newFirstHint": "Shows signals that need your decision first"
+    "newFirstHint": "Shows signals that need your decision first",
+    "reset": {
+      "resetDecisions": "Reset my decisions",
+      "freshStart": "Start tracking from now",
+      "resetDecisionsConfirm": "This clears ENTERED, SKIPPED, IGNORED and REVIEW decisions only. Original CISD signals stay saved.",
+      "freshStartConfirm": "Earlier signals will no longer appear in the active board. Tracking starts with incoming signals; history stays saved."
+    }
   },
   "journal": {
     "kicker": "Execution journal",

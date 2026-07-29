@@ -49,6 +49,8 @@ contextBridge.exposeInMainWorld('cisd', {
   watchFundedNext: (id) => ipcRenderer.invoke('fundednext:folder', id),
   importFundedNext: (id) => ipcRenderer.invoke('fundednext:choose', id),
   chooseCSV: () => ipcRenderer.invoke('csv:choose'),
+  resetSignalDecisions: (accountId) => ipcRenderer.invoke('signals:reset-decisions', accountId),
+  freshSignalStart: (accountId) => ipcRenderer.invoke('signals:fresh-start', accountId),
   signalStatus: (id, accountId, status, reason) => ipcRenderer.invoke('signal:status', id, accountId, status, reason),
   localeBundle: () => ipcRenderer.invoke('locale:bundle'),
   onChange: (handler) => ipcRenderer.on('state:changed', (_, state) => handler(state)),
