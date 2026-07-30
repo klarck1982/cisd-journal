@@ -142,7 +142,22 @@ function syncSignalsFromFile() {
     }
 
     signalsInitialized = true;
-    sendStateChanged(data);
+
+    // Replay writes to the same CISD CSV, but a backtest session used to read
+    // it only when the trader pressed Refresh. Keep the active session in step
+    // with each JForex file update so replay signals arrive automatically.
+    let stateToSend = data;
+    const activeBacktest = (data.backtests || []).find((item) => item.id === data.activeBacktestId && item.status === 'ACTIVE');
+    if (activeBacktest) {
+      try {
+        stateToSend = importBacktestSessionSignals(activeBacktest.id, { recordNoop: false }).state;
+      } catch (error) {
+        // A live signal must not fail merely because its optional backtest
+        // import has a bad date/filter/path; retain the diagnostic for review.
+        logError('syncSignalsFromFile:backtest', error);
+      }
+    }
+    sendStateChanged(stateToSend);
   } catch (error) {
     logError('syncSignalsFromFile', error);
   }
