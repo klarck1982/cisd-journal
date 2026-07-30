@@ -47,11 +47,23 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     private OutputParameterInfo[] outputInfo;
     private V2HtfPipeline pipeline;
     private String pipelineInstrument = "";
-    private HtfCandleBuilder.Snapshot[] snapshots = new HtfCandleBuilder.Snapshot[INTERVALS.length];
+    private volatile VisualFrame frame;
+
+    private static final class VisualFrame {
+        final String instrument;
+        final long sourceLastBarTime;
+        final HtfCandleBuilder.Snapshot[] layers;
+        VisualFrame(String instrument, long sourceLastBarTime, HtfCandleBuilder.Snapshot[] layers) {
+            this.instrument = instrument;
+            this.sourceLastBarTime = sourceLastBarTime;
+            this.layers = layers;
+        }
+    }
 
     @Override public void onStart(IIndicatorContext context) {
         this.context = context;
         info = new IndicatorInfo("HigherTFCandlesV2", "HTF Candles V2 — Visual Test", "CISD V2", true, false, false, 1, 0, 1);
+        info.setRecalculateAll(true);
         inputs = new InputParameterInfo[]{new InputParameterInfo("Chart Bars", InputParameterInfo.Type.BAR)};
         outputInfo = new OutputParameterInfo[]{new OutputParameterInfo("V2 Canvas", OutputParameterInfo.Type.DOUBLE, OutputParameterInfo.DrawingStyle.LINE)};
         outputInfo[0].setDrawnByIndicator(true);
@@ -64,13 +76,23 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
 
     @Override public IndicatorResult calculate(int startIndex, int endIndex) {
         if (bars == null || bars.length == 0 || endIndex < 0) return new IndicatorResult(0, 0);
-        // Drawing support owns the authoritative candle sequence used by the
-        // chart. Snapshots are built in drawOutput from that sequence, not from
-        // a transient calculate window.
+        String instrument = context.getFeedDescriptor() == null ? "" : context.getFeedDescriptor().getInstrument().toString();
+        if (!instrument.equals(pipelineInstrument)) {
+            pipelineInstrument = instrument;
+            pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, instrument);
+        }
+
+        // Full input history is available because V2 explicitly requests
+        // recalculateAll. Build every layer here, then atomically publish one
+        // immutable frame for the renderer.
+        HtfCandleBuilder.Snapshot[] next = new HtfCandleBuilder.Snapshot[INTERVALS.length];
+        int sourceEnd = Math.min(endIndex, bars.length - 1);
+        for (int i = 0; i < INTERVALS.length; i++) next[i] = pipeline.build(bars, sourceEnd, INTERVALS[i], 6);
+        frame = new VisualFrame(instrument, bars[sourceEnd].getTime(), next);
 
         int length = endIndex - startIndex + 1;
         double[] canvas = outputs[0] instanceof double[] && ((double[]) outputs[0]).length == length ? (double[]) outputs[0] : new double[length];
-        for (int i = 0; i < length; i++) canvas[i] = Double.NaN;
+        for (int i = 0; i < length; i++) canvas[i] = bars[startIndex + i].getClose();
         outputs[0] = canvas;
         return new IndicatorResult(startIndex, length);
     }
@@ -79,20 +101,12 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
                                       IIndicatorDrawingSupport support, List<Shape> shapes, Map<Color, List<Point>> handles) {
         if (outputIdx != 0) return null;
         Graphics2D g2 = (Graphics2D) g;
-        IBar[] chartBars = support.getCandles();
-        if (chartBars == null || chartBars.length == 0) return null;
-        String instrument = support.getInstrument() == null ? "" : support.getInstrument().toString();
-        if (!instrument.equals(pipelineInstrument)) {
-            pipelineInstrument = instrument;
-            pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, instrument);
-        }
-        for (int i = 0; i < INTERVALS.length; i++)
-            snapshots[i] = pipeline.build(chartBars, chartBars.length - 1, INTERVALS[i], 6);
-
+        VisualFrame current = frame;
+        if (current == null) return null;
         V2HtfRenderer renderer = new V2HtfRenderer();
         int offset = 20;
-        for (int i = 0; i < snapshots.length; i++) {
-            HtfCandleBuilder.Snapshot snapshot = snapshots[i];
+        for (int i = 0; i < current.layers.length; i++) {
+            HtfCandleBuilder.Snapshot snapshot = current.layers[i];
             if (snapshot == null) continue;
             V2HtfRenderer.Style style = new V2HtfRenderer.Style(10, 3, offset,
                 new Color(0, 180, 100, 180), new Color(220, 75, 75, 180),
