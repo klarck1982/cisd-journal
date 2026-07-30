@@ -90,6 +90,8 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     @Override public InputParameterInfo getInputParameterInfo(int i) { return inputs[i]; }
     @Override public OptInputParameterInfo getOptInputParameterInfo(int i) { return null; }
     @Override public OutputParameterInfo getOutputParameterInfo(int i) { return outputInfo[i]; }
+    // V2 visual phase has no user options yet, but JForex requires this hook.
+    @Override public void setOptInputParameter(int i, Object value) { }
     @Override public void setInputParameter(int i, Object value) { bars = (IBar[]) value; }
     @Override public void setOutputParameter(int i, Object value) { outputs[i] = value; }
     @Override public int getLookback() { return 0; }
