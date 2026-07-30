@@ -117,7 +117,8 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         if (current == null) return null;
         V2HtfRenderer renderer = new V2HtfRenderer();
         int offset = 24;
-        for (int i = 0; i < current.layers.length; i++) {
+        // Render ascending HTF order from left to right: 4H → D → W on a 1H chart.
+        for (int i = current.layers.length - 1; i >= 0; i--) {
             HtfCandleBuilder.Snapshot snapshot = current.layers[i];
             if (snapshot == null || snapshot.current == null) continue;
             V2HtfRenderer.Style style = new V2HtfRenderer.Style(10, 4, offset,
