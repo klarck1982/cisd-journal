@@ -122,8 +122,14 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     }
 
     private String formatLayerLabel(String label, HtfCandleBuilder.Snapshot snapshot) {
+        TimeZone zone = TimeZone.getTimeZone("GMT-04:00");
+        if ("D".equals(label) || "W".equals(label)) {
+            SimpleDateFormat date = new SimpleDateFormat("dd MMM");
+            date.setTimeZone(zone);
+            return label + "  " + date.format(new Date(snapshot.current.start)) + "→" + date.format(new Date(snapshot.current.end));
+        }
         SimpleDateFormat time = new SimpleDateFormat("HH:mm");
-        time.setTimeZone(TimeZone.getTimeZone("GMT-04:00"));
+        time.setTimeZone(zone);
         return label + "  " + time.format(new Date(snapshot.current.start)) + "→" + time.format(new Date(snapshot.current.end));
     }
 
