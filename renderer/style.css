@@ -1690,3 +1690,13 @@ body.density-compact .calendar-cell { min-height: 48px; padding: 4px 6px; }
   line-height: 1.25;
   font-size: var(--t-xs);
 }
+
+/* Premium signal decisions: one clear primary choice, then quiet alternatives. */
+.signal-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.signal-actions button { min-width: 0; min-height: 34px; padding: 7px 8px; white-space: normal; line-height: 1.2; font-size: var(--t-xs); }
+.signal-actions .signal-primary-action { grid-column: 1 / -1; justify-content: center; font-weight: 700; }
+.signal-actions .signal-log-action { grid-column: 1 / -1; }
+.signal-card.executed .signal-primary-action,
+.signal-card.missed .signal-primary-action,
+.signal-card.ignored .signal-primary-action,
+.signal-card.review .signal-primary-action { margin-top: 2px; }

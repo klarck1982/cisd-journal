@@ -35,12 +35,12 @@ function renderSignalCard(signal) {
         ${linkedTrade ? `<span class="tag safe">${escapeHtml(t('signals.linkedTrade'))}</span>` : ''}
         ${status.key === 'missed' ? `<span class="tag bad">${escapeHtml(status.decision?.reason || t('signals.reasonModal.none'))}</span>` : ''}
       </div>
-      <div class="item-actions">
-        ${canAct ? `<button class="ghost" data-action="entered" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.entered'))}</button>` : ''}
+      <div class="item-actions signal-actions">
+        ${canAct ? `<button class="primary signal-primary-action" data-action="entered" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.entered'))}</button>` : ''}
         ${canAct ? `<button class="ghost" data-action="missed" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.missed'))}</button>` : ''}
-        ${canAct ? `<button class="ghost" data-action="review" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.review'))}</button>` : ''}
         ${canAct ? `<button class="ghost" data-action="ignored" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.ignored'))}</button>` : ''}
-        <button class="ghost" data-action="journal" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.logTrade'))}</button>
+        ${canAct ? `<button class="ghost" data-action="review" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.review'))}</button>` : ''}
+        <button class="ghost ${canAct ? 'signal-log-action' : 'signal-primary-action'}" data-action="journal" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.logTrade'))}</button>
       </div>
     </article>
   `;
