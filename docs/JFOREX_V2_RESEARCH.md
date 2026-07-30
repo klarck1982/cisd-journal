@@ -14,10 +14,14 @@ application until visual parity is proven.
    redrawn. It must be treated as rendering-only; it must not emit alerts,
    write files, or advance signal state.
 3. `IIndicatorDrawingSupport.getCandles()` returns candles corresponding to the
-   output values for the current drawing operation. This is the correct drawing
-   reference; it is not automatically a complete feed-history API.
+   output values for the current drawing operation. It is a drawing reference,
+   not a replacement for a controlled history/recalculation model.
 4. `IIndicatorContext.getHistory()` is available to custom indicators. It is
    the correct API when V2 explicitly needs a controlled history range.
+5. `IndicatorInfo.setRecalculateAll(true)` tells JForex to recalculate over all
+   available chart data instead of only the arriving candle. This is appropriate
+   for a deterministic visual HTF renderer whose final frame depends on prior
+   base bars.
 
 ## Basic failure modes observed
 
@@ -51,6 +55,33 @@ The renderer does not mutate candle construction state.
 - The candle body, timer, Candle Closure lines and labels must use one resolved
   boundary source.
 
+## V2 output-frame design
+
+V2 does **not** use a mutable global layer list that is incrementally changed by
+whatever range JForex happened to request.
+
+On each controlled full recalculation:
+
+```
+input IBar[]
+  → boundary resolver
+  → six pure HTF builders
+  → immutable VisualFrame
+  → output anchor values for requested range
+```
+
+`VisualFrame` contains only the final snapshots needed by the right-side visual
+renderer (completed candles, current candle, resolved start/end, timer source).
+It is atomically replaced only after all six builders complete successfully.
+
+`drawOutput()` receives the latest completed `VisualFrame` and only renders it.
+It never creates candles, changes state, plays a sound, writes a file, or reads
+history.
+
+Output arrays are still filled for every requested JForex range. They act as a
+valid chart anchor and preserve the `IIndicator` contract; the right-side HTF
+visual itself comes from the immutable frame.
+
 ## V2 non-negotiable architecture
 
 ```
@@ -58,9 +89,9 @@ Feed/history acquisition
        ↓
 HTF boundary resolver
        ↓
-Per-layer state machine
+Pure per-layer candle builders
        ↓
-Per-bar output snapshot cache
+Immutable VisualFrame (atomic swap)
        ↓
 Renderer
        ↓
@@ -70,14 +101,13 @@ CISD adapter (later)
 ## V2 rules before coding resumes
 
 - No sound/file/CSV/shared-panel logic in rendering callbacks.
-- No global snapshot used as a substitute for an output-range cache.
-- No visual test should be sent to the user until it has an explicit output
-  cache matching JForex's `calculate()` range contract.
+- `IndicatorInfo.setRecalculateAll(true)` must be evaluated and used for the
+  visual-only phase so a settings change produces a full deterministic frame.
+- No visual test should be sent to the user until it has a valid output anchor
+  and immutable VisualFrame matching JForex's calculate/draw contract.
 - Basic remains the production reference.
 
 ## Next research task
 
-Design the exact per-bar output cache: which immutable HTF snapshot is assigned
-to each base-bar index, how it is invalidated after an instrument/timeframe or
-option change, and how the renderer selects the visible snapshot without
-rebuilding state.
+Write the exact `VisualFrame` data model and define frame invalidation rules for
+instrument change, timeframe change, optional-input change, and a new base bar.
