@@ -64,8 +64,10 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     private static final int[] SESSION_FILTER_VALUES = {0, 1, 2, 3};
     private static final String[] SESSION_FILTER_NAMES = {"All", "London + NY", "London Only", "NY Only"};
     // MIN_RR_VALUES and MIN_RR_NAMES REMOVED
-    private static final int[] TIMEZONE_VALUES = {0, 1, 2, 3, 4};
-    private static final String[] TIMEZONE_NAMES = {"GMT", "EET", "New York", "Brussels", "GMT+3 (TradingView)"};
+    private static final int[] TIMEZONE_VALUES = {0, 1, 2, 3, 4, 5};
+    private static final String[] TIMEZONE_NAMES = {"GMT", "EET", "New York", "Brussels", "GMT+3 (TradingView)", "UTC-4 (TradingView)"};
+    private static final int[] HTF_PROFILE_VALUES = {0, 1, 2, 3};
+    private static final String[] HTF_PROFILE_NAMES = {"Auto by Instrument", "Gold", "FX / Index", "Custom"};
     private static final String[] SOUND_FILES = {"alert.wav", "retest.wav", "None"};
     private static final String[] SOUND_NAMES = {"alert.wav", "retest.wav", "None"};
     private static final int[] CISD_SENSITIVITY_VALUES = {0, 1, 2};
@@ -199,7 +201,10 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     // CISD Grade: 0=Standard(manual), 1=Premium(auto), 2=Ultimate(auto)
     private int cisdGrade = 0;
 
-    private int chartTimezone = 4;
+    private int chartTimezone = 5;
+    // 4H opening profiles observed from the Pine/TradingView reference.
+    private int htfTimingProfile = 0;
+    private int custom4HAnchorHour = 1;
     private int layerSpacing = 3;
     // chartSpacing field REMOVED
 
@@ -525,11 +530,18 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         });
 
         optList.add(new OptInputParameterInfo("[Advanced] Chart Timezone", OptInputParameterInfo.Type.OTHER,
-            new IntegerListDescription(4, TIMEZONE_VALUES, TIMEZONE_NAMES)));
+            new IntegerListDescription(5, TIMEZONE_VALUES, TIMEZONE_NAMES)));
         setterList.add(v -> {
             chartTimezone = (Integer) v;
             chartCalendar = Calendar.getInstance(getTimezone());
         });
+
+        optList.add(new OptInputParameterInfo("[Advanced] TradingView 4H Profile", OptInputParameterInfo.Type.OTHER,
+            new IntegerListDescription(htfTimingProfile, HTF_PROFILE_VALUES, HTF_PROFILE_NAMES)));
+        setterList.add(v -> htfTimingProfile = (Integer) v);
+        optList.add(new OptInputParameterInfo("[Advanced] Custom 4H Start Hour", OptInputParameterInfo.Type.OTHER,
+            new IntegerRangeDescription(custom4HAnchorHour, 0, 3, 1)));
+        setterList.add(v -> custom4HAnchorHour = (Integer) v);
 
         optList.add(new OptInputParameterInfo("[Advanced] Layer Spacing", OptInputParameterInfo.Type.OTHER,
             new IntegerRangeDescription(3, 0, 20, 1)));
@@ -574,8 +586,32 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         }
     }
 
-    // Visual Timing Test: one source of truth, matching Pine's NY session.
-    private TimeZone getTimezone() { return TimeZone.getTimeZone("America/New_York"); }
+    // Labels and intraday boundaries follow the selected TradingView display zone.
+    private TimeZone getTimezone() {
+        switch (chartTimezone) {
+            case 0: return TimeZone.getTimeZone("GMT");
+            case 1: return TimeZone.getTimeZone("EET");
+            case 2: return TimeZone.getTimeZone("America/New_York");
+            case 3: return TimeZone.getTimeZone("Europe/Brussels");
+            case 4: return TimeZone.getTimeZone("GMT+03:00");
+            default: return TimeZone.getTimeZone("GMT-04:00");
+        }
+    }
+
+    private int get4HAnchorHour() {
+        if (htfTimingProfile == 1) return 2; // Gold: 02-06-10... UTC-4
+        if (htfTimingProfile == 2) return 1; // FX/Index: 01-05-09... UTC-4
+        if (htfTimingProfile == 3) return custom4HAnchorHour;
+        String instrument = context.getFeedDescriptor().getInstrument().toString().toUpperCase();
+        return instrument.contains("XAU") ? 2 : 1;
+    }
+
+    private Calendar newYorkCalendar(long timeMillis) {
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
+        cal.setTimeInMillis(timeMillis);
+        cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0);
+        return cal;
+    }
 
     private int[] getPeriodIndexes() { int[] idxs = new int[PERIOD_COUNT]; for (int i = 0; i < PERIOD_COUNT; i++) idxs[i] = i; return idxs; }
     private int[] getColorIndexes() { int[] idxs = new int[CLOSURE_COLORS.length]; for (int i = 0; i < CLOSURE_COLORS.length; i++) idxs[i] = i; return idxs; }
@@ -1241,8 +1277,10 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     }
 
     private long getChartPeriodStart(long timeMillis, long intervalMs) {
-        Calendar cal = Calendar.getInstance(getTimezone());
-        cal.setTimeInMillis(timeMillis);
+        // Daily/weekly stay on Midnight New York; intraday follows the selected
+        // TradingView display zone and its instrument-specific 4H anchor.
+        Calendar cal = (intervalMs >= 24 * 60 * 60 * 1000L) ? newYorkCalendar(timeMillis) : Calendar.getInstance(getTimezone());
+        if (intervalMs < 24 * 60 * 60 * 1000L) cal.setTimeInMillis(timeMillis);
         cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0);
         if (intervalMs == 24 * 60 * 60 * 1000L) {
             cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
@@ -1256,14 +1294,17 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         }
         cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
         long dayStart = cal.getTimeInMillis();
-        return dayStart + ((timeMillis - dayStart) / intervalMs) * intervalMs;
+        long anchor = intervalMs == 4 * 60 * 60 * 1000L ? get4HAnchorHour() * 60 * 60 * 1000L : 0;
+        long elapsed = timeMillis - dayStart - anchor;
+        if (elapsed < 0) elapsed += 24 * 60 * 60 * 1000L;
+        long start = dayStart + anchor + (elapsed / intervalMs) * intervalMs;
+        if (start > timeMillis) start -= intervalMs;
+        return start;
     }
 
     private long getChartPeriodEnd(long startMillis, long intervalMs) {
-        if (intervalMs != 24 * 60 * 60 * 1000L && intervalMs != 7 * 24 * 60 * 60 * 1000L)
-            return startMillis + intervalMs;
-        Calendar cal = Calendar.getInstance(getTimezone());
-        cal.setTimeInMillis(startMillis);
+        if (intervalMs < 24 * 60 * 60 * 1000L) return startMillis + intervalMs;
+        Calendar cal = newYorkCalendar(startMillis);
         cal.add(Calendar.DAY_OF_MONTH, intervalMs == 24 * 60 * 60 * 1000L ? 1 : 7);
         return cal.getTimeInMillis();
     }
