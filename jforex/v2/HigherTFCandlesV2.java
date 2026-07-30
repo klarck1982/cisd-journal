@@ -55,10 +55,12 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     private static final class VisualFrame {
         final String instrument;
         final long sourceLastBarTime;
+        final long baseInterval;
         final HtfCandleBuilder.Snapshot[] layers;
-        VisualFrame(String instrument, long sourceLastBarTime, HtfCandleBuilder.Snapshot[] layers) {
+        VisualFrame(String instrument, long sourceLastBarTime, long baseInterval, HtfCandleBuilder.Snapshot[] layers) {
             this.instrument = instrument;
             this.sourceLastBarTime = sourceLastBarTime;
+            this.baseInterval = baseInterval;
             this.layers = layers;
         }
     }
@@ -90,8 +92,15 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         // immutable frame for the renderer.
         HtfCandleBuilder.Snapshot[] next = new HtfCandleBuilder.Snapshot[INTERVALS.length];
         int sourceEnd = Math.min(endIndex, bars.length - 1);
-        for (int i = 0; i < INTERVALS.length; i++) next[i] = pipeline.build(bars, sourceEnd, INTERVALS[i], 6);
-        frame = new VisualFrame(instrument, bars[sourceEnd].getTime(), next);
+        long baseInterval = context.getFeedDescriptor() == null ? 0 : context.getFeedDescriptor().getPeriod().getInterval();
+        for (int i = 0; i < INTERVALS.length; i++) {
+            // Like Pine ValidTimeframe: an HTF visual must be higher than the
+            // chart's source period. Lower TF candles cannot be reconstructed
+            // honestly from a higher-TF source bar.
+            if (baseInterval > 0 && INTERVALS[i] <= baseInterval) continue;
+            next[i] = pipeline.build(bars, sourceEnd, INTERVALS[i], 6);
+        }
+        frame = new VisualFrame(instrument, bars[sourceEnd].getTime(), baseInterval, next);
 
         int length = endIndex - startIndex + 1;
         double[] canvas = outputs[0] instanceof double[] && ((double[]) outputs[0]).length == length ? (double[]) outputs[0] : new double[length];
