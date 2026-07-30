@@ -211,6 +211,10 @@ function applyStaticText() {
   $('#calendarKicker').textContent = t('nav.calendar');
   $('#calendarPageTitle').textContent = t('calendar.pageTitle');
   $('#calendarPageDescription').textContent = t('calendar.pageDescription');
+  $('#calendarDayNewsTitle').textContent = t('calendar.news');
+  $('#calendarDayNoteLabel').textContent = t('calendar.note');
+  $('#saveCalendarDayNote').textContent = t('calendar.saveNote');
+  $('#closeCalendarDayBtn').textContent = t('ui.close');
 
   // --- Account lifecycle -----------------------------------------------------
   $('#resetKeepsLimitsHint').textContent = t('settings.resetKeepsLimits');

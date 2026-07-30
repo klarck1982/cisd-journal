@@ -1721,3 +1721,4 @@ button.ghost { max-width: 100%; overflow-wrap: anywhere; }
   .page-head { align-items: flex-start; }
   .page-head .head-actions { justify-content: flex-start; }
 }
+.calendar-cell.has-note::after{content:'●';color:var(--blue);font-size:var(--t-xs);position:absolute;inset-inline-end:7px;inset-block-end:5px}.calendar-cell{position:relative}.calendar-day-section{display:grid;gap:8px;margin-top:16px}.calendar-day-section h4{margin:0;font-size:var(--t-sm)}

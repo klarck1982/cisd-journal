@@ -452,6 +452,11 @@ async function fetchNews() {
   const data = read();
   try {
     newsCache = await fetchCalendar();
+    // Keep a compact local history so a calendar day can show the important
+    // news that was known at the time, not only today's upcoming events.
+    const known = new Map((data.newsHistory || []).map((item) => [`${item.Date || ''}|${item.Country || ''}|${item.Event || ''}`, item]));
+    for (const item of newsCache) known.set(`${item.Date || ''}|${item.Country || ''}|${item.Event || ''}`, item);
+    data.newsHistory = [...known.values()].sort((a, b) => String(b.Date || '').localeCompare(String(a.Date || ''))).slice(0, 1500);
     data.settings.lastNewsSync = new Date().toISOString();
     data.settings.lastNewsError = '';
     save(data);

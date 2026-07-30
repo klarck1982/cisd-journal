@@ -50,6 +50,10 @@ function bindEvents() {
   };
 
   $('#calendarMonthSelect').addEventListener('change', changeCalendarMonth);
+  $('#closeCalendarDayModal').onclick = closeCalendarDay;
+  $('#closeCalendarDayBtn').onclick = closeCalendarDay;
+  $('#saveCalendarDayNote').onclick = saveCalendarDayNote;
+  $('#calendarDayModal').addEventListener('click', (event) => { if (event.target.id === 'calendarDayModal') closeCalendarDay(); });
   $('#saveMorningBtn').onclick = saveMorning;
   $('#saveEveningBtn').onclick = saveEvening;
 

@@ -63,11 +63,12 @@ function renderCalendar() {
     const cells = week.cells.map((cell) => {
       if (cell.empty) return '<div class="calendar-cell empty"></div>';
       const isToday = cell.day === todayKey();
+      const hasNote = (model.state?.daily || []).some((entry) => entry.accountId === model.accountId && entry.day === cell.day && entry.calendarNote);
       const tone = calendarTone(cell.value);
       const isBest = calendar.best && calendar.best.day === cell.day;
       const isWorst = calendar.worst && calendar.worst.day === cell.day;
       return `
-        <button class="calendar-cell ${cell.traded ? tone : 'quiet'}${isToday ? ' today' : ''}${isBest ? ' best' : ''}${isWorst ? ' worst' : ''}"
+        <button class="calendar-cell ${cell.traded ? tone : 'quiet'}${isToday ? ' today' : ''}${hasNote ? ' has-note' : ''}${isBest ? ' best' : ''}${isWorst ? ' worst' : ''}"
              data-calendar-day="${escapeHtml(cell.day)}"
              title="${escapeHtml(cell.day)} · ${cell.count || 0} ${escapeHtml(t('playbooks.card.trades'))}">
           <span class="calendar-day">${cell.dayNumber}</span>
@@ -92,13 +93,7 @@ function renderCalendar() {
   `;
 
   $$('[data-calendar-day]').forEach((button) => {
-    button.onclick = async () => {
-      model.dailyDay = button.dataset.calendarDay;
-      model.page = 'daily';
-      persistUiState();
-      await refreshSnapshots();
-      render();
-    };
+    button.onclick = () => openCalendarDay(button.dataset.calendarDay);
   });
 
   // Weekday performance strip: the pattern most traders never notice.
@@ -122,4 +117,35 @@ async function changeCalendarMonth() {
   persistUiState();
   model.calendar = await cisd.calendarMonth(model.accountId, { month: model.calendarMonth });
   renderCalendar();
+}
+
+
+function openCalendarDay(day) {
+  model.calendarDayDetail = day;
+  const account = activeAccount();
+  const trades = (model.state?.trades || []).filter((trade) => trade.accountId === account?.id && String(trade.date || trade.createdAt || '').slice(0, 10) === day);
+  const net = trades.reduce((sum, trade) => sum + (Number(trade.netProfit ?? trade.profit) || 0), 0);
+  const entry = (model.state?.daily || []).find((item) => item.accountId === account?.id && item.day === day) || {};
+  const news = (model.state?.newsHistory || []).filter((item) => String(item.Date || item.date || '').slice(0, 10) === day);
+  $('#calendarDayModalTitle').textContent = `${t('calendar.dayDetails')} · ${day}`;
+  $('#calendarDayMetrics').innerHTML = [
+    metricCard(t('daily.metrics.trades'), String(trades.length), '', '', 'journal'),
+    metricCard(t('daily.metrics.net'), `${net > 0 ? '+' : ''}${formatCurrency(net, account?.currency)}`, '', net >= 0 ? 'good' : 'bad', 'curve'),
+  ].join('');
+  $('#calendarDayNews').innerHTML = news.length ? news.map((item) => `<div class="item"><div class="item-title">${escapeHtml(item.Country || '')} · ${escapeHtml(item.Event || '')}</div><div class="item-subtitle">${escapeHtml(formatDateTime(item.Date || ''))}</div></div>`).join('') : emptyState(t('calendar.noNews'));
+  $('#calendarDayNote').value = entry.calendarNote || '';
+  $('#calendarDayModal').classList.remove('hidden');
+}
+
+function closeCalendarDay() { $('#calendarDayModal').classList.add('hidden'); model.calendarDayDetail = ''; }
+
+async function saveCalendarDayNote() {
+  const account = activeAccount();
+  if (!account || !model.calendarDayDetail) return;
+  const day = model.calendarDayDetail;
+  const existing = (model.state?.daily || []).find((item) => item.accountId === account.id && item.day === day) || {};
+  model.state = await runBusy(t('ui.loading'), () => cisd.saveDaily(day, { ...existing, accountId: account.id, calendarNote: $('#calendarDayNote').value.trim() }));
+  await refreshSnapshots();
+  renderCalendar();
+  toast(t('calendar.saved'), 'success');
 }

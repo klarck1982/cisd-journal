@@ -1033,6 +1033,13 @@
     "pageTitle": "Monthly calendar",
     "pageDescription": "A single monthly view showing which days work for you and how you behave after a win or a loss.",
     "openDay": "Open day review",
-    "openDayHint": "Click any day to open its summary and review."
+    "openDayHint": "Click any day to open its summary and review.",
+    "dayDetails": "Day details",
+    "note": "Day note",
+    "saveNote": "Save day note",
+    "saved": "Day note saved ✓",
+    "news": "High-impact news that day",
+    "noNews": "No saved news for this day",
+    "noteMarker": "Contains a note"
   }
 }
