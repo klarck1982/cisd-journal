@@ -11,6 +11,7 @@ import com.dukascopy.api.indicators.IndicatorResult;
 import com.dukascopy.api.indicators.InputParameterInfo;
 import com.dukascopy.api.indicators.OptInputParameterInfo;
 import com.dukascopy.api.indicators.OutputParameterInfo;
+import com.dukascopy.api.indicators.IntegerListDescription;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -48,6 +49,10 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     private IndicatorInfo info;
     private InputParameterInfo[] inputs;
     private OutputParameterInfo[] outputInfo;
+    private OptInputParameterInfo[] optInfo;
+    private final boolean[] layerEnabled = {true, true, true, true, true, true};
+    // 0 = Auto, 1..6 = 15m..W, 7 = Off.
+    private int closureFocus = 0;
     private V2HtfPipeline pipeline;
     private String pipelineInstrument = "";
     private volatile VisualFrame frame;
@@ -67,8 +72,16 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
 
     @Override public void onStart(IIndicatorContext context) {
         this.context = context;
-        info = new IndicatorInfo("HigherTFCandlesV2", "HTF Candles V2 — Visual Test", "CISD V2", true, false, false, 1, 0, 1);
+        info = new IndicatorInfo("HigherTFCandlesV2", "HTF Candles V2 — Visual Test", "CISD V2", true, false, false, 1, 7, 1);
         info.setRecalculateAll(true);
+        int[] layerValues = {0, 1};
+        String[] layerNames = {"Off", "On"};
+        optInfo = new OptInputParameterInfo[7];
+        for (int i = 0; i < 6; i++)
+            optInfo[i] = new OptInputParameterInfo("[V2] Show " + LABELS[i], OptInputParameterInfo.Type.OTHER,
+                new IntegerListDescription(1, layerValues, layerNames));
+        optInfo[6] = new OptInputParameterInfo("[V2] Candle Closure Focus", OptInputParameterInfo.Type.OTHER,
+            new IntegerListDescription(0, new int[]{0,1,2,3,4,5,6,7}, new String[]{"Auto","15m","30m","1H","4H","Daily","Weekly","Off"}));
         inputs = new InputParameterInfo[]{new InputParameterInfo("Chart Bars", InputParameterInfo.Type.BAR)};
         outputInfo = new OutputParameterInfo[]{new OutputParameterInfo("V2 Canvas", OutputParameterInfo.Type.DOUBLE, OutputParameterInfo.DrawingStyle.LINE)};
         outputInfo[0].setDrawnByIndicator(true);
@@ -97,6 +110,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             // Like Pine ValidTimeframe: an HTF visual must be higher than the
             // chart's source period. Lower TF candles cannot be reconstructed
             // honestly from a higher-TF source bar.
+            if (!layerEnabled[i]) continue;
             if (baseInterval > 0 && INTERVALS[i] <= baseInterval) continue;
             next[i] = pipeline.build(bars, sourceEnd, INTERVALS[i], 6);
         }
@@ -118,10 +132,17 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         V2HtfRenderer renderer = new V2HtfRenderer();
         // Match Basic: Candle Closure belongs to one focus layer only — the
         // nearest valid HTF — so all vertical intervals have one cadence.
-        for (int focus = 0; focus < current.layers.length; focus++) {
-            if (current.layers[focus] != null && current.layers[focus].current != null) {
-                renderer.drawClosureSeries(g2, support, current.layers[focus], new Color(105, 165, 255, 95));
-                break;
+        int focusIndex = closureFocus == 0 ? -1 : closureFocus - 1;
+        if (closureFocus != 7) {
+            if (focusIndex >= 0 && focusIndex < current.layers.length && current.layers[focusIndex] != null)
+                renderer.drawClosureSeries(g2, support, current.layers[focusIndex], new Color(105, 165, 255, 95));
+            else if (focusIndex < 0) {
+                for (int focus = 0; focus < current.layers.length; focus++) {
+                    if (current.layers[focus] != null && current.layers[focus].current != null) {
+                        renderer.drawClosureSeries(g2, support, current.layers[focus], new Color(105, 165, 255, 95));
+                        break;
+                    }
+                }
             }
         }
         int offset = 24;
@@ -165,10 +186,12 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
 
     @Override public IndicatorInfo getIndicatorInfo() { return info; }
     @Override public InputParameterInfo getInputParameterInfo(int i) { return inputs[i]; }
-    @Override public OptInputParameterInfo getOptInputParameterInfo(int i) { return null; }
+    @Override public OptInputParameterInfo getOptInputParameterInfo(int i) { return optInfo[i]; }
     @Override public OutputParameterInfo getOutputParameterInfo(int i) { return outputInfo[i]; }
-    // V2 visual phase has no user options yet, but JForex requires this hook.
-    @Override public void setOptInputParameter(int i, Object value) { }
+    @Override public void setOptInputParameter(int i, Object value) {
+        if (i >= 0 && i < 6) layerEnabled[i] = ((Integer) value) == 1;
+        else if (i == 6) closureFocus = (Integer) value;
+    }
     @Override public void setInputParameter(int i, Object value) { bars = (IBar[]) value; }
     @Override public void setOutputParameter(int i, Object value) { outputs[i] = value; }
     @Override public int getLookback() { return 0; }
