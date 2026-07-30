@@ -920,10 +920,23 @@ function registerHandlers() {
 
   ipcMain.handle('backtest:reset', (_, id) => {
     const data = read();
-    data.backtestSignals = (data.backtestSignals || []).filter((item) => item.backtestId !== id);
+    const backtest = (data.backtests || []).find((item) => item.id === id);
+    if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
+
+    // Reset means replay this exact session, not delete it. Keep its name,
+    // filters and source; clear only decisions, simulated trades and P&L.
+    for (const signal of data.backtestSignals || []) {
+      if (signal.backtestId !== id) continue;
+      signal.status = 'NEW';
+      delete signal.resultR;
+      delete signal.reviewNote;
+      delete signal.reviewedAt;
+    }
     data.backtestTrades = (data.backtestTrades || []).filter((item) => item.backtestId !== id);
-    data.backtests = data.backtests.filter((item) => item.id !== id);
-    if (data.activeBacktestId === id) data.activeBacktestId = null;
+    backtest.currentBalance = Number(backtest.startingCapital || 0);
+    backtest.status = 'ACTIVE';
+    backtest.resetAt = new Date().toISOString();
+    data.activeBacktestId = id;
     save(data);
     return data;
   });

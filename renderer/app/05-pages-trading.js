@@ -350,7 +350,7 @@ function renderBacktest() {
       });
       if (!ok) return;
       await runBusy(t('ui.loading'), () => cisd.resetBacktest(button.dataset.backtestReset));
-      if (model.selectedBacktestId === button.dataset.backtestReset) model.selectedBacktestId = null;
+      model.selectedBacktestId = button.dataset.backtestReset;
       persistUiState();
       await refreshStateAndRender();
       toast(t('messages.backtestReset'), 'success');

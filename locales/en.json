@@ -303,7 +303,7 @@
       "open": "Open",
       "refresh": "Re-import",
       "reset": "Reset",
-      "resetConfirm": "This backtest session and all its reviewed signals will be deleted. Continue?",
+      "resetConfirm": "The session name, period and filters stay. Decisions, backtest trades and virtual balance reset so you can replay it again.",
       "stop": "Finish session",
       "stopConfirm": "This session will be marked finished. Its data is kept.",
       "archive": "Archive",
