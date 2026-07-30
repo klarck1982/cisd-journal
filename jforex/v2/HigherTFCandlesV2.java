@@ -68,7 +68,11 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             pipelineInstrument = instrument;
             pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, instrument);
         }
-        for (int i = 0; i < INTERVALS.length; i++) snapshots[i] = pipeline.build(bars, endIndex, INTERVALS[i], 6);
+        // endIndex is the current calculation window, not necessarily the
+        // complete input history. The V2 builder needs all available bars to
+        // produce genuine HTF candles instead of repeating the latest bar.
+        int historyEnd = bars.length - 1;
+        for (int i = 0; i < INTERVALS.length; i++) snapshots[i] = pipeline.build(bars, historyEnd, INTERVALS[i], 6);
         int length = endIndex - startIndex + 1;
         double[] canvas = outputs[0] instanceof double[] && ((double[]) outputs[0]).length == length ? (double[]) outputs[0] : new double[length];
         for (int i = 0; i < length; i++) canvas[i] = Double.NaN;
