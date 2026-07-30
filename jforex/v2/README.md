@@ -18,3 +18,4 @@ Do not use this V2 folder in live trading until its visual phases are validated.
 The next component converts JForex `IBar[]` to `SourceBar` snapshots and hands
 those immutable snapshots to a renderer. CISD remains outside this pipeline.
 - `V2HtfPipeline.java`: adapter from JForex bars into V2 snapshots.
+- `V2HtfRenderer.java`: immutable snapshot renderer, modeled after Pine's clear build-then-draw separation.
