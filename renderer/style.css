@@ -1700,3 +1700,24 @@ body.density-compact .calendar-cell { min-height: 48px; padding: 4px 6px; }
 .signal-card.missed .signal-primary-action,
 .signal-card.ignored .signal-primary-action,
 .signal-card.review .signal-primary-action { margin-top: 2px; }
+
+/* Final interaction polish: controls stay aligned, readable and usable during a live session. */
+.panel-head { flex-wrap: wrap; }
+.panel-head > div { min-width: 0; }
+.button-row, .head-actions, .toolbar-inline { flex-wrap: wrap; }
+button { min-height: 34px; }
+button.primary { box-shadow: 0 4px 14px var(--blue-wash); }
+button.ghost { max-width: 100%; overflow-wrap: anywhere; }
+.item { min-width: 0; }
+.item-head > * { min-width: 0; }
+.item-title, .item-subtitle, .inline-note { overflow-wrap: anywhere; }
+.status-dock .status-pill { min-width: 0; }
+.status-dock strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signal-card.review { border-inline-start-color: var(--yellow); }
+.signal-card.ignored { border-inline-start-color: var(--muted); }
+.signal-card .chip { flex-shrink: 0; }
+.page-head .head-actions { justify-content: flex-end; }
+@media (max-width: 1180px) {
+  .page-head { align-items: flex-start; }
+  .page-head .head-actions { justify-content: flex-start; }
+}
