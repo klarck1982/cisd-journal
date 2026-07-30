@@ -10,3 +10,10 @@ and timing reference while keeping Basic untouched.
 4. CISD and desktop integration only after visual parity is verified.
 
 Do not use this V2 folder in live trading until its visual phases are validated.
+
+## Current progress
+- `TradingViewTimeEngine.java`: timing profiles and boundaries.
+- `HtfCandleBuilder.java`: pure, deterministic HTF aggregation.
+
+The next component converts JForex `IBar[]` to `SourceBar` snapshots and hands
+those immutable snapshots to a renderer. CISD remains outside this pipeline.
