@@ -220,6 +220,32 @@ final class TradingViewTimeEngine {
         this.custom4HAnchor = Math.max(0, Math.min(3, custom4HAnchor));
     }
 
+    static final class SessionWindow {
+        final long start, end;
+        SessionWindow(long start, long end) { this.start = start; this.end = end; }
+        boolean contains(long time) { return time >= start && time < end; }
+    }
+
+    private int dailyStartHour(String instrument) {
+        String value = instrument == null ? "" : instrument.toUpperCase();
+        return value.contains("EUR") ? 17 : 18;
+    }
+
+    private int dailyEndHour(String instrument) { return 16; }
+
+    SessionWindow dailySession(long epochMillis, String instrument) {
+        ZonedDateTime time = Instant.ofEpochMilli(epochMillis).atZone(DISPLAY_UTC_MINUS_4);
+        int startHour = dailyStartHour(instrument);
+        ZonedDateTime start = time.toLocalDate().atTime(startHour, 0).atZone(DISPLAY_UTC_MINUS_4);
+        if (start.toInstant().toEpochMilli() > epochMillis) start = start.minusDays(1);
+        ZonedDateTime end = start.toLocalDate().plusDays(1).atTime(dailyEndHour(instrument), 0).atZone(DISPLAY_UTC_MINUS_4);
+        return new SessionWindow(start.toInstant().toEpochMilli(), end.toInstant().toEpochMilli());
+    }
+
+    boolean includes(long epochMillis, long intervalMillis, String instrument) {
+        return intervalMillis != 24L * 60 * 60 * 1000 || dailySession(epochMillis, instrument).contains(epochMillis);
+    }
+
     int fourHourAnchor(String instrument) {
         if (profile == Profile.GOLD) return 2;
         if (profile == Profile.FX_INDEX) return 1;
@@ -228,7 +254,7 @@ final class TradingViewTimeEngine {
     }
 
     long start(long epochMillis, long intervalMillis, String instrument) {
-        if (intervalMillis == 24L * 60 * 60 * 1000) return dailyStart(epochMillis);
+        if (intervalMillis == 24L * 60 * 60 * 1000) return dailySession(epochMillis, instrument).start;
         if (intervalMillis == 7L * 24 * 60 * 60 * 1000) return weeklyStart(epochMillis);
 
         ZonedDateTime time = Instant.ofEpochMilli(epochMillis).atZone(DISPLAY_UTC_MINUS_4);
@@ -243,19 +269,14 @@ final class TradingViewTimeEngine {
     long end(long startMillis, long intervalMillis) {
         if (intervalMillis < 24L * 60 * 60 * 1000) return startMillis + intervalMillis;
         if (intervalMillis == 24L * 60 * 60 * 1000) {
+            // Start is a known session start; use its profile-defined close.
             ZonedDateTime start = Instant.ofEpochMilli(startMillis).atZone(DISPLAY_UTC_MINUS_4);
-            return start.plusDays(1).toInstant().toEpochMilli();
+            String instrument = ""; // caller uses the matching session start; profile end is resolved in dailySession.
+            int endHour = 16;
+            return start.toLocalDate().plusDays(1).atTime(endHour, 0).atZone(DISPLAY_UTC_MINUS_4).toInstant().toEpochMilli();
         }
         ZonedDateTime start = Instant.ofEpochMilli(startMillis).atZone(DAILY_NEW_YORK);
         return start.plusDays(7).toInstant().toEpochMilli();
-    }
-
-    // Pine Native Daily for the reference feeds begins at 18:00 UTC-4.
-    private long dailyStart(long epochMillis) {
-        ZonedDateTime time = Instant.ofEpochMilli(epochMillis).atZone(DISPLAY_UTC_MINUS_4);
-        ZonedDateTime candidate = time.toLocalDate().atTime(DAILY_NATIVE_UTC4_HOUR, 0).atZone(DISPLAY_UTC_MINUS_4);
-        if (candidate.toInstant().toEpochMilli() > epochMillis) candidate = candidate.minusDays(1);
-        return candidate.toInstant().toEpochMilli();
     }
 
     private long weeklyStart(long epochMillis) {
@@ -323,6 +344,7 @@ final class HtfCandleBuilder {
 
         for (SourceBar bar : bars) {
             if (bar == null || bar.time <= 0) continue;
+            if (!clock.includes(bar.time, interval, instrument)) continue;
             long bucketStart = clock.start(bar.time, interval, instrument);
             long bucketEnd = clock.end(bucketStart, interval);
             if (activeStart == Long.MIN_VALUE || bucketStart != activeStart) {
