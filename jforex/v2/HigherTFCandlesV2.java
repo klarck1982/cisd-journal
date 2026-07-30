@@ -350,7 +350,7 @@ final class V2HtfRenderer {
         int total = candles.size();
         g.setFont(g.getFont().deriveFont(Font.BOLD, 10f));
         int labelX = chartRight - total * (style.candleWidth + style.candleGap);
-        String[] labelLines = label.split("\\n");
+        String[] labelLines = label.split("\n");
         int labelWidth = 0;
         for (String line : labelLines) labelWidth = Math.max(labelWidth, g.getFontMetrics().stringWidth(line));
         int lineHeight = g.getFontMetrics().getHeight();
