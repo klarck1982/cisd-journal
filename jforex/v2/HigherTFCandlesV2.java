@@ -104,15 +104,16 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         VisualFrame current = frame;
         if (current == null) return null;
         V2HtfRenderer renderer = new V2HtfRenderer();
-        int offset = 20;
+        int offset = 24;
         for (int i = 0; i < current.layers.length; i++) {
             HtfCandleBuilder.Snapshot snapshot = current.layers[i];
-            if (snapshot == null) continue;
-            V2HtfRenderer.Style style = new V2HtfRenderer.Style(10, 3, offset,
-                new Color(0, 180, 100, 180), new Color(220, 75, 75, 180),
-                Color.BLACK, Color.BLACK, Color.BLACK, new Color(220, 220, 220));
+            if (snapshot == null || snapshot.current == null) continue;
+            V2HtfRenderer.Style style = new V2HtfRenderer.Style(10, 4, offset,
+                new Color(38, 178, 104, 220), new Color(214, 82, 82, 220),
+                new Color(30, 35, 40), new Color(30, 35, 40), new Color(20, 24, 28), Color.WHITE);
             renderer.draw(g2, support, snapshot, LABELS[i], style);
-            offset += 6 * 13 + 22;
+            int count = snapshot.completed.size() + 1;
+            offset += count * (style.candleWidth + style.candleGap) + 30;
         }
         return null;
     }
@@ -313,8 +314,12 @@ final class V2HtfRenderer {
         int chartRight = support.getChartWidth() - style.rightOffset;
         int total = candles.size();
         g.setFont(g.getFont().deriveFont(Font.BOLD, 10f));
+        int labelX = chartRight - total * (style.candleWidth + style.candleGap);
+        int labelWidth = g.getFontMetrics().stringWidth(label) + 10;
+        g.setColor(new Color(20, 25, 30, 190));
+        g.fillRoundRect(labelX - 5, 9, labelWidth, 16, 5, 5);
         g.setColor(style.label);
-        g.drawString(label, chartRight - total * (style.candleWidth + style.candleGap), 18);
+        g.drawString(label, labelX, 21);
 
         for (int i = 0; i < total; i++) {
             HtfCandleBuilder.Candle candle = candles.get(i);
