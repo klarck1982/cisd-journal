@@ -45,6 +45,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     private InputParameterInfo[] inputs;
     private OutputParameterInfo[] outputInfo;
     private V2HtfPipeline pipeline;
+    private String pipelineInstrument = "";
     private HtfCandleBuilder.Snapshot[] snapshots = new HtfCandleBuilder.Snapshot[INTERVALS.length];
 
     @Override public void onStart(IIndicatorContext context) {
@@ -55,11 +56,18 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         outputInfo[0].setDrawnByIndicator(true);
         outputInfo[0].setShowOutput(true);
         outputInfo[0].setColor(new Color(0, 0, 0, 0));
-        pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, context.getFeedDescriptor().getInstrument().toString());
+        // FeedDescriptor can be null during JForex onStart; bind the actual
+        // instrument lazily in calculate when the feed is available.
+        pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, "");
     }
 
     @Override public IndicatorResult calculate(int startIndex, int endIndex) {
         if (bars == null || bars.length == 0 || endIndex < 0) return new IndicatorResult(0, 0);
+        String instrument = context.getFeedDescriptor() == null ? "" : context.getFeedDescriptor().getInstrument().toString();
+        if (!instrument.equals(pipelineInstrument)) {
+            pipelineInstrument = instrument;
+            pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, instrument);
+        }
         for (int i = 0; i < INTERVALS.length; i++) snapshots[i] = pipeline.build(bars, endIndex, INTERVALS[i], 6);
         int length = endIndex - startIndex + 1;
         double[] canvas = outputs[0] instanceof double[] && ((double[]) outputs[0]).length == length ? (double[]) outputs[0] : new double[length];
