@@ -82,6 +82,57 @@ Output arrays are still filled for every requested JForex range. They act as a
 valid chart anchor and preserve the `IIndicator` contract; the right-side HTF
 visual itself comes from the immutable frame.
 
+## VisualFrame contract
+
+```
+VisualFrame
+  sourceInstrument
+  sourcePeriod
+  sourceLastBarTime
+  configurationFingerprint
+  createdAt
+  layers[]
+
+LayerFrame
+  timeframeLabel
+  resolvedStart
+  resolvedEnd
+  completedCandles[]
+  currentCandle
+```
+
+Every candle stored in a frame is immutable. The renderer may calculate pixel
+coordinates and a countdown string, but never changes OHLC, start, end, or the
+layer list.
+
+## Frame invalidation rules
+
+A new frame is required when any of the following changes:
+
+1. **Instrument changes** — detected through `IChartInstrumentsListener` and
+   through the feed descriptor key.
+2. **Base chart period changes** — feed descriptor period differs from the key
+   stored in the frame.
+3. **Optional visual/timing input changes** — every setter marks the frame
+   dirty; no setter rebuilds or draws immediately.
+4. **A new base bar arrives** — source last-bar time is newer than the frame's
+   `sourceLastBarTime`.
+5. **The final source bar updates** — same bar time, new high/low/close; V2
+   rebuilds the frame so the current HTF candle remains live.
+
+`calculate()` is the only location allowed to clear the dirty flag and atomically
+replace the frame.
+
+## Rendering contract
+
+- Renderer reads only the latest non-null `VisualFrame`.
+- Renderer uses `IIndicatorDrawingSupport` for pixel transforms, visible chart
+  size, and right-side placement.
+- Timer is derived as `layer.resolvedEnd - now`; it does not mutate a candle.
+- Candle Closure uses `resolvedStart` and `resolvedEnd` from the same layer,
+  never `start + a generic interval`.
+- Drawing must not call history, write files, emit sound, or update CISD state.
+
 ## V2 non-negotiable architecture
 
 ```
@@ -109,5 +160,5 @@ CISD adapter (later)
 
 ## Next research task
 
-Write the exact `VisualFrame` data model and define frame invalidation rules for
-instrument change, timeframe change, optional-input change, and a new base bar.
+Validate the exact JForex output-anchor and `setRecalculateAll` behaviour with
+a minimal diagnostic indicator before attaching the HTF visual renderer.
