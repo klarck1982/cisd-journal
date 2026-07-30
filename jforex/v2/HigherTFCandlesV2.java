@@ -28,6 +28,9 @@ import java.time.ZonedDateTime;
 import java.awt.BasicStroke;
 import java.awt.Font;
 import java.awt.Rectangle;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Visual-only V2. No CISD, files, sounds or desktop integration are permitted
@@ -111,11 +114,17 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             V2HtfRenderer.Style style = new V2HtfRenderer.Style(10, 4, offset,
                 new Color(38, 178, 104, 220), new Color(214, 82, 82, 220),
                 new Color(30, 35, 40), new Color(30, 35, 40), new Color(20, 24, 28), Color.WHITE);
-            renderer.draw(g2, support, snapshot, LABELS[i], style);
+            renderer.draw(g2, support, snapshot, formatLayerLabel(LABELS[i], snapshot), style);
             int count = snapshot.completed.size() + 1;
             offset += count * (style.candleWidth + style.candleGap) + 30;
         }
         return null;
+    }
+
+    private String formatLayerLabel(String label, HtfCandleBuilder.Snapshot snapshot) {
+        SimpleDateFormat time = new SimpleDateFormat("HH:mm");
+        time.setTimeZone(TimeZone.getTimeZone("GMT-04:00"));
+        return label + "  " + time.format(new Date(snapshot.current.start)) + "→" + time.format(new Date(snapshot.current.end));
     }
 
     @Override public IndicatorInfo getIndicatorInfo() { return info; }
