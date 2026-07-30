@@ -64,27 +64,10 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
 
     @Override public IndicatorResult calculate(int startIndex, int endIndex) {
         if (bars == null || bars.length == 0 || endIndex < 0) return new IndicatorResult(0, 0);
-        String instrument = context.getFeedDescriptor() == null ? "" : context.getFeedDescriptor().getInstrument().toString();
-        if (!instrument.equals(pipelineInstrument)) {
-            pipelineInstrument = instrument;
-            pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, instrument);
-        }
-        // The indicator calculation array can be only the visible calculation
-        // window. Request feed history explicitly so every HTF snapshot has
-        // genuine source candles, not a repeated final bar.
-        IBar[] historyBars = bars;
-        try {
-            List<ITimedData> feedData = context.getHistory().getFeedData(
-                    context.getFeedDescriptor(), 1200, bars[bars.length - 1].getTime(), 0);
-            List<IBar> collected = new ArrayList<>();
-            for (ITimedData item : feedData) if (item instanceof IBar) collected.add((IBar) item);
-            if (!collected.isEmpty()) historyBars = collected.toArray(new IBar[0]);
-        } catch (Exception ignored) {
-            // Fall back to the calculation window; compilation/runtime details
-            // are surfaced by the V2 diagnostic label instead of breaking chart drawing.
-        }
-        int historyEnd = historyBars.length - 1;
-        for (int i = 0; i < INTERVALS.length; i++) snapshots[i] = pipeline.build(historyBars, historyEnd, INTERVALS[i], 6);
+        // Drawing support owns the authoritative candle sequence used by the
+        // chart. Snapshots are built in drawOutput from that sequence, not from
+        // a transient calculate window.
+
         int length = endIndex - startIndex + 1;
         double[] canvas = outputs[0] instanceof double[] && ((double[]) outputs[0]).length == length ? (double[]) outputs[0] : new double[length];
         for (int i = 0; i < length; i++) canvas[i] = Double.NaN;
@@ -96,6 +79,16 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
                                       IIndicatorDrawingSupport support, List<Shape> shapes, Map<Color, List<Point>> handles) {
         if (outputIdx != 0) return null;
         Graphics2D g2 = (Graphics2D) g;
+        IBar[] chartBars = support.getCandles();
+        if (chartBars == null || chartBars.length == 0) return null;
+        String instrument = support.getInstrument() == null ? "" : support.getInstrument().toString();
+        if (!instrument.equals(pipelineInstrument)) {
+            pipelineInstrument = instrument;
+            pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, instrument);
+        }
+        for (int i = 0; i < INTERVALS.length; i++)
+            snapshots[i] = pipeline.build(chartBars, chartBars.length - 1, INTERVALS[i], 6);
+
         V2HtfRenderer renderer = new V2HtfRenderer();
         int offset = 20;
         for (int i = 0; i < snapshots.length; i++) {
