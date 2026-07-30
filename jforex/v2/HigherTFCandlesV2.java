@@ -123,6 +123,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             V2HtfRenderer.Style style = new V2HtfRenderer.Style(10, 4, offset,
                 new Color(38, 178, 104, 220), new Color(214, 82, 82, 220),
                 new Color(30, 35, 40), new Color(30, 35, 40), new Color(20, 24, 28), Color.WHITE);
+            renderer.drawClosure(g2, support, snapshot, new Color(105, 165, 255, 95));
             renderer.draw(g2, support, snapshot, formatLayerLabel(LABELS[i], snapshot) + formatRemaining(snapshot), style);
             int count = snapshot.completed.size() + 1;
             offset += count * (style.candleWidth + style.candleGap) + 30;
@@ -339,6 +340,16 @@ final class V2HtfRenderer {
             this.bullBody = bullBody; this.bearBody = bearBody; this.bullWick = bullWick;
             this.bearWick = bearWick; this.border = border; this.label = label;
         }
+    }
+
+    void drawClosure(Graphics2D g, IIndicatorDrawingSupport support, HtfCandleBuilder.Snapshot snapshot, Color color) {
+        if (snapshot == null || snapshot.current == null) return;
+        int startX = support.getXForTime(snapshot.current.start, false);
+        int endX = support.getXForTime(snapshot.current.end, false);
+        g.setColor(color);
+        g.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{4f, 4f}, 0f));
+        if (startX >= 0 && startX < support.getChartWidth()) g.drawLine(startX, 76, startX, support.getChartHeight());
+        if (endX >= 0 && endX < support.getChartWidth()) g.drawLine(endX, 76, endX, support.getChartHeight());
     }
 
     void draw(Graphics2D g, IIndicatorDrawingSupport support, HtfCandleBuilder.Snapshot snapshot,
