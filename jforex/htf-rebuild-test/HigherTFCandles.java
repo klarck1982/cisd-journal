@@ -1142,12 +1142,12 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             pendingBearish.active = false; pendingBearish.waveStartIdx = -1;
         }
 
-        // HTF Rebuild Engine: never mix a previous mutable layer state with
-        // a new JForex calculation range. Reconstruct each enabled layer from
-        // the same chronological source bars, then draw the resulting snapshot.
         for (LayerData layer : layers) {
             if (!layer.enabled) continue;
-            rebuildLayerFromBars(layer, bars, endIndex);
+            for (int i = startIndex; i <= endIndex && i < bars.length; i++) {
+                if (bars[i].getTime() <= 0) continue;
+                processChartBar(layer, bars[i]);
+            }
         }
 
         int detectionIndex = endIndex;
@@ -1192,25 +1192,6 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         }
 
         return new IndicatorResult(startIndex, length);
-    }
-
-    private void rebuildLayerFromBars(LayerData layer, IBar[] bars, int endIndex) {
-        layer.historicalCandles.clear();
-        layer.currentOpen = Double.NaN;
-        layer.currentHigh = Double.NaN;
-        layer.currentLow = Double.NaN;
-        layer.currentClose = Double.NaN;
-        layer.currentPeriodStart = 0;
-        layer.currentCandleActive = false;
-        layer.lsActive = false;
-
-        // JForex can request an arbitrary calculation range after changing a
-        // setting. Starting from bar zero makes the visual HTF state deterministic.
-        for (int i = 0; i <= endIndex && i < bars.length; i++) {
-            IBar bar = bars[i];
-            if (bar == null || bar.getTime() <= 0) continue;
-            processChartBar(layer, bar);
-        }
     }
 
     private void processChartBar(LayerData layer, IBar bar) {
