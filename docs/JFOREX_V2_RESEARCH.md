@@ -13,15 +13,31 @@ application until visual parity is proven.
 2. `IDrawingIndicator.drawOutput()` may be called whenever the chart surface is
    redrawn. It must be treated as rendering-only; it must not emit alerts,
    write files, or advance signal state.
-3. `IIndicatorDrawingSupport.getCandles()` returns candles corresponding to the
-   output values for the current drawing operation. It is a drawing reference,
-   not a replacement for a controlled history/recalculation model.
-4. `IIndicatorContext.getHistory()` is available to custom indicators. It is
-   the correct API when V2 explicitly needs a controlled history range.
-5. `IndicatorInfo.setRecalculateAll(true)` tells JForex to recalculate over all
-   available chart data instead of only the arriving candle. This is appropriate
-   for a deterministic visual HTF renderer whose final frame depends on prior
-   base bars.
+3. `IIndicatorContext.getHistory()` is available to custom indicators when a
+   controlled external history range is actually needed.
+4. `IndicatorInfo.setRecalculateAll(true)` tells JForex to recalculate over all
+   chart data instead of only the arriving candle.
+
+## Empirical JForex lifecycle result
+
+The `V2LifecycleDiagnostic` was compiled and tested on live JForex charts.
+With `setRecalculateAll(true)`:
+
+| Chart | calculate range | input bars | draw support bars | visible bars |
+|---|---:|---:|---:|---:|
+| USA30 15m | 0–1705 | 1706 | 60 | 59 |
+| USA30 1H | 0–119 | 120 | 56 | 55 |
+| USA500 1H | 0–237 | 238 | 56 | 55 |
+
+### Consequence
+
+- `calculate()` receives the full available source history and is the correct
+  place to build the immutable HTF `VisualFrame`.
+- `IIndicatorDrawingSupport.getCandles()` exposes only the drawing/visible
+  range. It is correct for pixel coordinates and screen dimensions, but it is
+  **not** the source for HTF aggregation.
+- The earlier V2 branch that built snapshots in `drawOutput()` from support
+  candles is invalid and must be discarded.
 
 ## Basic failure modes observed
 
@@ -63,7 +79,7 @@ whatever range JForex happened to request.
 On each controlled full recalculation:
 
 ```
-input IBar[]
+full input IBar[]
   → boundary resolver
   → six pure HTF builders
   → immutable VisualFrame
@@ -75,8 +91,9 @@ renderer (completed candles, current candle, resolved start/end, timer source).
 It is atomically replaced only after all six builders complete successfully.
 
 `drawOutput()` receives the latest completed `VisualFrame` and only renders it.
-It never creates candles, changes state, plays a sound, writes a file, or reads
-history.
+It uses drawing support only for pixel transforms, chart dimensions, visible
+range and right-side placement. It never creates candles, changes state, plays
+a sound, writes a file, or reads history.
 
 Output arrays are still filled for every requested JForex range. They act as a
 valid chart anchor and preserve the `IIndicator` contract; the right-side HTF
@@ -136,15 +153,15 @@ replace the frame.
 ## V2 non-negotiable architecture
 
 ```
-Feed/history acquisition
+Full calculate input
        ↓
 HTF boundary resolver
        ↓
 Pure per-layer candle builders
        ↓
-Immutable VisualFrame (atomic swap)
+Immutable VisualFrame (atomic swap in calculate)
        ↓
-Renderer
+Renderer using drawing support only for coordinates
        ↓
 CISD adapter (later)
 ```
@@ -152,13 +169,13 @@ CISD adapter (later)
 ## V2 rules before coding resumes
 
 - No sound/file/CSV/shared-panel logic in rendering callbacks.
-- `IndicatorInfo.setRecalculateAll(true)` must be evaluated and used for the
-  visual-only phase so a settings change produces a full deterministic frame.
+- `IndicatorInfo.setRecalculateAll(true)` is required for the visual-only phase.
 - No visual test should be sent to the user until it has a valid output anchor
   and immutable VisualFrame matching JForex's calculate/draw contract.
 - Basic remains the production reference.
 
 ## Next research task
 
-Validate the exact JForex output-anchor and `setRecalculateAll` behaviour with
-a minimal diagnostic indicator before attaching the HTF visual renderer.
+Write the exact `VisualFrame` data model and frame invalidation implementation
+for instrument change, timeframe change, optional-input change, and a new base
+bar, then replace the invalid experimental V2 renderer in one controlled pass.
