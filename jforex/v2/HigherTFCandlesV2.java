@@ -116,6 +116,14 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         VisualFrame current = frame;
         if (current == null) return null;
         V2HtfRenderer renderer = new V2HtfRenderer();
+        // Match Basic: Candle Closure belongs to one focus layer only — the
+        // nearest valid HTF — so all vertical intervals have one cadence.
+        for (int focus = 0; focus < current.layers.length; focus++) {
+            if (current.layers[focus] != null && current.layers[focus].current != null) {
+                renderer.drawClosureSeries(g2, support, current.layers[focus], new Color(105, 165, 255, 95));
+                break;
+            }
+        }
         int offset = 24;
         // Render ascending HTF order from left to right: 4H → D → W on a 1H chart.
         for (int i = current.layers.length - 1; i >= 0; i--) {
@@ -341,6 +349,28 @@ final class V2HtfRenderer {
             this.bullBody = bullBody; this.bearBody = bearBody; this.bullWick = bullWick;
             this.bearWick = bearWick; this.border = border; this.label = label;
         }
+    }
+
+    void drawClosureSeries(Graphics2D g, IIndicatorDrawingSupport support, HtfCandleBuilder.Snapshot snapshot, Color color) {
+        if (snapshot == null || snapshot.current == null) return;
+        List<HtfCandleBuilder.Candle> candles = new ArrayList<>(snapshot.completed);
+        candles.add(snapshot.current);
+        g.setColor(color);
+        g.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{4f, 4f}, 0f));
+        SimpleDateFormat clock = new SimpleDateFormat("HH:mm");
+        clock.setTimeZone(TimeZone.getTimeZone("GMT-04:00"));
+        g.setFont(g.getFont().deriveFont(Font.BOLD, 9f));
+        for (int i = 0; i < candles.size(); i++) {
+            HtfCandleBuilder.Candle candle = candles.get(i);
+            int x = support.getXForTime(candle.start, false);
+            if (x < 0 || x >= support.getChartWidth()) continue;
+            g.drawLine(x, 76, x, support.getChartHeight());
+            String text = "C" + (i + 1) + " " + clock.format(new Date(candle.start)) + "-" + clock.format(new Date(candle.end));
+            g.drawString(text, x + 3, 73);
+        }
+        HtfCandleBuilder.Candle current = snapshot.current;
+        int closeX = support.getXForTime(current.end, false);
+        if (closeX >= 0 && closeX < support.getChartWidth()) g.drawLine(closeX, 76, closeX, support.getChartHeight());
     }
 
     void drawClosure(Graphics2D g, IIndicatorDrawingSupport support, HtfCandleBuilder.Snapshot snapshot, Color color) {
