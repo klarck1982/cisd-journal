@@ -138,7 +138,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         long hours = remaining / (60L * 60 * 1000);
         long minutes = (remaining / (60L * 1000)) % 60;
         long seconds = (remaining / 1000) % 60;
-        return String.format("  (%02d:%02d:%02d)", hours, minutes, seconds);
+        return "\n(" + String.format("%02d:%02d:%02d", hours, minutes, seconds) + ")";
     }
 
     private String formatLayerLabel(String label, HtfCandleBuilder.Snapshot snapshot) {
@@ -146,11 +146,11 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         if ("D".equals(label) || "W".equals(label)) {
             SimpleDateFormat date = new SimpleDateFormat("dd MMM");
             date.setTimeZone(zone);
-            return label + "  " + date.format(new Date(snapshot.current.start)) + "→" + date.format(new Date(snapshot.current.end));
+            return label + "\n" + date.format(new Date(snapshot.current.start)) + "→" + date.format(new Date(snapshot.current.end));
         }
         SimpleDateFormat time = new SimpleDateFormat("HH:mm");
         time.setTimeZone(zone);
-        return label + "  " + time.format(new Date(snapshot.current.start)) + "→" + time.format(new Date(snapshot.current.end));
+        return label + "\n" + time.format(new Date(snapshot.current.start)) + "→" + time.format(new Date(snapshot.current.end));
     }
 
     @Override public IndicatorInfo getIndicatorInfo() { return info; }
@@ -350,11 +350,16 @@ final class V2HtfRenderer {
         int total = candles.size();
         g.setFont(g.getFont().deriveFont(Font.BOLD, 10f));
         int labelX = chartRight - total * (style.candleWidth + style.candleGap);
-        int labelWidth = g.getFontMetrics().stringWidth(label) + 10;
+        String[] labelLines = label.split("\\n");
+        int labelWidth = 0;
+        for (String line : labelLines) labelWidth = Math.max(labelWidth, g.getFontMetrics().stringWidth(line));
+        int lineHeight = g.getFontMetrics().getHeight();
+        int labelHeight = labelLines.length * lineHeight + 8;
         g.setColor(new Color(20, 25, 30, 190));
-        g.fillRoundRect(labelX - 5, 9, labelWidth, 16, 5, 5);
+        g.fillRoundRect(labelX - 5, 7, labelWidth + 10, labelHeight, 5, 5);
         g.setColor(style.label);
-        g.drawString(label, labelX, 21);
+        for (int line = 0; line < labelLines.length; line++)
+            g.drawString(labelLines[line], labelX, 7 + g.getFontMetrics().getAscent() + line * lineHeight);
 
         for (int i = 0; i < total; i++) {
             HtfCandleBuilder.Candle candle = candles.get(i);
