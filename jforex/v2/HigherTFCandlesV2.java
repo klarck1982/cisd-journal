@@ -114,11 +114,22 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             V2HtfRenderer.Style style = new V2HtfRenderer.Style(10, 4, offset,
                 new Color(38, 178, 104, 220), new Color(214, 82, 82, 220),
                 new Color(30, 35, 40), new Color(30, 35, 40), new Color(20, 24, 28), Color.WHITE);
-            renderer.draw(g2, support, snapshot, formatLayerLabel(LABELS[i], snapshot), style);
+            renderer.draw(g2, support, snapshot, formatLayerLabel(LABELS[i], snapshot) + formatRemaining(snapshot), style);
             int count = snapshot.completed.size() + 1;
             offset += count * (style.candleWidth + style.candleGap) + 30;
         }
         return null;
+    }
+
+    private String formatRemaining(HtfCandleBuilder.Snapshot snapshot) {
+        long remaining = snapshot.current.end - System.currentTimeMillis();
+        long duration = snapshot.current.end - snapshot.current.start;
+        // Historical charts and Replay must not show a fake wall-clock countdown.
+        if (remaining <= 0 || remaining > duration) return "";
+        long hours = remaining / (60L * 60 * 1000);
+        long minutes = (remaining / (60L * 1000)) % 60;
+        long seconds = (remaining / 1000) % 60;
+        return String.format("  (%02d:%02d:%02d)", hours, minutes, seconds);
     }
 
     private String formatLayerLabel(String label, HtfCandleBuilder.Snapshot snapshot) {
