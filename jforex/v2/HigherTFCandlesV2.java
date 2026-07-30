@@ -210,6 +210,7 @@ final class TradingViewTimeEngine {
 
     static final ZoneId DISPLAY_UTC_MINUS_4 = ZoneId.of("Etc/GMT+4");
     static final ZoneId DAILY_NEW_YORK = ZoneId.of("America/New_York");
+    static final int DAILY_NATIVE_UTC4_HOUR = 18;
 
     private final Profile profile;
     private final int custom4HAnchor;
@@ -241,13 +242,20 @@ final class TradingViewTimeEngine {
 
     long end(long startMillis, long intervalMillis) {
         if (intervalMillis < 24L * 60 * 60 * 1000) return startMillis + intervalMillis;
+        if (intervalMillis == 24L * 60 * 60 * 1000) {
+            ZonedDateTime start = Instant.ofEpochMilli(startMillis).atZone(DISPLAY_UTC_MINUS_4);
+            return start.plusDays(1).toInstant().toEpochMilli();
+        }
         ZonedDateTime start = Instant.ofEpochMilli(startMillis).atZone(DAILY_NEW_YORK);
-        return start.plusDays(intervalMillis == 24L * 60 * 60 * 1000 ? 1 : 7).toInstant().toEpochMilli();
+        return start.plusDays(7).toInstant().toEpochMilli();
     }
 
+    // Pine Native Daily for the reference feeds begins at 18:00 UTC-4.
     private long dailyStart(long epochMillis) {
-        ZonedDateTime time = Instant.ofEpochMilli(epochMillis).atZone(DAILY_NEW_YORK);
-        return time.toLocalDate().atStartOfDay(DAILY_NEW_YORK).toInstant().toEpochMilli();
+        ZonedDateTime time = Instant.ofEpochMilli(epochMillis).atZone(DISPLAY_UTC_MINUS_4);
+        ZonedDateTime candidate = time.toLocalDate().atTime(DAILY_NATIVE_UTC4_HOUR, 0).atZone(DISPLAY_UTC_MINUS_4);
+        if (candidate.toInstant().toEpochMilli() > epochMillis) candidate = candidate.minusDays(1);
+        return candidate.toInstant().toEpochMilli();
     }
 
     private long weeklyStart(long epochMillis) {
