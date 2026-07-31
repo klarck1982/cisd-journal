@@ -37,10 +37,7 @@ final class TradingViewTimeEngine {
         return value.contains("EUR") ? 17 : 18;
     }
 
-    private int dailyEndHour(String instrument) {
-        String value = instrument == null ? "" : instrument.toUpperCase();
-        return value.contains("USATECH") ? 17 : 16;
-    }
+    private int dailyEndHour(String instrument) { return 16; }
 
     SessionWindow dailySession(long epochMillis, String instrument) {
         ZonedDateTime time = Instant.ofEpochMilli(epochMillis).atZone(DISPLAY_UTC_MINUS_4);
