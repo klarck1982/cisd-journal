@@ -60,11 +60,13 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     private static final class VisualFrame {
         final String instrument;
         final long sourceLastBarTime;
+        final long marketClockTime;
         final long baseInterval;
         final HtfCandleBuilder.Snapshot[] layers;
-        VisualFrame(String instrument, long sourceLastBarTime, long baseInterval, HtfCandleBuilder.Snapshot[] layers) {
+        VisualFrame(String instrument, long sourceLastBarTime, long marketClockTime, long baseInterval, HtfCandleBuilder.Snapshot[] layers) {
             this.instrument = instrument;
             this.sourceLastBarTime = sourceLastBarTime;
+            this.marketClockTime = marketClockTime;
             this.baseInterval = baseInterval;
             this.layers = layers;
         }
@@ -114,7 +116,12 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             if (baseInterval > 0 && INTERVALS[i] <= baseInterval) continue;
             next[i] = pipeline.build(bars, sourceEnd, INTERVALS[i], 6);
         }
-        frame = new VisualFrame(instrument, bars[sourceEnd].getTime(), baseInterval, next);
+        long marketClock = System.currentTimeMillis();
+        try {
+            long tickTime = context.getHistory().getTimeOfLastTick(context.getFeedDescriptor().getInstrument());
+            if (tickTime > 0) marketClock = tickTime;
+        } catch (Exception ignored) { }
+        frame = new VisualFrame(instrument, bars[sourceEnd].getTime(), marketClock, baseInterval, next);
 
         int length = endIndex - startIndex + 1;
         double[] canvas = outputs[0] instanceof double[] && ((double[]) outputs[0]).length == length ? (double[]) outputs[0] : new double[length];
@@ -154,15 +161,15 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
                 new Color(38, 178, 104, 220), new Color(214, 82, 82, 220),
                 new Color(30, 35, 40), new Color(30, 35, 40), new Color(20, 24, 28), Color.WHITE);
             renderer.drawClosure(g2, support, snapshot, new Color(105, 165, 255, 95));
-            renderer.draw(g2, support, snapshot, formatLayerLabel(LABELS[i], snapshot) + formatRemaining(snapshot), style);
+            renderer.draw(g2, support, snapshot, formatLayerLabel(LABELS[i], snapshot) + formatRemaining(snapshot, current.marketClockTime), style);
             int count = snapshot.completed.size() + 1;
             offset += count * (style.candleWidth + style.candleGap) + 30;
         }
         return null;
     }
 
-    private String formatRemaining(HtfCandleBuilder.Snapshot snapshot) {
-        long remaining = snapshot.current.end - System.currentTimeMillis();
+    private String formatRemaining(HtfCandleBuilder.Snapshot snapshot, long marketClockTime) {
+        long remaining = snapshot.current.end - marketClockTime;
         long duration = snapshot.current.end - snapshot.current.start;
         // Historical charts and Replay must not show a fake wall-clock countdown.
         if (remaining <= 0 || remaining > duration) return "";
