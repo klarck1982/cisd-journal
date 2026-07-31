@@ -270,6 +270,10 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     private long lastChartPeriodMs = -1;
     private long latestBarTime = 0;
     private int lastCalculatedIndex = -1;
+    // Basic Refined: HTF construction is invalidated explicitly when a layer
+    // configuration or chart identity changes. CISD state is deliberately separate.
+    private boolean htfStateDirty = true;
+    private String lastHtfBuildKey = "";
     private long lastCheckedRetestTime = 0;
     private long fibCacheWaveStart = -1;
     private double[] fibCacheResult = null;
@@ -350,23 +354,23 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             final int layerIdx = l;
             optList.add(new OptInputParameterInfo("[Layer " + ln + "] Enable", OptInputParameterInfo.Type.OTHER,
                 new IntegerListDescription(layers[l].enabled ? 1 : 0, BOOLEAN_VALUES, BOOLEAN_NAMES)));
-            setterList.add(v -> layers[layerIdx].enabled = ((Integer) v) == 1);
+            setterList.add(v -> { layers[layerIdx].enabled = ((Integer) v) == 1; markHtfStateDirty(); });
 
             optList.add(new OptInputParameterInfo("[Layer " + ln + "] Timeframe", OptInputParameterInfo.Type.OTHER,
                 new IntegerListDescription(layers[l].periodIndex, getPeriodIndexes(), PERIOD_NAMES)));
-            setterList.add(v -> layers[layerIdx].periodIndex = (Integer) v);
+            setterList.add(v -> { layers[layerIdx].periodIndex = (Integer) v; markHtfStateDirty(); });
 
             optList.add(new OptInputParameterInfo("[Layer " + ln + "] Candles", OptInputParameterInfo.Type.OTHER,
                 new IntegerRangeDescription(layers[l].candlesToShow, 1, MAX_CANDLES, 1)));
-            setterList.add(v -> layers[layerIdx].candlesToShow = (Integer) v);
+            setterList.add(v -> { layers[layerIdx].candlesToShow = (Integer) v; markHtfStateDirty(); });
 
             optList.add(new OptInputParameterInfo("[Layer " + ln + "] Position", OptInputParameterInfo.Type.OTHER,
                 new IntegerListDescription(layers[l].positionOption, POSITION_VALUES, POSITION_NAMES)));
-            setterList.add(v -> layers[layerIdx].positionOption = (Integer) v);
+            setterList.add(v -> { layers[layerIdx].positionOption = (Integer) v; markHtfStateDirty(); });
 
             optList.add(new OptInputParameterInfo("[Layer " + ln + "] Offset", OptInputParameterInfo.Type.OTHER,
                 new IntegerRangeDescription(layers[l].candleOffset, 0, 50, 1)));
-            setterList.add(v -> layers[layerIdx].candleOffset = (Integer) v);
+            setterList.add(v -> { layers[layerIdx].candleOffset = (Integer) v; markHtfStateDirty(); });
 
             // [Layer " + ln + "] SMT Detecting optInput REMOVED
         }
@@ -529,6 +533,7 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         setterList.add(v -> {
             chartTimezone = (Integer) v;
             chartCalendar = Calendar.getInstance(getTimezone());
+            markHtfStateDirty();
         });
 
         optList.add(new OptInputParameterInfo("[Advanced] Layer Spacing", OptInputParameterInfo.Type.OTHER,
@@ -1058,6 +1063,27 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
     }
     // ================== End SMT Methods ==================
 
+    private void markHtfStateDirty() { htfStateDirty = true; }
+
+    private void clearHtfLayerState() {
+        for (LayerData layer : layers) {
+            if (layer == null) continue;
+            layer.historicalCandles.clear();
+            layer.currentOpen = Double.NaN;
+            layer.currentHigh = Double.NaN;
+            layer.currentLow = Double.NaN;
+            layer.currentClose = Double.NaN;
+            layer.currentCandleActive = false;
+            layer.currentPeriodStart = 0;
+            layer.lsActive = false;
+        }
+    }
+
+    private String htfBuildKey(long basePeriodMs) {
+        String instrument = context.getFeedDescriptor() == null ? "" : context.getFeedDescriptor().getInstrument().toString();
+        return instrument + "|" + basePeriodMs + "|" + chartTimezone;
+    }
+
     @Override
     public IndicatorResult calculate(int startIndex, int endIndex) {
         if (inputs[0] == null || inputs[0].length == 0) return new IndicatorResult(0, 0);
@@ -1122,18 +1148,8 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
                     cisdStoredMomVolActive[i] = e.momVolActive;
                 }
             }
-            for (LayerData layer : layers) {
-                if (layer != null) {
-                    layer.historicalCandles.clear();
-                    layer.currentOpen = Double.NaN;
-                    layer.currentHigh = Double.NaN;
-                    layer.currentLow = Double.NaN;
-                    layer.currentClose = Double.NaN;
-                    layer.currentCandleActive = false;
-                    layer.currentPeriodStart = 0;
-                    layer.lsActive = false;
-                }
-            }
+            clearHtfLayerState();
+            markHtfStateDirty();
             lastChartPeriodMs = currentPeriodMs;
             lastCalculatedIndex = -1;
             fibCacheWaveStart = -1;
@@ -1142,12 +1158,24 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
             pendingBearish.active = false; pendingBearish.waveStartIdx = -1;
         }
 
+        String buildKey = htfBuildKey(currentPeriodMs);
+        if (!buildKey.equals(lastHtfBuildKey)) markHtfStateDirty();
+        int htfStartIndex = startIndex;
+        if (htfStateDirty) {
+            clearHtfLayerState();
+            htfStartIndex = 0;
+            context.getConsole().getOut().println("HTF rebuild: " + buildKey);
+        }
         for (LayerData layer : layers) {
             if (!layer.enabled) continue;
-            for (int i = startIndex; i <= endIndex && i < bars.length; i++) {
+            for (int i = htfStartIndex; i <= endIndex && i < bars.length; i++) {
                 if (bars[i].getTime() <= 0) continue;
                 processChartBar(layer, bars[i]);
             }
+        }
+        if (htfStateDirty) {
+            htfStateDirty = false;
+            lastHtfBuildKey = buildKey;
         }
 
         int detectionIndex = endIndex;
