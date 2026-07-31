@@ -159,6 +159,13 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
                 }
             }
         }
+        // Temporary validation panel for the 4H builder: exact OHLC per candle.
+        for (int i = 0; i < current.layers.length; i++) {
+            if ("4H".equals(LABELS[i]) && current.layers[i] != null) {
+                renderer.drawOhlcAudit(g2, current.layers[i]);
+                break;
+            }
+        }
         int offset = 24;
         // Render ascending HTF order from left to right: 4H → D → W on a 1H chart.
         for (int i = current.layers.length - 1; i >= 0; i--) {
@@ -432,6 +439,27 @@ final class V2HtfRenderer {
             this.candleWidth = candleWidth; this.candleGap = candleGap; this.rightOffset = rightOffset;
             this.bullBody = bullBody; this.bearBody = bearBody; this.bullWick = bullWick;
             this.bearWick = bearWick; this.border = border; this.label = label;
+        }
+    }
+
+    void drawOhlcAudit(Graphics2D g, HtfCandleBuilder.Snapshot snapshot) {
+        if (snapshot == null || snapshot.current == null) return;
+        List<HtfCandleBuilder.Candle> candles = new ArrayList<>(snapshot.completed);
+        candles.add(snapshot.current);
+        SimpleDateFormat clock = new SimpleDateFormat("HH:mm");
+        clock.setTimeZone(TimeZone.getTimeZone("GMT-04:00"));
+        g.setFont(g.getFont().deriveFont(Font.PLAIN, 9f));
+        int lineHeight = g.getFontMetrics().getHeight();
+        int height = candles.size() * lineHeight + 10;
+        g.setColor(new Color(15, 20, 25, 210));
+        g.fillRoundRect(10, 150, 335, height, 6, 6);
+        g.setColor(Color.WHITE);
+        for (int i = 0; i < candles.size(); i++) {
+            HtfCandleBuilder.Candle c = candles.get(i);
+            String row = clock.format(new Date(c.start)) + "-" + clock.format(new Date(c.end))
+                + " O " + String.format(Locale.US, "%.2f", c.open)
+                + " C " + String.format(Locale.US, "%.2f", c.close);
+            g.drawString(row, 16, 158 + (i + 1) * lineHeight);
         }
     }
 
