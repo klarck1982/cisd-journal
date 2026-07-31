@@ -505,6 +505,17 @@ final class V2HtfRenderer {
             g.fillRect(x, top, style.candleWidth, Math.max(1, bottom - top));
             g.setColor(style.border);
             g.draw(new Rectangle(x, top, style.candleWidth, Math.max(1, bottom - top)));
+
+            // Temporary V2 validation marker: ties the visual candle to the
+            // exact OHLC being shown in the layer label.
+            if (i == total - 1) {
+                g.setColor(new Color(40, 190, 255, 220));
+                g.setStroke(new BasicStroke(1.2f));
+                g.drawRect(x - 2, top - 2, style.candleWidth + 4, Math.max(1, bottom - top) + 4);
+                g.setFont(g.getFont().deriveFont(Font.PLAIN, 8f));
+                String debug = String.format(Locale.US, "O %.2f C %.2f", candle.open, candle.close);
+                g.drawString(debug, x - 18, Math.min(support.getChartHeight() - 4, yLow + 13));
+            }
         }
     }
 }
