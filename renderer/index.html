@@ -26,12 +26,6 @@
 
     <div class="workspace">
       <aside class="sidebar">
-        <div class="sidebar-top">
-          <div class="section-kicker" id="accountsKicker">Accounts</div>
-          <button id="newAccountBtn" class="primary small">+ Challenge</button>
-        </div>
-        <div id="accountRail" class="account-rail"></div>
-
         <nav class="nav">
           <button class="nav-link active" data-page="overview" id="navOverview"></button>
           <button class="nav-link" data-page="signals" id="navSignals"></button>
@@ -89,6 +83,19 @@
               <button id="overviewGoSignals" class="primary"></button>
             </div>
           </div>
+
+          <section class="overview-accounts" aria-label="Accounts">
+            <div class="overview-accounts-head">
+              <div><div class="section-kicker" id="accountsKicker">Accounts</div><p class="panel-hint" id="overviewAccountsHint"></p></div>
+              <button id="newAccountBtn" class="primary small">+ Challenge</button>
+            </div>
+            <div id="accountRail" class="account-rail"></div>
+          </section>
+
+          <section class="attention-panel" aria-live="polite">
+            <div class="panel-head"><div><h2 id="overviewAttentionTitle"></h2><span class="panel-hint" id="overviewAttentionHint"></span></div></div>
+            <div id="overviewAttentionList" class="attention-list"></div>
+          </section>
 
           <section class="panel slim quick-start hidden" id="quickStartPanel">
             <div class="panel-head">
@@ -167,6 +174,11 @@
               </section>
             </div>
 
+            <section class="panel" data-dashboard-id="positions">
+              <div class="panel-head"><h3 id="overviewPositionsTitle"></h3><span id="overviewPositionsHint" class="panel-hint"></span></div>
+              <div id="overviewPositionsList" class="list"></div>
+            </section>
+
             <section class="panel" data-dashboard-id="signals">
               <div class="dashboard-handle" draggable="true" title="اسحب للترتيب">⋮⋮</div>
               <div class="panel-head">
@@ -188,6 +200,8 @@
             <div class="head-actions">
               <button id="chooseCsvBtn" class="ghost"></button>
               <button id="refreshSnapshotsBtn" class="ghost"></button>
+              <button id="signalsResetDecisionsBtn" class="ghost small"></button>
+              <button id="signalsFreshStartBtn" class="ghost small"></button>
             </div>
           </div>
 
@@ -198,26 +212,9 @@
             </div>
           </div>
 
-          <div class="grid three">
-            <section class="panel">
-              <div class="panel-head">
-                <h3 id="signalsSummaryTitle"></h3>
-                <span class="panel-hint" id="signalsSummaryHint"></span>
-              </div>
-              <div id="signalsSummaryCards" class="metric-grid compact"></div>
-            </section>
-
-            <section class="panel span-two">
-              <div class="panel-head">
-                <h3 id="signalsLiveTitle"></h3>
-                <span class="panel-hint" id="signalsLiveHint"></span>
-              </div>
-              <div class="toolbar-inline">
-                <input id="signalsSearch" class="search-input" type="search" placeholder="Search signals">
-              </div>
-              <div id="signalList" class="signal-list"></div>
-            </section>
-          </div>
+          <section class="panel"><div class="panel-head"><h3 id="signalsSummaryTitle"></h3><span class="panel-hint" id="signalsSummaryHint"></span></div><div id="signalsSummaryCards" class="metric-grid compact"></div></section>
+          <section class="panel"><div class="panel-head"><h3 id="signalsLatestTitle">آخر 5 إشارات</h3><span id="signalsLiveHint" class="panel-hint"></span></div><div id="signalsLatestList" class="signal-list"></div></section>
+          <section class="panel"><div class="panel-head"><h3 id="signalsLiveTitle"></h3><input id="signalsSearch" class="search-input" type="search" placeholder="Search signals"></div><div id="signalTimeframeBoard" class="signal-timeframe-board"></div></section>
         </section>
 
         <section class="page" data-page="journal">
@@ -379,6 +376,19 @@
                   <span id="backtestTfLabel"></span>
                   <input id="backtestTf" placeholder="15m">
                 </label>
+                <label>
+                  <span id="backtestCapitalLabel"></span>
+                  <input id="backtestCapital" type="number" min="1" step="100" value="100000">
+                </label>
+                <label>
+                  <span id="backtestCurrencyLabel"></span>
+                  <select id="backtestCurrency"><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select>
+                </label>
+                <label>
+                  <span id="backtestRiskPerRLabel"></span>
+                  <input id="backtestRiskPerR" type="number" min="0.01" step="0.01" value="1000">
+                </label>
+                <p class="inline-note full" id="backtestSeparateHint"></p>
                 <div class="full">
                   <div class="panel slim" style="padding:12px;">
                     <div class="panel-head" style="margin-bottom:8px;">
@@ -406,6 +416,24 @@
               <div id="backtestLibrary" class="list"></div>
             </section>
           </div>
+
+          <section class="panel slim">
+            <div class="panel-head">
+              <div><h3 id="backtestManualTitle"></h3><span class="panel-hint" id="backtestManualHint"></span></div>
+            </div>
+            <form id="backtestManualTradeForm" class="form-grid compact-form">
+              <label><span id="backtestManualSymbolLabel"></span><input id="backtestManualSymbol" placeholder="XAUUSD"></label>
+              <label><span id="backtestManualSideLabel"></span><select id="backtestManualSide"><option value="Buy">Buy</option><option value="Sell">Sell</option></select></label>
+              <label><span id="backtestManualResultLabel"></span><input id="backtestManualResult" type="number" step="0.01" placeholder="1.50"></label>
+              <label class="full"><span id="backtestManualNoteLabel"></span><input id="backtestManualNote"></label>
+              <div class="form-actions full"><button class="primary" id="backtestManualSaveBtn" type="submit"></button></div>
+            </form>
+          </section>
+
+          <section class="panel slim">
+            <div class="panel-head"><div><h3 id="backtestLedgerTitle"></h3><span class="panel-hint" id="backtestLedgerHint"></span></div></div>
+            <div id="backtestLedgerList" class="list"></div>
+          </section>
 
           <section class="panel slim backtest-spotlight">
             <div class="panel-head">
@@ -917,25 +945,8 @@
             <section class="panel">
               <div class="panel-head"><h3 id="newsSettingsTitle"></h3></div>
               <div class="form-grid compact-form">
-                <label>
-                  <span id="newsProviderLabel"></span>
-                  <select id="newsProvider">
-                    <option value="FREE">✅ FREE - بدون مفتاح (موصى به)</option>
-                    <option value="FMP">FMP Free (يحتاج مفتاح مدفوع للتقويم)</option>
-                    <option value="TE">Trading Economics</option>
-                  </select>
-                </label>
-                <label class="full" id="newsKeyWrap">
-                  <span id="newsKeyLabel"></span>
-                  <input id="newsKey" type="password" placeholder="API Key">
-                </label>
-                <div class="inline-note full" id="newsFreeHint" style="display:none; color: var(--green);">
-                  المزود المجاني يعمل بدون مفتاح ويجلب الأخبار عالية التأثير من ForexFactory مباشرة - لا يحتاج تسجيل.
-                </div>
-                <div class="form-actions full">
-                  <button id="saveNewsSettingsBtn" class="ghost"></button>
-                  <button id="testNewsBtn" class="ghost"></button>
-                </div>
+                <div class="inline-note full" id="newsFreeHint" style="color: var(--green);"></div>
+                <div class="form-actions full"><button id="testNewsBtn" class="ghost"></button></div>
                 <div id="newsConnectionStatus" class="inline-note"></div>
               </div>
             </section>
@@ -1149,6 +1160,28 @@
     </div>
   </div>
 
+  <div id="calendarDayModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="calendarDayModalTitle">
+    <div class="modal-card">
+      <div class="panel-head"><h3 id="calendarDayModalTitle"></h3><button id="closeCalendarDayModal" class="ghost icon" aria-label="Close">×</button></div>
+      <div id="calendarDayMetrics" class="metric-grid compact"></div>
+      <section class="calendar-day-section"><h4 id="calendarDayNewsTitle"></h4><div id="calendarDayNews" class="list"></div></section>
+      <label class="calendar-day-section"><span id="calendarDayNoteLabel"></span><textarea id="calendarDayNote" rows="4"></textarea></label>
+      <div class="form-actions"><button id="saveCalendarDayNote" class="primary" type="button"></button><button id="closeCalendarDayBtn" class="ghost" type="button"></button></div>
+    </div>
+  </div>
+
+  <div id="tradeDetailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tradeDetailTitle">
+    <div class="modal-card trade-detail-card">
+      <div class="panel-head"><h3 id="tradeDetailTitle"></h3><button id="closeTradeDetailModal" class="ghost icon" aria-label="Close">×</button></div>
+      <div id="tradeDetailSummary" class="trade-detail-summary"></div>
+      <div class="trade-detail-charts">
+        <section><h4 id="tradeDetailBeforeTitle"></h4><div id="tradeDetailBefore" class="trade-detail-image"></div></section>
+        <section><h4 id="tradeDetailAfterTitle"></h4><div id="tradeDetailAfter" class="trade-detail-image"></div></section>
+      </div>
+      <div class="form-actions"><button id="tradeDetailEditBtn" class="primary" type="button"></button><button id="tradeDetailCloseBtn" class="ghost" type="button"></button></div>
+    </div>
+  </div>
+
   <div id="tradeEditModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tradeEditTitle">
     <div class="modal-card">
       <div class="panel-head">
@@ -1259,6 +1292,19 @@
         </section>
 
         <section class="welcome-step hidden" data-step="3">
+          <h3 id="welcomeConnectionTitle"></h3>
+          <p class="muted" id="welcomeConnectionHint"></p>
+          <div class="form-grid compact-form">
+            <label class="full"><span id="welcomeConnectionModeLabel"></span><select id="welcomeConnectionMode"><option value="none">لاحقًا</option><option value="investor_pass">Investor Pass</option><option value="shared_url">رابط لوحة الشركة</option></select></label>
+            <label class="investor-field"><span id="welcomeInvestorLoginLabel"></span><input id="welcomeInvestorLogin"></label>
+            <label class="investor-field"><span id="welcomeInvestorServerLabel"></span><input id="welcomeInvestorServer"></label>
+            <label class="investor-field full"><span id="welcomeInvestorPasswordLabel"></span><input id="welcomeInvestorPassword" type="password"></label>
+            <label class="shared-url-field full"><span id="welcomeSharedUrlLabel"></span><input id="welcomeSharedUrl" type="url" placeholder="https://"></label>
+            <div class="inline-note full" id="welcomeConnectionStatus"></div>
+          </div>
+        </section>
+
+        <section class="welcome-step hidden" data-step="4">
           <h3 id="welcomeCsvTitle"></h3>
           <p class="muted" id="welcomeCsvHint"></p>
           <div class="button-row">
@@ -1286,6 +1332,8 @@
   <script src="app/04-pages-overview.js"></script>
   <script src="app/05-pages-trading.js"></script>
   <script src="app/05a-trade-edit.js"></script>
+  <script src="app/05b-backtest-ledger.js"></script>
+  <script src="app/05c-signal-board.js"></script>
   <script src="app/06-pages-daily.js"></script>
   <script src="app/07-pages-playbooks.js"></script>
   <script src="app/08-pages-edge.js"></script>

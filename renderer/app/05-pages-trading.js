@@ -3,15 +3,18 @@
  */
 
 function allLiveSignalsForAccount() {
+  const freshSince = activeAccount()?.signalFreshSince || '';
   return (model.state?.signals || [])
     .filter((signal) => (signal.mode || 'LIVE') === 'LIVE')
+    .filter((signal) => !freshSince || String(signal.importedAt || signal.SignalTimeNY || '') >= freshSince)
     .slice()
     .sort((a, b) => String(b.importedAt || '').localeCompare(String(a.importedAt || '')));
 }
 
 function liveSignalsForAccount() {
   const query = model.search.signals.trim().toLowerCase();
-  return allLiveSignalsForAccount().filter((signal) => !query || `${signal.SignalID || ''} ${signal.Instrument || ''} ${signal.Direction || ''} ${signal.Session || ''} ${signal.TF || ''}`.toLowerCase().includes(query));
+  return allLiveSignalsForAccount()
+    .filter((signal) => !query || `${signal.SignalID || ''} ${signal.Instrument || ''} ${signal.Direction || ''} ${signal.Session || ''} ${signal.TF || ''}`.toLowerCase().includes(query));
 }
 
 function renderSignalCard(signal) {
@@ -32,10 +35,12 @@ function renderSignalCard(signal) {
         ${linkedTrade ? `<span class="tag safe">${escapeHtml(t('signals.linkedTrade'))}</span>` : ''}
         ${status.key === 'missed' ? `<span class="tag bad">${escapeHtml(status.decision?.reason || t('signals.reasonModal.none'))}</span>` : ''}
       </div>
-      <div class="item-actions">
-        ${canAct ? `<button class="ghost" data-action="entered" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.entered'))}</button>` : ''}
+      <div class="item-actions signal-actions">
+        ${canAct ? `<button class="primary signal-primary-action" data-action="entered" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.entered'))}</button>` : ''}
         ${canAct ? `<button class="ghost" data-action="missed" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.missed'))}</button>` : ''}
-        <button class="ghost" data-action="journal" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.logTrade'))}</button>
+        ${canAct ? `<button class="ghost" data-action="ignored" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.ignored'))}</button>` : ''}
+        ${canAct ? `<button class="ghost" data-action="review" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.review'))}</button>` : ''}
+        <button class="ghost ${canAct ? 'signal-log-action' : 'signal-primary-action'}" data-action="journal" data-signal-id="${escapeHtml(signal.SignalID)}">${escapeHtml(t('signals.actions.logTrade'))}</button>
       </div>
     </article>
   `;
@@ -56,6 +61,24 @@ function bindSignalActions() {
     button.onclick = () => openReasonModal(button.dataset.signalId);
   });
 
+  $$('[data-action="review"]').forEach((button) => {
+    button.onclick = async () => {
+      model.state = await runBusy(t('ui.loading'), () => cisd.signalStatus(button.dataset.signalId, model.accountId, 'REVIEW', ''));
+      await refreshSnapshots();
+      render();
+      toast('تم وضع الإشارة للمراجعة لاحقًا ✓', 'info');
+    };
+  });
+
+  $$('[data-action="ignored"]').forEach((button) => {
+    button.onclick = async () => {
+      model.state = await runBusy(t('ui.loading'), () => cisd.signalStatus(button.dataset.signalId, model.accountId, 'IGNORED', t('signals.actions.ignoredHint')));
+      await refreshSnapshots(); render();
+      const exportError = model.state?.settings?.lastDecisionExportError;
+      toast(exportError ? `تم حفظ قرارك داخل التطبيق، لكن لم يُكتب على الشارت: ${exportError}` : 'تم تسجيل الإشارة كضعيفة ✓', exportError ? 'warn' : 'success');
+    };
+  });
+
   $$('[data-action="journal"]').forEach((button) => {
     const signal = (model.state?.signals || []).find((item) => item.SignalID === button.dataset.signalId);
     if (!signal) return;
@@ -73,14 +96,9 @@ function renderSignalsPage() {
     metricCard(t('signals.metrics.missed'), String(model.dashboard?.discipline?.totals?.missed || 0), t('signals.metrics.missedHint'), 'bad', 'risk'),
     metricCard(t('signals.metrics.coverage'), formatPercent(model.dashboard?.discipline?.rates?.decisionCoverage || 0), diagnostics ? `${diagnostics.added} ${t('signals.metrics.newSignals')}` : t('signals.metrics.coverageHint'), 'warn', 'source'),
   ].join('');
-  $('#signalsLiveHint').textContent = diagnostics ? `${diagnostics.added} ${t('signals.metrics.newSignals')} · ${diagnostics.duplicates} ${t('signals.metrics.duplicates')}` : t('signals.summaryHint');
-  $('#signalList').innerHTML = renderListRows(
-    liveSignalsForAccount(),
-    renderSignalCard,
-    model.search.signals.trim()
-      ? { key: 'signalsFiltered', action: 'clearSignalSearch' }
-      : { key: 'signals', action: 'chooseCsv' }
-  );
+  const diagnosticsHint = diagnostics ? `${diagnostics.added} ${t('signals.metrics.newSignals')} · ${diagnostics.duplicates} ${t('signals.metrics.duplicates')}` : t('signals.summaryHint');
+  $('#signalsLiveHint').textContent = diagnosticsHint;
+  renderSignalBoard(liveSignalsForAccount());
   bindSignalActions();
 }
 
@@ -163,6 +181,7 @@ function renderJournal() {
         ${(trade.tags || '').split(',').filter(Boolean).slice(0, 3).map((tag) => `<span class="tag neutral">${escapeHtml(tag.trim())}</span>`).join('')}
       </div>
       <div class="item-actions">
+        <button class="ghost small" data-trade-open="${escapeHtml(trade.id || '')}">${escapeHtml(t('journal.detailOpen'))}</button>
         <button class="ghost small" data-trade-edit="${escapeHtml(trade.id || '')}">${escapeHtml(t('journal.edit'))}</button>
         <button class="ghost small danger" data-trade-delete="${escapeHtml(trade.id || '')}">${escapeHtml(t('journal.delete'))}</button>
       </div>
@@ -176,9 +195,9 @@ function renderJournal() {
 
 
 function backtestsForAccount() {
-  return (model.state?.backtests || [])
-    .filter((item) => item.accountId === model.accountId)
-    .filter((item) => !item.archived);
+  // Backtests are a dedicated simulation centre, not children of the selected
+  // funded account. Their only shared input is the CISD signal file.
+  return (model.state?.backtests || []).filter((item) => item.status !== 'ARCHIVED' && !item.archived);
 }
 
 function selectedBacktest() {
@@ -211,11 +230,15 @@ function renderBacktestSpotlight(selected, reviewSignals) {
   const net = scored.reduce((sum, signal) => sum + (Number(signal.resultR) || 0), 0);
   const avg = scored.length ? net / scored.length : 0;
 
+  const virtualTrades = (model.state?.backtestTrades || []).filter((trade) => trade.backtestId === selected.id);
+  const virtualPnl = virtualTrades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
   $('#backtestSpotlightCards').innerHTML = [
+    metricCard(t('backtest.create.virtualBalance'), formatCurrency(selected.currentBalance ?? selected.startingCapital ?? 0, selected.currency || 'USD'), t('backtest.create.separateHint'), '', 'capital'),
+    metricCard(t('backtest.create.virtualPnL'), `${virtualPnl >= 0 ? '+' : ''}${formatCurrency(virtualPnl, selected.currency || 'USD')}`, `${virtualTrades.length} ${t('journal.recentTrades.title')}`, virtualPnl >= 0 ? 'good' : 'bad', 'curve'),
     metricCard(t('backtest.spotlight.matched'), String(reviewSignals.length), t('backtest.spotlight.matchedHint'), '', 'signals'),
     metricCard(t('backtest.spotlight.reviewed'), `${reviewed.length}/${reviewSignals.length || 0}`, t('backtest.spotlight.reviewedHint'), reviewed.length === reviewSignals.length && reviewSignals.length ? 'good' : 'warn', 'backtest'),
     metricCard(t('backtest.spotlight.winRate'), scored.length ? formatPercent(wins / scored.length) : '—', t('backtest.spotlight.winRateHint'), wins / Math.max(scored.length, 1) >= 0.5 ? 'good' : 'warn', 'analytics'),
-    metricCard(t('backtest.spotlight.net'), `${net > 0 ? '+' : ''}${formatNumber(net, 2)}R`, `${t('backtest.spotlight.avg')} ${avg > 0 ? '+' : ''}${formatNumber(avg, 2)}R`, net >= 0 ? 'good' : 'bad', 'curve'),
+    metricCard(t('backtest.spotlight.net'), `${net > 0 ? '+' : ''}${formatNumber(net, 2)}R`, `${virtualTrades.length} ${t('journal.recentTrades.title')}`, net >= 0 ? 'good' : 'bad', 'curve'),
   ].join('');
 
   $('#backtestSpotlightTags').innerHTML = [
@@ -233,6 +256,14 @@ function renderBacktest() {
   if (selected) model.selectedBacktestId = selected.id;
   else model.selectedBacktestId = null;
 
+  const manualForm = $('#backtestManualTradeForm');
+  const manualButton = $('#backtestManualSaveBtn');
+  if (manualForm && manualButton) {
+    const canLog = !!selected && selected.status !== 'FINISHED';
+    [...manualForm.elements].forEach((element) => { element.disabled = !canLog; });
+    manualButton.disabled = !canLog;
+  }
+
   $('#backtestLibrary').innerHTML = renderListRows(sessions, (session) => {
     const signals = (model.state?.backtestSignals || []).filter((item) => item.backtestId === session.id);
     const reviewed = signals.filter((item) => ['WIN', 'LOSS', 'BE', 'MISSED'].includes(String(item.status || '').toUpperCase())).length;
@@ -242,7 +273,7 @@ function renderBacktest() {
         <div class="item-head">
           <div>
             <div class="item-title">${escapeHtml(session.name || t('backtest.create.defaultName'))}</div>
-            <div class="item-subtitle">${escapeHtml(session.filters?.start || '')} → ${escapeHtml(session.filters?.end || '')}</div>
+            <div class="item-subtitle">${escapeHtml(session.filters?.start || '')} → ${escapeHtml(session.filters?.end || '')} · ${escapeHtml(formatCurrency(session.currentBalance ?? session.startingCapital ?? 0, session.currency || 'USD'))}</div>
           </div>
           <div class="playbook-actions">
             <span class="chip ${session.status === 'FINISHED' ? 'neutral' : 'safe'}">${escapeHtml(session.status === 'FINISHED' ? t('backtest.status.finished') : t('backtest.status.active'))}</span>
@@ -269,6 +300,7 @@ function renderBacktest() {
   const reviewQuery = model.search.backtest.trim().toLowerCase();
   const reviewSignals = backtestSignalsForSelected().filter((signal) => !reviewQuery || `${signal.SignalID || ''} ${signal.Instrument || ''} ${signal.Direction || ''} ${signal.Session || ''} ${signal.TF || ''} ${signal.reviewNote || ''}`.toLowerCase().includes(reviewQuery));
   renderBacktestSpotlight(selected, backtestSignalsForSelected());
+  renderBacktestLedger(selected);
   $('#backtestReviewList').innerHTML = renderListRows(reviewSignals, (signal) => {
     const reviewed = ['WIN', 'LOSS', 'BE', 'MISSED'].includes(String(signal.status || '').toUpperCase());
     return `
@@ -318,7 +350,7 @@ function renderBacktest() {
       });
       if (!ok) return;
       await runBusy(t('ui.loading'), () => cisd.resetBacktest(button.dataset.backtestReset));
-      if (model.selectedBacktestId === button.dataset.backtestReset) model.selectedBacktestId = null;
+      model.selectedBacktestId = button.dataset.backtestReset;
       persistUiState();
       await refreshStateAndRender();
       toast(t('messages.backtestReset'), 'success');
@@ -369,4 +401,26 @@ function populateFilterSelect(selectId, options, current, defaultLabel) {
   if (!select) return;
   select.innerHTML = `<option value="all">${escapeHtml(defaultLabel)}</option>${options.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('')}`;
   select.value = current || 'all';
+}
+
+
+async function saveManualBacktestTrade(event) {
+  event.preventDefault();
+  const session = selectedBacktest();
+  const symbol = $('#backtestManualSymbol').value.trim().toUpperCase();
+  if (!session) { toast(t('backtest.spotlight.empty'), 'warn'); return; }
+  if (!symbol) { $('#backtestManualSymbol').focus(); return; }
+  try {
+    model.state = await runBusy(t('ui.loading'), () => cisd.addBacktestTrade(session.id, {
+      symbol,
+      side: $('#backtestManualSide').value,
+      resultR: Number($('#backtestManualResult').value || 0),
+      note: $('#backtestManualNote').value.trim(),
+    }));
+    $('#backtestManualTradeForm').reset();
+    await refreshStateAndRender();
+    toast(t('backtest.create.manualSaved'), 'success');
+  } catch (error) {
+    toast(`${t('ui.error')}: ${error.message}`, 'error');
+  }
 }

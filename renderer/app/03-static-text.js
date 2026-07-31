@@ -28,6 +28,11 @@ function applyStaticText() {
   $('#overviewKicker').textContent = t('overview.kicker');
   $('#overviewTitle').textContent = t('overview.title');
   $('#overviewDescription').textContent = t('overview.description');
+  $('#overviewAccountsHint').textContent = t('overview.accountsHint');
+  $('#overviewAttentionTitle').textContent = t('overview.attentionTitle');
+  $('#overviewAttentionHint').textContent = t('overview.attentionHint');
+  $('#overviewPositionsTitle').textContent = t('overview.positionsTitle');
+  $('#overviewPositionsHint').textContent = t('overview.positionsHint');
   $('#overviewOpenTerminal').innerHTML = `${icon('terminal','button-icon')}${escapeHtml(t('overview.actions.openTerminal'))}`;
   $('#overviewLoadNews').innerHTML = `${icon('news','button-icon')}${escapeHtml(t('overview.actions.refreshNews'))}`;
   $('#overviewGoSignals').innerHTML = `${icon('signals','button-icon')}${escapeHtml(t('overview.actions.reviewSignals'))}`;
@@ -44,6 +49,8 @@ function applyStaticText() {
   $('#signalsDescription').textContent = t('signals.description');
   $('#chooseCsvBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('signals.actions.chooseCsv'))}`;
   $('#refreshSnapshotsBtn').innerHTML = `${icon('source','button-icon')}${escapeHtml(t('signals.actions.refresh'))}`;
+  $('#signalsResetDecisionsBtn').textContent = t('signals.reset.resetDecisions');
+  $('#signalsFreshStartBtn').textContent = t('signals.reset.freshStart');
   $('#signalsSourceTitle').innerHTML = iconText('source', t('signals.sourceTitle'));
   $('#signalsSummaryTitle').innerHTML = iconText('discipline', t('signals.summaryTitle'));
   $('#signalsSummaryHint').textContent = t('signals.summaryHint');
@@ -89,6 +96,19 @@ function applyStaticText() {
   $('#backtestEndLabel').textContent = t('backtest.create.end');
   $('#backtestSymbolLabel').textContent = t('backtest.create.symbol');
   $('#backtestTfLabel').textContent = t('backtest.create.tf');
+  $('#backtestCapitalLabel').textContent = t('backtest.create.capital');
+  $('#backtestCurrencyLabel').textContent = t('backtest.create.currency');
+  $('#backtestSeparateHint').textContent = t('backtest.create.separateHint');
+  $('#backtestRiskPerRLabel').textContent = t('backtest.create.riskPerR');
+  $('#backtestManualTitle').textContent = t('backtest.create.manualTitle');
+  $('#backtestManualHint').textContent = t('backtest.create.manualHint');
+  $('#backtestManualSymbolLabel').textContent = t('backtest.create.manualSymbol');
+  $('#backtestManualSideLabel').textContent = t('backtest.create.manualSide');
+  $('#backtestManualResultLabel').textContent = t('backtest.create.manualResult');
+  $('#backtestManualNoteLabel').textContent = t('backtest.create.manualNote');
+  $('#backtestManualSaveBtn').textContent = t('backtest.create.manualSave');
+  $('#backtestLedgerTitle').textContent = t('backtest.create.ledgerTitle');
+  $('#backtestLedgerHint').textContent = t('backtest.create.ledgerHint');
   const csvLabel = $('#backtestCsvLabel');
   if (csvLabel) csvLabel.textContent = t('backtest.create.csvLabel');
   const csvHint = $('#backtestCsvHint');
@@ -181,10 +201,8 @@ function applyStaticText() {
   $('#chooseTerminalBtn').innerHTML = `${icon('terminal','button-icon')}${escapeHtml(t('settings.chooseTerminal'))}`;
   $('#openTerminalBtn').innerHTML = `${icon('terminal','button-icon')}${escapeHtml(t('settings.openTerminal'))}`;
   $('#newsSettingsTitle').innerHTML = iconText('news', t('settings.newsTitle'));
-  $('#newsProviderLabel').textContent = t('settings.newsProvider');
-  $('#newsKeyLabel').textContent = t('settings.newsKey');
-  $('#saveNewsSettingsBtn').innerHTML = `${icon('news','button-icon')}${escapeHtml(t('settings.saveNews'))}`;
   $('#testNewsBtn').innerHTML = `${icon('news','button-icon')}${escapeHtml(t('settings.testNews'))}`;
+  $('#newsFreeHint').textContent = t('settings.forexFactoryOnly');
   $('#maintenanceTitle').innerHTML = iconText('maintenance', t('settings.maintenanceTitle'));
   $('#backupBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.backup'))}`;
   $('#restoreBtn').innerHTML = `${icon('import','button-icon')}${escapeHtml(t('settings.restore'))}`;
@@ -193,6 +211,10 @@ function applyStaticText() {
   $('#calendarKicker').textContent = t('nav.calendar');
   $('#calendarPageTitle').textContent = t('calendar.pageTitle');
   $('#calendarPageDescription').textContent = t('calendar.pageDescription');
+  $('#calendarDayNewsTitle').textContent = t('calendar.news');
+  $('#calendarDayNoteLabel').textContent = t('calendar.note');
+  $('#saveCalendarDayNote').textContent = t('calendar.saveNote');
+  $('#closeCalendarDayBtn').textContent = t('ui.close');
 
   // --- Account lifecycle -----------------------------------------------------
   $('#resetKeepsLimitsHint').textContent = t('settings.resetKeepsLimits');
@@ -232,6 +254,13 @@ function applyStaticText() {
   $('#welcomeTargetLabel').textContent = t('accountModal.target');
   $('#welcomeDailyLossLabel').textContent = t('accountModal.dailyLoss');
   $('#welcomeDrawdownLabel').textContent = t('accountModal.maxDrawdown');
+  $('#welcomeConnectionTitle').textContent = t('welcome.connection.title');
+  $('#welcomeConnectionHint').textContent = t('welcome.connection.hint');
+  $('#welcomeConnectionModeLabel').textContent = t('welcome.connection.mode');
+  $('#welcomeInvestorLoginLabel').textContent = t('welcome.connection.login');
+  $('#welcomeInvestorServerLabel').textContent = t('welcome.connection.server');
+  $('#welcomeInvestorPasswordLabel').textContent = t('welcome.connection.password');
+  $('#welcomeSharedUrlLabel').textContent = t('welcome.connection.url');
   $('#welcomeCsvTitle').textContent = t('welcome.csv.title');
   $('#welcomeCsvHint').textContent = t('welcome.csv.hint');
   $('#welcomeChooseCsv').textContent = t('signals.actions.chooseCsv');
@@ -337,4 +366,9 @@ function applyStaticText() {
   $('#saveBacktestReviewBtn').textContent = t('backtest.review.save');
   $('#backtestReviewResultInput').placeholder = t('backtest.review.resultPlaceholder');
   $('#backtestReviewNoteInput').placeholder = t('backtest.review.notePlaceholder');
+  $('#tradeDetailTitle').textContent = t('journal.detailTitle');
+  $('#tradeDetailBeforeTitle').textContent = t('journal.detailBefore');
+  $('#tradeDetailAfterTitle').textContent = t('journal.detailAfter');
+  $('#tradeDetailEditBtn').textContent = t('journal.detailEdit');
+  $('#tradeDetailCloseBtn').textContent = t('journal.detailClose');
 }

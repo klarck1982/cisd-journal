@@ -32,10 +32,6 @@ const store = createStore(app);
 const { dataFile, initial, logError, read, save } = store;
 const execFileAsync = promisify(execFile);
 
-function secretFile() {
-  return path.join(app.getPath('userData'), 'news-api-key.bin');
-}
-
 function accountSecretFile(accountId, kind) {
   return path.join(app.getPath('userData'), `${kind}-${accountId}.bin`);
 }
@@ -146,10 +142,43 @@ function syncSignalsFromFile() {
     }
 
     signalsInitialized = true;
-    sendStateChanged(data);
+
+    // Replay writes to the same CISD CSV, but a backtest session used to read
+    // it only when the trader pressed Refresh. Keep the active session in step
+    // with each JForex file update so replay signals arrive automatically.
+    let stateToSend = data;
+    const activeBacktest = (data.backtests || []).find((item) => item.id === data.activeBacktestId && item.status === 'ACTIVE');
+    if (activeBacktest) {
+      try {
+        stateToSend = importBacktestSessionSignals(activeBacktest.id, { recordNoop: false }).state;
+      } catch (error) {
+        // A live signal must not fail merely because its optional backtest
+        // import has a bad date/filter/path; retain the diagnostic for review.
+        logError('syncSignalsFromFile:backtest', error);
+      }
+    }
+    sendStateChanged(stateToSend);
   } catch (error) {
     logError('syncSignalsFromFile', error);
   }
+}
+
+function writeSignalDecisionsFile(data, accountId) {
+  const source = data.settings?.csvPath || '';
+  if (!source) return;
+  const target = path.join(path.dirname(source), 'CISD_Journal_Decisions.csv');
+  const rows = ['SignalID,Decision,Reason,UpdatedAt'];
+  for (const signal of data.signals || []) {
+    const decision = signal.decisions?.[accountId];
+    if (!decision || !['ORDER_PLACED', 'MISSED', 'IGNORED', 'REVIEW'].includes(decision.status)) continue;
+    const state = decision.status === 'ORDER_PLACED' ? 'ENTERED'
+      : decision.status === 'MISSED' ? 'SKIPPED'
+      : decision.status === 'IGNORED' ? 'IGNORED'
+      : 'REVIEW';
+    const clean = (value) => `"${String(value || '').replace(/"/g, '""')}"`;
+    rows.push([signal.SignalID, state, decision.reason || '', decision.updatedAt || ''].map(clean).join(','));
+  }
+  fs.writeFileSync(target, rows.join('\n'), 'utf8');
 }
 
 function watchSignalsFile() {
@@ -249,30 +278,6 @@ function watchAllFundedNextFolders() {
   }
 }
 
-function newsKey() {
-  try {
-    const encrypted = fs.readFileSync(secretFile());
-    return safeStorage.isEncryptionAvailable() ? safeStorage.decryptString(encrypted) : encrypted.toString();
-  } catch {
-    return '';
-  }
-}
-
-function setNewsKey(value) {
-  if (!value) {
-    try {
-      fs.unlinkSync(secretFile());
-    } catch {}
-    return;
-  }
-
-  const payload = safeStorage.isEncryptionAvailable()
-    ? safeStorage.encryptString(value)
-    : Buffer.from(value);
-
-  fs.writeFileSync(secretFile(), payload);
-}
-
 function readEncryptedSecret(filePath) {
   try {
     const encrypted = fs.readFileSync(filePath);
@@ -337,6 +342,13 @@ async function runMt5ReadonlyBridge(payload) {
     preferExecutable: true,
   });
 
+  // A packaged Windows app must contain the read-only helper. Without it,
+  // an Investor Pass cannot be queried; fail with an instruction instead of a
+  // cryptic Windows “spawn ENOENT” message.
+  if (app.isPackaged && !fs.existsSync(plan.exePath)) {
+    throw new Error('ميزة Investor Pass غير جاهزة في هذه النسخة: ملف الربط الخاص بـ MT5 غير موجود. أعد تثبيت نسخة كاملة من التطبيق.');
+  }
+
   let lastError = null;
   for (const candidate of plan.candidates) {
     try {
@@ -354,10 +366,17 @@ async function runMt5ReadonlyBridge(payload) {
     }
   }
 
-  const fallback = app.isPackaged
-    ? 'Bundled MT5 bridge EXE was not found or failed to run. Build/ship bridges/mt5_readonly_sync.exe with the desktop app.'
-    : 'MT5 readonly bridge could not run. Build the helper EXE or make Python + MetaTrader5 available.';
-  throw lastError || new Error(fallback);
+  if (lastError?.killed || lastError?.code === 'ETIMEDOUT') {
+    throw new Error('انتهت مهلة الاتصال بـ MT5. تأكد أن منصة MT5 مثبتة ومفتوحة ثم أعد المحاولة.');
+  }
+  const detail = String(lastError?.message || '');
+  if (/initialize|terminal|MetaTrader/i.test(detail)) {
+    throw new Error('لم يتمكن التطبيق من فتح MT5. تأكد من تثبيت منصة MT5 الخاصة بالشركة، ثم افتحها مرة واحدة وأعد المحاولة.');
+  }
+  if (/authorization|login|password|server/i.test(detail)) {
+    throw new Error('تعذر تسجيل الدخول للقراءة فقط. راجع رقم الحساب واسم الخادم وInvestor Pass.');
+  }
+  throw new Error('تعذر الاتصال بحساب MT5 عبر Investor Pass. تحقق من الإنترنت وبيانات الحساب واسم الخادم، ثم أعد المحاولة.');
 }
 
 async function syncFundingAccess(accountId) {
@@ -432,21 +451,39 @@ async function syncFundingAccess(accountId) {
 async function fetchNews() {
   const data = read();
   try {
-    newsCache = await fetchCalendar(data.settings.newsProvider || 'FMP', newsKey());
+    newsCache = await fetchCalendar();
+    // Keep a compact local history so a calendar day can show the important
+    // news that was known at the time, not only today's upcoming events.
+    const known = new Map((data.newsHistory || []).map((item) => [`${item.Date || ''}|${item.Country || ''}|${item.Event || ''}`, item]));
+    for (const item of newsCache) known.set(`${item.Date || ''}|${item.Country || ''}|${item.Event || ''}`, item);
+    data.newsHistory = [...known.values()].sort((a, b) => String(b.Date || '').localeCompare(String(a.Date || ''))).slice(0, 1500);
+    data.settings.lastNewsSync = new Date().toISOString();
+    data.settings.lastNewsError = '';
+    save(data);
     if (win) win.webContents.send('news:updated', newsCache);
     return newsCache;
   } catch (error) {
+    data.settings.lastNewsError = error.message;
+    save(data);
     throw localizeError(error, data.settings?.locale);
   }
+}
+
+function recalculateBacktestBalance(data, backtestId) {
+  const backtest = (data.backtests || []).find((item) => item.id === backtestId);
+  if (!backtest) return null;
+  const riskPerR = Number(backtest.riskPerR || 0);
+  const trades = (data.backtestTrades || []).filter((item) => item.backtestId === backtestId);
+  for (const trade of trades) trade.pnl = (Number(trade.resultR) || 0) * riskPerR;
+  backtest.currentBalance = Number(backtest.startingCapital || 0) + trades.reduce((sum, trade) => sum + (Number(trade.pnl) || 0), 0);
+  backtest.updatedAt = new Date().toISOString();
+  return backtest;
 }
 
 function scheduleNewsAutoFetch() {
   const attempt = async () => {
     try {
       const data = read();
-      const provider = data.settings?.newsProvider || 'FMP';
-      // FREE provider يعمل بدون مفتاح - هذا هو الحل لمشكلة FMP المجاني الذي لا يدعم التقويم
-      if (provider !== 'FREE' && !newsKey()) return;
       await fetchNews();
     } catch (e) {
       logError('news:autoFetch', e);
@@ -585,21 +622,10 @@ function registerHandlers() {
 
   ipcMain.handle('news:status', () => {
     const data = read();
-    const provider = data.settings?.newsProvider || 'FMP';
-    const isFree = provider === 'FREE';
-    return { configured: isFree || !!newsKey(), count: newsCache.length, provider };
-  });
-  ipcMain.handle('news:provider', (_, provider) => {
-    const data = read();
-    data.settings.newsProvider = provider;
-    save(data);
-    return data.settings;
-  });
-  ipcMain.handle('news:key', (_, key) => {
-    setNewsKey(key);
-    return { configured: !!newsKey() };
+    return { configured: true, count: newsCache.length, provider: 'FOREX_FACTORY', lastSync: data.settings?.lastNewsSync || '', lastError: data.settings?.lastNewsError || '' };
   });
   ipcMain.handle('news:fetch', async () => fetchNews());
+
 
   ipcMain.handle('image:choose', async () => {
     const result = await dialog.showOpenDialog(win, {
@@ -766,9 +792,8 @@ function registerHandlers() {
     data.trades = data.trades.filter((item) => item.accountId !== accountId);
     data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== accountId);
 
-    const backtestIds = data.backtests.filter((item) => item.accountId === accountId).map((item) => item.id);
-    data.backtests = data.backtests.filter((item) => item.accountId !== accountId);
-    data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    // Backtest sessions are a separate simulation centre. Resetting a real
+    // account must never remove a trader's research or virtual capital.
     data.daily = data.daily.filter((item) => item.accountId !== accountId);
 
     const account = data.accounts.find((item) => item.id === accountId);
@@ -832,9 +857,8 @@ function registerHandlers() {
 
     closeFundedNextWatcher(id);
 
-    const backtestIds = (data.backtests || []).filter((item) => item.accountId === id).map((item) => item.id);
-    data.backtests = (data.backtests || []).filter((item) => item.accountId !== id);
-    data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    // Simulation sessions do not belong to a live account and survive account
+    // deletion; this prevents research from being silently destroyed.
     data.trades = (data.trades || []).filter((item) => item.accountId !== id);
     data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== id);
     data.daily = (data.daily || []).filter((item) => item.accountId !== id);
@@ -869,7 +893,12 @@ function registerHandlers() {
       id: crypto.randomUUID(),
       status: 'ACTIVE',
       createdAt: new Date().toISOString(),
-      accountId: payload.accountId,
+      // A backtest is a standalone virtual account. It only reads CISD
+      // signals; no real account, trade, balance or risk record is referenced.
+      startingCapital: Number(payload.startingCapital) || 100000,
+      currentBalance: Number(payload.startingCapital) || 100000,
+      currency: String(payload.currency || 'USD'),
+      riskPerR: Math.max(0, Number(payload.riskPerR) || 0),
       sourceCsvPath: csvPath,
       backtestCsvPath: payload.backtestCsvPath || '',
       filters: {
@@ -896,9 +925,23 @@ function registerHandlers() {
 
   ipcMain.handle('backtest:reset', (_, id) => {
     const data = read();
-    data.backtestSignals = (data.backtestSignals || []).filter((item) => item.backtestId !== id);
-    data.backtests = data.backtests.filter((item) => item.id !== id);
-    if (data.activeBacktestId === id) data.activeBacktestId = null;
+    const backtest = (data.backtests || []).find((item) => item.id === id);
+    if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
+
+    // Reset means replay this exact session, not delete it. Keep its name,
+    // filters and source; clear only decisions, simulated trades and P&L.
+    for (const signal of data.backtestSignals || []) {
+      if (signal.backtestId !== id) continue;
+      signal.status = 'NEW';
+      delete signal.resultR;
+      delete signal.reviewNote;
+      delete signal.reviewedAt;
+    }
+    data.backtestTrades = (data.backtestTrades || []).filter((item) => item.backtestId !== id);
+    backtest.currentBalance = Number(backtest.startingCapital || 0);
+    backtest.status = 'ACTIVE';
+    backtest.resetAt = new Date().toISOString();
+    data.activeBacktestId = id;
     save(data);
     return data;
   });
@@ -921,6 +964,59 @@ function registerHandlers() {
     signal.resultR = payload.resultR !== undefined ? Number(payload.resultR) : signal.resultR;
     signal.reviewNote = payload.note || '';
     signal.reviewedAt = new Date().toISOString();
+
+    // A scored signal is a real decision in this simulation. Mirror it into
+    // the isolated ledger so signal-based and manual entries share one P&L.
+    const resultStatuses = ['WIN', 'LOSS', 'BE'];
+    const backtest = (data.backtests || []).find((item) => item.id === signal.backtestId);
+    data.backtestTrades = data.backtestTrades || [];
+    const index = data.backtestTrades.findIndex((item) => item.backtestId === signal.backtestId && item.signalId === signal.id);
+    if (backtest && resultStatuses.includes(String(signal.status).toUpperCase())) {
+      const row = {
+        backtestId: signal.backtestId, signalId: signal.id,
+        symbol: String(signal.Instrument || '').toUpperCase(),
+        side: String(signal.Direction || '').startsWith('-') ? 'Sell' : 'Buy',
+        resultR: Number(signal.resultR || 0), note: signal.reviewNote,
+        date: String(signal.signalAt || signal.importedAt || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
+        updatedAt: new Date().toISOString(), source: 'signal',
+      };
+      if (index >= 0) data.backtestTrades[index] = { ...data.backtestTrades[index], ...row };
+      else data.backtestTrades.unshift({ ...row, id: crypto.randomUUID(), createdAt: new Date().toISOString() });
+      recalculateBacktestBalance(data, signal.backtestId);
+    } else if (index >= 0) {
+      data.backtestTrades.splice(index, 1);
+      recalculateBacktestBalance(data, signal.backtestId);
+    }
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('backtest:trade:add', (_, backtestId, payload = {}) => {
+    const data = read();
+    const backtest = (data.backtests || []).find((item) => item.id === backtestId && item.status !== 'ARCHIVED');
+    if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
+    const resultR = Number(payload.resultR || 0);
+    const trade = {
+      id: crypto.randomUUID(), backtestId, symbol: String(payload.symbol || '').toUpperCase(),
+      side: payload.side === 'Sell' ? 'Sell' : 'Buy', resultR,
+      note: String(payload.note || ''), signalId: String(payload.signalId || ''),
+      date: payload.date || new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString(),
+    };
+    if (!trade.symbol) throw new Error('Backtest trade requires a symbol');
+    data.backtestTrades = data.backtestTrades || [];
+    data.backtestTrades.unshift(trade);
+    // The virtual ledger changes only this simulation balance.
+    recalculateBacktestBalance(data, backtestId);
+    save(data);
+    return data;
+  });
+
+  ipcMain.handle('backtest:trade:delete', (_, tradeId) => {
+    const data = read();
+    const trade = (data.backtestTrades || []).find((item) => item.id === tradeId);
+    if (!trade) throw new Error('Backtest trade not found');
+    data.backtestTrades = data.backtestTrades.filter((item) => item.id !== tradeId);
+    recalculateBacktestBalance(data, trade.backtestId);
     save(data);
     return data;
   });
@@ -1054,6 +1150,27 @@ function registerHandlers() {
     return { cancelled: false, path: result.filePaths[0] };
   });
 
+  ipcMain.handle('signals:reset-decisions', (_, accountId) => {
+    const data = read();
+    for (const signal of data.signals || []) {
+      if (signal.decisions) delete signal.decisions[accountId];
+    }
+    writeSignalDecisionsFile(data, accountId);
+    save(data);
+    return data;
+  });
+  ipcMain.handle('signals:fresh-start', (_, accountId) => {
+    const data = read();
+    const account = ensureAccount(data, accountId);
+    account.signalFreshSince = new Date().toISOString();
+    for (const signal of data.signals || []) {
+      if (signal.decisions) delete signal.decisions[accountId];
+    }
+    writeSignalDecisionsFile(data, accountId);
+    save(data);
+    return data;
+  });
+
   ipcMain.handle('signal:status', (_, id, accountId, status, reason) => {
     const data = read();
     const signal = data.signals.find((item) => item.SignalID === id);
@@ -1064,6 +1181,15 @@ function registerHandlers() {
         reason: reason || '',
         updatedAt: new Date().toISOString(),
       };
+      // A locked JForex folder must never make the trader's decision vanish.
+      // Save locally first, then report an export problem for the chart layer.
+      try {
+        writeSignalDecisionsFile(data, accountId);
+        data.settings.lastDecisionExportError = '';
+      } catch (error) {
+        data.settings.lastDecisionExportError = error.message || 'Could not write the chart decisions file';
+        logError('writeSignalDecisionsFile', error);
+      }
       save(data);
     }
     return data;

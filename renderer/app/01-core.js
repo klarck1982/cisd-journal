@@ -18,6 +18,8 @@ const model = {
   calendar: null,
   calendarMonth: null,
   dailyDraft: { mood: '' },
+  // Empty means today; set from the calendar when reviewing an earlier day.
+  dailyDay: '',
   fundingAccess: null,
   runtimeReadiness: null,
   page: 'overview',
@@ -38,7 +40,8 @@ const model = {
   welcomeStep: 0,
   welcomeCsvPath: '',
   backtestCsvPath: '',
-  dashboardDensity: 'comfortable',
+  dashboardDensity: 'compact',
+  signalsView: 'pending',
   search: {
     signals: '',
     journal: '',
@@ -73,8 +76,10 @@ function persistUiState() {
       selectedBacktestId: model.selectedBacktestId,
       filters: model.filters,
       search: model.search,
+      signalsView: model.signalsView,
       quickStartDismissed: model.quickStartDismissed,
       calendarMonth: model.calendarMonth,
+      dailyDay: model.dailyDay,
       dashboardDensity: model.dashboardDensity,
     }));
   } catch {}
@@ -90,8 +95,10 @@ function restoreUiState() {
     if (saved.selectedBacktestId) model.selectedBacktestId = saved.selectedBacktestId;
     if (saved.filters) model.filters = { ...model.filters, ...saved.filters };
     if (saved.search) model.search = { ...model.search, ...saved.search };
+    if (saved.signalsView) model.signalsView = saved.signalsView;
     if (saved.quickStartDismissed) model.quickStartDismissed = true;
     if (saved.calendarMonth) model.calendarMonth = saved.calendarMonth;
+    if (saved.dailyDay) model.dailyDay = saved.dailyDay;
     if (saved.dashboardDensity) model.dashboardDensity = saved.dashboardDensity;
   } catch {}
 }
@@ -321,6 +328,8 @@ function signalDisplayState(signal) {
 
   const status = String(decision?.status || 'NEW').toUpperCase();
   if (status === 'MISSED') return { key: 'missed', cls: 'bad', label: t('signals.status.missed'), decision };
+  if (status === 'IGNORED') return { key: 'ignored', cls: 'neutral', label: t('signals.status.ignored'), decision };
+  if (status === 'REVIEW') return { key: 'review', cls: 'warn', label: t('signals.status.review'), decision };
   if (['ORDER_PLACED', 'EXECUTED', 'ENTERED', 'FILLED', 'TAKEN'].includes(status)) return { key: 'executed', cls: 'safe', label: t('signals.status.executed'), decision };
   return { key: 'pending', cls: 'warn', label: t('signals.status.pending'), decision: null };
 }

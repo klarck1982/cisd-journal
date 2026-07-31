@@ -50,6 +50,10 @@ function bindEvents() {
   };
 
   $('#calendarMonthSelect').addEventListener('change', changeCalendarMonth);
+  $('#closeCalendarDayModal').onclick = closeCalendarDay;
+  $('#closeCalendarDayBtn').onclick = closeCalendarDay;
+  $('#saveCalendarDayNote').onclick = saveCalendarDayNote;
+  $('#calendarDayModal').addEventListener('click', (event) => { if (event.target.id === 'calendarDayModal') closeCalendarDay(); });
   $('#saveMorningBtn').onclick = saveMorning;
   $('#saveEveningBtn').onclick = saveEvening;
 
@@ -92,9 +96,22 @@ function bindEvents() {
     await refreshStateAndRender();
     toast(t('messages.refreshed'), 'success');
   };
+  $('#signalsResetDecisionsBtn').onclick = async () => {
+    const ok = await openConfirm({ title: t('signals.reset.resetDecisions'), text: t('signals.reset.resetDecisionsConfirm'), confirmLabel: t('signals.reset.resetDecisions') });
+    if (!ok) return;
+    model.state = await runBusy(t('ui.loading'), () => cisd.resetSignalDecisions(model.accountId));
+    await refreshSnapshots(); render(); toast('تم تصفير قرارات الإشارات ✓', 'success');
+  };
+  $('#signalsFreshStartBtn').onclick = async () => {
+    const ok = await openConfirm({ title: t('signals.reset.freshStart'), text: t('signals.reset.freshStartConfirm'), confirmLabel: t('signals.reset.freshStart') });
+    if (!ok) return;
+    model.state = await runBusy(t('ui.loading'), () => cisd.freshSignalStart(model.accountId));
+    await refreshSnapshots(); render(); toast('بدأت متابعة جديدة من الآن ✓', 'success');
+  };
 
   $('#tradeForm').addEventListener('submit', saveTrade);
   $('#backtestForm').addEventListener('submit', startBacktest);
+  $('#backtestManualTradeForm').addEventListener('submit', saveManualBacktestTrade);
   const chooseBacktestCsvBtn = $('#chooseBacktestCsvBtn');
   if (chooseBacktestCsvBtn) chooseBacktestCsvBtn.onclick = chooseBacktestCsv;
   const clearBacktestCsvBtn = $('#clearBacktestCsvBtn');
@@ -115,7 +132,6 @@ function bindEvents() {
     renderJournal();
   };
   $('#fundingAccessModeInput').addEventListener('change', toggleFundingAccessFields);
-  $('#newsProvider').addEventListener('change', toggleNewsFields);
   $('#saveFundingAccessBtn').onclick = saveFundingAccess;
   $('#syncFundingAccessBtn').onclick = syncFundingAccessNow;
   $('#openFundingAccessBtn').onclick = openFundingAccess;
@@ -135,7 +151,6 @@ function bindEvents() {
   $('#savePreferencesBtn').onclick = savePreferences;
   $('#chooseTerminalBtn').onclick = chooseTerminal;
   $('#openTerminalBtn').onclick = openTerminal;
-  $('#saveNewsSettingsBtn').onclick = saveNewsSettings;
   $('#testNewsBtn').onclick = () => loadNews(false);
   $('#backupBtn').onclick = backupData;
   $('#restoreBtn').onclick = restoreData;
@@ -165,6 +180,10 @@ function bindEvents() {
   $('#tradeEditModal').addEventListener('click', (event) => {
     if (event.target.id === 'tradeEditModal') closeTradeEditModal();
   });
+  $('#closeTradeDetailModal').onclick = closeTradeDetailModal;
+  $('#tradeDetailCloseBtn').onclick = closeTradeDetailModal;
+  $('#tradeDetailEditBtn').onclick = () => { const id = model.detailTradeId; closeTradeDetailModal(); if (id) openTradeEditModal(id); };
+  $('#tradeDetailModal').addEventListener('click', (event) => { if (event.target.id === 'tradeDetailModal') closeTradeDetailModal(); });
 
   // --- Account lifecycle -----------------------------------------------------
   $('#archiveAccountBtn').onclick = archiveCurrentAccount;
@@ -175,6 +194,7 @@ function bindEvents() {
   $('#welcomeBack').onclick = welcomeBack;
   $('#welcomeSkip').onclick = finishWelcome;
   $('#welcomeChooseCsv').onclick = chooseWelcomeCsv;
+  $('#welcomeConnectionMode').onchange = toggleWelcomeConnectionFields;
   $$('[data-welcome-locale]').forEach((button) => {
     button.onclick = () => chooseWelcomeLocale(button.dataset.welcomeLocale);
   });

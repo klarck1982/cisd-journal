@@ -1620,3 +1620,105 @@ body.density-compact .calendar-cell { min-height: 48px; padding: 4px 6px; }
 .dashboard-item.dragging { opacity: 0.4; transform: scale(0.98); }
 .dashboard-item.drag-over { outline: 2px dashed var(--blue-edge); outline-offset: 2px; border-radius: var(--radius); }
 #overviewDashboard .panel { position: relative; }
+
+/* The account is the trader's starting point, not a hidden sidebar setting. */
+.overview-accounts { display: grid; gap: 10px; margin: 4px 0 2px; }
+.overview-accounts-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.overview-accounts-head p { margin: 5px 0 0; }
+.account-rail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  overflow: visible;
+}
+.overview-accounts .account-card { min-height: 106px; padding: 12px; text-align: start; cursor: pointer; }
+.overview-accounts .account-card.active { background: linear-gradient(135deg, var(--panel), var(--blue-wash)); }
+@media (max-width: 980px) { .overview-accounts-head { align-items: start; } .account-rail { grid-template-columns: 1fr; } }
+
+.attention-panel { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: linear-gradient(135deg, var(--panel), var(--s-2)); }
+.attention-panel h2 { margin: 0; font-size: var(--t-lg); }
+.attention-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 12px; }
+.attention-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 72px; padding: 12px; border: 1px solid var(--line-subtle); border-radius: var(--radius-md); background: var(--s-base); }
+.attention-item strong, .attention-item span { display: block; }
+.attention-item span { margin-top: 3px; color: var(--muted); font-size: var(--t-xs); }
+.attention-item.safe { border-color: var(--green-edge); }
+.attention-item.warn { border-color: var(--yellow-edge); }
+.attention-item.bad { border-color: var(--red-edge); }
+
+.trade-detail-card { width: min(900px, calc(100vw - 40px)); }
+.trade-detail-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+.trade-detail-summary .stack-row { padding: 10px; border: 1px solid var(--line-subtle); border-radius: var(--radius-sm); background: var(--s-2); }
+.trade-detail-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.trade-detail-charts h4 { margin: 0 0 8px; font-size: var(--t-sm); color: var(--muted); }
+.trade-detail-image { min-height: 190px; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--s-2); color: var(--muted); }
+.trade-detail-image img { display: block; width: 100%; max-height: 360px; object-fit: contain; }
+@media (max-width: 700px) { .trade-detail-summary, .trade-detail-charts { grid-template-columns: 1fr; } }
+
+.calendar-cell { cursor: pointer; text-align: inherit; font: inherit; color: inherit; }
+.calendar-cell.today { outline: 2px solid var(--blue); outline-offset: -2px; box-shadow: 0 0 0 3px var(--blue-wash); }
+.calendar-cell.today .calendar-day { color: var(--blue); font-weight: 800; }
+.signal-timeframe-board{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:10px;overflow-x:auto}.signal-tf-column{min-width:220px;padding:10px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--s-2)}.signal-tf-column h4{margin:0 0 8px;color:var(--blue)}
+
+/* Signal board: each timeframe owns a fixed-width vertical lane. This prevents
+   action buttons and long instrument names from spilling into neighbouring lanes. */
+.signal-timeframe-board {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 2px 2px 12px;
+  scroll-snap-type: x proximity;
+}
+.signal-tf-column {
+  flex: 0 0 260px;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.signal-tf-column .signal-card { min-width: 0; overflow: hidden; }
+.signal-tf-column .item-title,
+.signal-tf-column .item-subtitle { overflow-wrap: anywhere; }
+.signal-tf-column .item-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.signal-tf-column .item-actions button {
+  min-width: 0;
+  width: 100%;
+  padding-inline: 7px;
+  white-space: normal;
+  line-height: 1.25;
+  font-size: var(--t-xs);
+}
+
+/* Premium signal decisions: one clear primary choice, then quiet alternatives. */
+.signal-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.signal-actions button { min-width: 0; min-height: 34px; padding: 7px 8px; white-space: normal; line-height: 1.2; font-size: var(--t-xs); }
+.signal-actions .signal-primary-action { grid-column: 1 / -1; justify-content: center; font-weight: 700; }
+.signal-actions .signal-log-action { grid-column: 1 / -1; }
+.signal-card.executed .signal-primary-action,
+.signal-card.missed .signal-primary-action,
+.signal-card.ignored .signal-primary-action,
+.signal-card.review .signal-primary-action { margin-top: 2px; }
+
+/* Final interaction polish: controls stay aligned, readable and usable during a live session. */
+.panel-head { flex-wrap: wrap; }
+.panel-head > div { min-width: 0; }
+.button-row, .head-actions, .toolbar-inline { flex-wrap: wrap; }
+button { min-height: 34px; }
+button.primary { box-shadow: 0 4px 14px var(--blue-wash); }
+button.ghost { max-width: 100%; overflow-wrap: anywhere; }
+.item { min-width: 0; }
+.item-head > * { min-width: 0; }
+.item-title, .item-subtitle, .inline-note { overflow-wrap: anywhere; }
+.status-dock .status-pill { min-width: 0; }
+.status-dock strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signal-card.review { border-inline-start-color: var(--yellow); }
+.signal-card.ignored { border-inline-start-color: var(--muted); }
+.signal-card .chip { flex-shrink: 0; }
+.page-head .head-actions { justify-content: flex-end; }
+@media (max-width: 1180px) {
+  .page-head { align-items: flex-start; }
+  .page-head .head-actions { justify-content: flex-start; }
+}
+.calendar-cell.has-note::after{content:'●';color:var(--blue);font-size:var(--t-xs);position:absolute;inset-inline-end:7px;inset-block-end:5px}.calendar-cell{position:relative}.calendar-day-section{display:grid;gap:8px;margin-top:16px}.calendar-day-section h4{margin:0;font-size:var(--t-sm)}

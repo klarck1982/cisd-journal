@@ -92,16 +92,11 @@ async function savePreferences() {
 }
 
 async function saveNewsSettings() {
+  // Forex Factory is the one built-in source: this button now simply verifies
+  // and refreshes it, with no provider choice or private API key to manage.
   try {
-    await runBusy(t('ui.loading'), async () => {
-      await cisd.saveNewsProvider($('#newsProvider').value);
-      const key = $('#newsKey').value.trim();
-      if (key) await cisd.saveNewsKey(key);
-    });
-    $('#newsKey').value = '';
+    await loadNews(false);
     await refreshStateAndRender();
-    await loadNews(true);
-    toast(t('messages.newsSettingsSaved'), 'success');
   } catch (error) {
     toast(`${t('ui.error')}: ${error.message}`, 'error');
   }
@@ -151,7 +146,6 @@ async function saveTrade(event) {
   render();
   toast(t('messages.tradeSaved'), 'success');
 }
-
 async function chooseBacktestCsv() {
   try {
     const result = await cisd.chooseBacktestCsv();
@@ -164,13 +158,11 @@ async function chooseBacktestCsv() {
     toast(`${t('ui.error')}: ${error.message}`, 'error');
   }
 }
-
 function clearBacktestCsv() {
   model.backtestCsvPath = '';
   $('#backtestCsvPathLabel').textContent = t('backtest.create.defaultCsvHint') || 'يستخدم الملف الحي الافتراضي';
   $('#clearBacktestCsvBtn').classList.add('hidden');
 }
-
 async function toggleDensity() {
   const current = model.state?.settings?.dashboardDensity || model.dashboardDensity || 'comfortable';
   const next = current === 'compact' ? 'comfortable' : 'compact';
@@ -190,8 +182,10 @@ async function toggleDensity() {
 async function startBacktest(event) {
   event.preventDefault();
   const payload = {
-    accountId: model.accountId,
     name: $('#backtestName').value.trim() || t('backtest.create.defaultName'),
+    startingCapital: Number($('#backtestCapital').value || 100000),
+    currency: $('#backtestCurrency').value,
+    riskPerR: Number($('#backtestRiskPerR').value || 0),
     start: $('#backtestStart').value,
     end: $('#backtestEnd').value,
     session: $('#backtestSession').value,
@@ -217,14 +211,15 @@ async function startBacktest(event) {
 }
 
 function openAccountModal() {
-  $('#accountModalFirm').value = 'FundingPips';
+  // A new account must start as the trader's account, not as a hidden demo.
+  $('#accountModalFirm').value = '';
   $('#accountModalName').value = '';
-  $('#accountModalCapital').value = '100000';
+  $('#accountModalCapital').value = '';
   $('#accountModalCurrency').value = 'USD';
   $('#accountModalPhase').value = 'Challenge';
-  $('#accountModalTarget').value = '10';
-  $('#accountModalDailyLoss').value = '5';
-  $('#accountModalDrawdown').value = '10';
+  $('#accountModalTarget').value = '';
+  $('#accountModalDailyLoss').value = '';
+  $('#accountModalDrawdown').value = '';
   $('#accountModal').classList.remove('hidden');
   $('#accountModalFirm').focus();
 }

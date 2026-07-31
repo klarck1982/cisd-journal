@@ -11,7 +11,7 @@
  * guard the product exists to provide is inert. Better to ask once at setup.
  */
 
-const WELCOME_STEPS = 4;
+const WELCOME_STEPS = 5;
 
 function isOnboardingPending() {
   return model.state?.settings?.onboardingComplete !== true;
@@ -45,6 +45,7 @@ function renderWelcome() {
     : t('welcome.next');
 
   $('#welcomeCsvPath').textContent = model.welcomeCsvPath || t('welcome.csv.none');
+  toggleWelcomeConnectionFields();
 
   $$('[data-welcome-locale]').forEach((button) => {
     button.classList.toggle('active', button.dataset.welcomeLocale === (model.state?.settings?.locale || 'ar'));
@@ -103,7 +104,40 @@ async function commitWelcomeStep() {
     return true;
   }
 
+  if (model.welcomeStep === 3) {
+    const mode = $('#welcomeConnectionMode').value;
+    if (mode === 'none') return true;
+    const payload = mode === 'investor_pass'
+      ? { mode, investorLogin: $('#welcomeInvestorLogin').value.trim(), investorServer: $('#welcomeInvestorServer').value.trim(), investorPassword: $('#welcomeInvestorPassword').value }
+      : { mode, sharedDashboardUrl: $('#welcomeSharedUrl').value.trim() };
+    try {
+      const result = await runBusy(t('ui.loading'), () => cisd.saveFundingAccess(model.accountId, payload));
+      model.state = result.state;
+      model.fundingAccess = result.fundingAccess;
+      $('#welcomeConnectionStatus').textContent = 'تم حفظ طريقة الربط ✓';
+      // Try once now so a successful link is visible before the user reaches Home.
+      try {
+        const synced = await runBusy(t('ui.loading'), () => cisd.syncFundingAccess(model.accountId));
+        model.state = synced.state;
+        $('#welcomeConnectionStatus').textContent = 'تم الاتصال وجلب بيانات الحساب ✓';
+      } catch (error) {
+        $('#welcomeConnectionStatus').textContent = `تعذر جلب البيانات الآن: ${error.message}`;
+      }
+      return true;
+    } catch (error) {
+      $('#welcomeConnectionStatus').textContent = error.message;
+      return false;
+    }
+  }
+
   return true;
+}
+
+function toggleWelcomeConnectionFields() {
+  const mode = $('#welcomeConnectionMode')?.value || 'none';
+  $$('.welcome-step .investor-field').forEach((el) => el.classList.toggle('hidden', mode !== 'investor_pass'));
+  $$('.welcome-step .shared-url-field').forEach((el) => el.classList.toggle('hidden', mode !== 'shared_url'));
+  if (mode === 'none') $('#welcomeConnectionStatus').textContent = t('welcome.connection.later');
 }
 
 async function welcomeNext() {

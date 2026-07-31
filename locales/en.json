@@ -101,7 +101,30 @@
       "newsAction": "Open settings",
       "done": "Setup complete",
       "dismiss": "Hide this"
-    }
+    },
+    "accountsHint": "Choose an account to see its status, open positions, and what needs attention now.",
+    "attentionTitle": "What needs your attention now?",
+    "attentionHint": "Start with the most important item, then continue your day calmly.",
+    "attentionClear": "Everything is under control today",
+    "attentionClearHint": "There are no alerts or pending actions right now.",
+    "attentionRisk": "Risk warning",
+    "attentionRiskHint": "Review account limits before making another decision.",
+    "attentionPositions": "Open positions",
+    "attentionPositionsHint": "Review current positions before entering a new one.",
+    "attentionSignals": "New signals",
+    "attentionSignalsHint": "CISD signals are waiting for your decision.",
+    "attentionPlan": "Today’s plan",
+    "attentionPlanHint": "You have not started today’s plan or completed its review.",
+    "attentionOpen": "Open now",
+    "attentionReview": "Daily review",
+    "attentionReviewHint": "Record what worked and what to improve before closing the day.",
+    "attentionPlanReady": "Today’s plan is ready",
+    "attentionPlanReadyHint": "Your plan is saved. Focus on disciplined execution now.",
+    "attentionReviewDone": "Daily review complete",
+    "attentionReviewDoneHint": "Today’s lesson is saved and available from the calendar.",
+    "positionsTitle": "Open positions",
+    "positionsHint": "Trades that are still open on this account",
+    "noPositions": "No open positions right now"
   },
   "signals": {
     "kicker": "Signal execution review",
@@ -112,7 +135,10 @@
       "refresh": "Refresh snapshots",
       "entered": "Entered",
       "missed": "Missed",
-      "logTrade": "Log trade"
+      "logTrade": "Log trade",
+      "ignored": "Ignored",
+      "ignoredHint": "Weak signal",
+      "review": "Review later"
     },
     "sourceTitle": "Signal source",
     "summaryTitle": "Discipline snapshot",
@@ -126,7 +152,9 @@
     "status": {
       "pending": "Pending",
       "executed": "Entered",
-      "missed": "Missed"
+      "missed": "Missed",
+      "review": "Review later",
+      "ignored": "Ignored"
     },
     "metrics": {
       "total": "Signals",
@@ -153,6 +181,15 @@
         "late": "Late execution",
         "rule-break": "Rule conflict"
       }
+    },
+    "filterNew": "New signals only",
+    "filterAll": "All signals",
+    "newFirstHint": "Shows signals that need your decision first",
+    "reset": {
+      "resetDecisions": "Reset my decisions",
+      "freshStart": "Start tracking from now",
+      "resetDecisionsConfirm": "This clears ENTERED, SKIPPED, IGNORED and REVIEW decisions only. Original CISD signals stay saved.",
+      "freshStartConfirm": "Earlier signals will no longer appear in the active board. Tracking starts with incoming signals; history stays saved."
     }
   },
   "journal": {
@@ -210,7 +247,15 @@
     "updated": "Trade updated ✓",
     "deleted": "Trade deleted ✓",
     "saveEdit": "Save changes",
-    "cancelEdit": "Cancel"
+    "cancelEdit": "Cancel",
+    "detailTitle": "Trade details",
+    "detailEdit": "Edit trade",
+    "detailBefore": "Chart before entry",
+    "detailAfter": "Chart after exit",
+    "detailNoImage": "No image attached",
+    "detailClose": "Close",
+    "detailOpen": "Open details",
+    "detailSignal": "Linked to a CISD signal"
   },
   "backtest": {
     "kicker": "Practice Table - Train Before Live",
@@ -232,7 +277,24 @@
       "csvLabel": "Backtest CSV (optional)",
       "csvHint": "If empty, uses live file but filters only your chosen period to match JForex",
       "chooseCsv": "Choose Backtest CSV",
-      "clearCsv": "Clear"
+      "clearCsv": "Clear",
+      "capital": "Virtual starting capital",
+      "currency": "Backtest currency",
+      "separateHint": "A separate virtual account — never affects a live account",
+      "riskPerR": "Risk amount per 1R",
+      "manualTitle": "Add a manual backtest trade",
+      "manualHint": "Saved here only; it never enters live-account records",
+      "manualSymbol": "Symbol",
+      "manualSide": "Direction",
+      "manualResult": "Result (R)",
+      "manualNote": "Note",
+      "manualSave": "Save backtest trade",
+      "manualSaved": "Backtest trade saved and virtual balance updated ✓",
+      "virtualBalance": "Virtual balance",
+      "virtualPnL": "Backtest profit/loss",
+      "ledgerTitle": "Backtest trade ledger",
+      "ledgerHint": "Trades in this centre only — never shown in the live journal",
+      "ledgerDelete": "Delete from backtest"
     },
     "library": {
       "title": "Backtest library",
@@ -241,7 +303,7 @@
       "open": "Open",
       "refresh": "Re-import",
       "reset": "Reset",
-      "resetConfirm": "This backtest session and all its reviewed signals will be deleted. Continue?",
+      "resetConfirm": "The session name, period and filters stay. Decisions, backtest trades and virtual balance reset so you can replay it again.",
       "stop": "Finish session",
       "stopConfirm": "This session will be marked finished. Its data is kept.",
       "archive": "Archive",
@@ -490,7 +552,11 @@
     "lastAccountBlocked": "The last account cannot be deleted. Create another account first.",
     "resetKeepsLimits": "Your risk limits (target, daily loss, drawdown) are preserved.",
     "archivedTitle": "Archived accounts",
-    "restoreAccount": "Restore"
+    "restoreAccount": "Restore",
+    "newsSettingsTitle": "Economic news",
+    "forexFactoryOnly": "Forex Factory is the only news source. No API key or sign-up is needed; only high-impact events are shown.",
+    "newsLastSync": "Last successful update",
+    "newsUpdateFailed": "Update failed"
   },
   "warnings": {
     "ALL_CLEAR": "No active risk warnings.",
@@ -921,7 +987,7 @@
   "welcome": {
     "kicker": "Welcome",
     "title": "Let us set up CISD Journal in a minute",
-    "subtitle": "Four short steps. Everything can be changed later in Settings.",
+    "subtitle": "Five short steps. You can change everything later in Settings.",
     "skip": "Skip for now",
     "back": "Back",
     "next": "Next",
@@ -944,7 +1010,17 @@
       "hint": "Optional. You can link it later from the Signals page.",
       "none": "No file selected"
     },
-    "done": "Setup complete ✓"
+    "done": "Setup complete ✓",
+    "connection": {
+      "title": "Connect account data",
+      "hint": "Optional for now. Use Investor Pass or a firm dashboard link, or connect later.",
+      "mode": "Connection method",
+      "login": "Account number",
+      "server": "Server name",
+      "password": "Investor Pass",
+      "url": "Firm dashboard link",
+      "later": "You can finish connecting from Settings at any time."
+    }
   },
   "alerts": {
     "nearDailyLoss": "Approaching the daily loss limit — {{remaining}} left",
@@ -956,6 +1032,14 @@
   "calendar": {
     "pageTitle": "Monthly calendar",
     "pageDescription": "A single monthly view showing which days work for you and how you behave after a win or a loss.",
-    "openDay": "Open day review"
+    "openDay": "Open day review",
+    "openDayHint": "Click any day to open its summary and review.",
+    "dayDetails": "Day details",
+    "note": "Day note",
+    "saveNote": "Save day note",
+    "saved": "Day note saved ✓",
+    "news": "High-impact news that day",
+    "noNews": "No saved news for this day",
+    "noteMarker": "Contains a note"
   }
 }

@@ -13,9 +13,12 @@ const app = { getPath: () => dir };
 const store = createStore(app);
 let data = store.initial();
 
-// Configure two independent accounts
-data.accounts[0] = { ...data.accounts[0], capital: 100000, currentBalance: 100000, dailyLoss: 3, maxDrawdown: 10, profitTarget: 10 };
-data.accounts[1] = { ...data.accounts[1], capital: 50000, currentBalance: 50000, dailyLoss: 3, maxDrawdown: 6, profitTarget: 8 };
+// Configure two independent accounts. New installations intentionally have no
+// pre-created firm accounts, so the test creates the accounts explicitly.
+data.accounts = [
+  { id: 'fundingpips', firm: 'FundingPips', capital: 100000, currentBalance: 100000, dailyLoss: 3, maxDrawdown: 10, profitTarget: 10, currency: 'USD' },
+  { id: 'fundednext', firm: 'FundedNext', capital: 50000, currentBalance: 50000, dailyLoss: 3, maxDrawdown: 6, profitTarget: 8, currency: 'USD' },
+];
 
 // FundedNext: one closed trade and one open position in the same CSV
 const fn = `Ticket ID,Open Time,Open Price,Close Time,Close Price,Profit,Lots,Commission,Swap,Symbol,Type,SL,TP,Pips,Volume\nF-1,2026.07.24 10:00:00,4000,2026-07-24 11:00:00,4010,20,0.1,-1,0,XAUUSD,Buy,3980,4040,1000,10\nF-2,2026.07.24 10:05:00,20000,Currently Running,20020,-5,0.1,0,0,NDX100,Sell,20100,19800,-500,10`;
@@ -48,7 +51,7 @@ sig.decisions = { fundingpips: { status: 'ORDER_PLACED' }, fundednext: { status:
 assert.notEqual(sig.decisions.fundingpips.status, sig.decisions.fundednext.status);
 
 // Backtest import from the same CSV with time/session/symbol/TF filters
-const backtest = { id: 'bt-1', accountId: 'fundingpips', name: 'London Gold', filters: { start: '2026-07-24', end: '2026-07-24', session: 'London', symbol: 'XAUUSD', tf: '15m' } };
+const backtest = { id: 'bt-1', startingCapital: 100000, currentBalance: 100000, currency: 'USD', name: 'London Gold', filters: { start: '2026-07-24', end: '2026-07-24', session: 'London', symbol: 'XAUUSD', tf: '15m' } };
 data.backtests.push(backtest);
 result = importBacktestSignalsText(data, signalsCsv, backtest, 'signals.csv', { recordNoop: true });
 assert.equal(result.count, 1);
@@ -80,9 +83,9 @@ assert.equal(analytics.totals.count, 1);
 assert.equal(analytics.totals.net, 19);
 assert.equal(analytics.breakdowns.bySource[0].label, 'imported');
 
-const backtestAnalytics = buildAccountAnalyticsSnapshot(data, 'fundingpips', { source: 'backtest' });
-assert.equal(backtestAnalytics.totals.count, 1);
-assert.equal(backtestAnalytics.totals.net, 1);
+// A standalone backtest must not leak into real-account analytics.
+const realAccountAnalytics = buildAccountAnalyticsSnapshot(data, 'fundingpips', { source: 'backtest' });
+assert.equal(realAccountAnalytics.totals.count, 0);
 
 // Backup simulation
 const backup = path.join(dir, 'backup.json');

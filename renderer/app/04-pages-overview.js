@@ -71,6 +71,41 @@ function renderOverviewHero(account, dashboard) {
   `;
 }
 
+function renderAttentionQueue(account, dashboard) {
+  const today = model.daily?.todaySummary;
+  const pendingSignals = allLiveSignalsForAccount().filter((signal) => signalDisplayState(signal).key === 'pending').length;
+  const items = [];
+  if (dashboard.risk.warnings?.length) items.push({ tone: 'bad', title: t('overview.attentionRisk'), hint: t('overview.attentionRiskHint'), page: 'overview' });
+  if (dashboard.risk.openPositions?.count) items.push({ tone: 'warn', title: `${t('overview.attentionPositions')} · ${dashboard.risk.openPositions.count}`, hint: t('overview.attentionPositionsHint'), page: 'data' });
+  if (pendingSignals) items.push({ tone: 'warn', title: `${t('overview.attentionSignals')} · ${pendingSignals}`, hint: t('overview.attentionSignalsHint'), page: 'signals' });
+  // Planning and review are distinct steps. A saved morning plan must be
+  // visible as progress, while an unfinished evening review remains actionable.
+  if (!today?.plan) {
+    items.push({ tone: 'neutral', title: t('overview.attentionPlan'), hint: t('overview.attentionPlanHint'), page: 'daily' });
+  } else if (!today?.reviewedAt) {
+    items.push({ tone: 'safe', title: t('overview.attentionPlanReady'), hint: t('overview.attentionPlanReadyHint'), page: 'daily' });
+    items.push({ tone: 'neutral', title: t('overview.attentionReview'), hint: t('overview.attentionReviewHint'), page: 'daily' });
+  } else {
+    items.push({ tone: 'safe', title: t('overview.attentionReviewDone'), hint: t('overview.attentionReviewDoneHint'), page: 'daily' });
+  }
+  if (!items.length) items.push({ tone: 'safe', title: t('overview.attentionClear'), hint: t('overview.attentionClearHint'), page: '' });
+
+  $('#overviewAttentionList').innerHTML = items.map((item) => `
+    <article class="attention-item ${item.tone}">
+      <div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.hint)}</span></div>
+      ${item.page ? `<button class="ghost small" data-attention-page="${escapeHtml(item.page)}">${escapeHtml(t('overview.attentionOpen'))}</button>` : ''}
+    </article>
+  `).join('');
+  $$('[data-attention-page]').forEach((button) => {
+    button.onclick = () => {
+      model.page = button.dataset.attentionPage;
+      persistUiState();
+      renderActivePage();
+      renderWorkspaceStatus();
+    };
+  });
+}
+
 function renderQuickStart() {
   const panel = $('#quickStartPanel');
   const account = activeAccount();
@@ -135,6 +170,7 @@ function renderOverview() {
   if (!account || !dashboard) return;
 
   renderQuickStart();
+  renderAttentionQueue(account, dashboard);
   renderOverviewHero(account, dashboard);
 
   $('#overviewHealthCards').innerHTML = [
@@ -177,6 +213,14 @@ function renderOverview() {
     <div class="stack-row"><span class="label">${escapeHtml(t('overview.challenge.target'))}</span><span class="value">${dashboard.risk.challenge.targetAmount === null ? '—' : escapeHtml(formatCurrency(dashboard.risk.challenge.targetAmount, account.currency))}</span></div>
     <div class="stack-row"><span class="label">${escapeHtml(t('overview.challenge.remaining'))}</span><span class="value">${dashboard.risk.challenge.challengeRemaining === null ? '—' : escapeHtml(formatCurrency(dashboard.risk.challenge.challengeRemaining, account.currency))}</span></div>
   `;
+
+  const positions = (model.state?.openPositions || []).filter((position) => position.accountId === account.id);
+  $('#overviewPositionsList').innerHTML = positions.length ? positions.map((position) => `
+    <article class="item">
+      <div class="item-head"><div><div class="item-title">${escapeHtml(position.symbol || '')} · ${escapeHtml(position.side || '')}</div><div class="item-subtitle">${escapeHtml(position.ticket || '')}</div></div><strong class="${classForSigned(position.netProfit)}">${Number(position.netProfit) > 0 ? '+' : ''}${escapeHtml(formatCurrency(position.netProfit || 0, account.currency))}</strong></div>
+      <div class="item-meta"><span class="tag neutral">${escapeHtml(t('overview.health.openPnl'))}: ${escapeHtml(formatNumber(position.netProfit || 0, 2))}</span>${position.sl ? `<span class="tag neutral">SL ${escapeHtml(String(position.sl))}</span>` : ''}${position.tp ? `<span class="tag neutral">TP ${escapeHtml(String(position.tp))}</span>` : ''}</div>
+    </article>
+  `).join('') : emptyState(t('overview.noPositions'));
 
   $('#overviewNewsStatus').textContent = model.newsConfigured ? t('overview.news.live') : t('overview.news.notConfigured');
   $('#overviewNewsList').innerHTML = model.news.length

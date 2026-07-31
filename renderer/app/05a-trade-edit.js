@@ -18,6 +18,9 @@
  * other trade to repair one.
  */
 function bindTradeRowActions() {
+  $$('[data-trade-open]').forEach((button) => {
+    button.onclick = () => openTradeDetailModal(button.dataset.tradeOpen);
+  });
   $$('[data-trade-edit]').forEach((button) => {
     button.onclick = () => openTradeEditModal(button.dataset.tradeEdit);
   });
@@ -97,4 +100,27 @@ async function deleteTrade(tradeId) {
   await refreshSnapshots();
   render();
   toast(t('journal.deleted'), 'success');
+}
+
+function openTradeDetailModal(tradeId) {
+  const trade = findTrade(tradeId);
+  if (!trade) return;
+  model.detailTradeId = tradeId;
+  const account = activeAccount();
+  const result = trade.resultR ?? trade.netProfit ?? 0;
+  $('#tradeDetailSummary').innerHTML = [
+    `<div class="stack-row"><span class="label">${escapeHtml(trade.symbol || '')} · ${escapeHtml(trade.side || '')}</span><span class="value ${classForSigned(result)}">${Number(result) > 0 ? '+' : ''}${escapeHtml(formatNumber(result, 2))}${trade.resultR !== null && trade.resultR !== undefined ? 'R' : ''}</span></div>`,
+    `<div class="stack-row"><span class="label">${escapeHtml(formatShortDate(trade.date || trade.createdAt))}</span><span class="value">${trade.signalId ? escapeHtml(t('journal.detailSignal')) : 'Manual'}</span></div>`,
+    `<div class="stack-row"><span class="label">${escapeHtml(trade.tags || '—')}</span><span class="value">${escapeHtml(trade.note || '—')}</span></div>`,
+  ].join('');
+  const image = (path) => path ? `<img src="${escapeHtml(`file://${path}`)}" alt="">` : `<span>${escapeHtml(t('journal.detailNoImage'))}</span>`;
+  $('#tradeDetailBefore').innerHTML = image(trade.beforeImage);
+  $('#tradeDetailAfter').innerHTML = image(trade.afterImage);
+  $('#tradeDetailModal').classList.remove('hidden');
+  $('#tradeDetailCloseBtn').focus();
+}
+
+function closeTradeDetailModal() {
+  model.detailTradeId = null;
+  $('#tradeDetailModal').classList.add('hidden');
 }
