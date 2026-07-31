@@ -32,6 +32,7 @@ import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.Locale;
 
 /**
  * Visual-only V2. No CISD, files, sounds or desktop integration are permitted
@@ -181,14 +182,20 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
 
     private String formatLayerLabel(String label, HtfCandleBuilder.Snapshot snapshot) {
         TimeZone zone = TimeZone.getTimeZone("GMT-04:00");
+        String boundary;
         if ("D".equals(label) || "W".equals(label)) {
             SimpleDateFormat date = new SimpleDateFormat("dd MMM");
             date.setTimeZone(zone);
-            return label + "\n" + date.format(new Date(snapshot.current.start)) + "→" + date.format(new Date(snapshot.current.end));
+            boundary = date.format(new Date(snapshot.current.start)) + "→" + date.format(new Date(snapshot.current.end));
+        } else {
+            SimpleDateFormat time = new SimpleDateFormat("HH:mm");
+            time.setTimeZone(zone);
+            boundary = time.format(new Date(snapshot.current.start)) + "→" + time.format(new Date(snapshot.current.end));
         }
-        SimpleDateFormat time = new SimpleDateFormat("HH:mm");
-        time.setTimeZone(zone);
-        return label + "\n" + time.format(new Date(snapshot.current.start)) + "→" + time.format(new Date(snapshot.current.end));
+        HtfCandleBuilder.Candle c = snapshot.current;
+        return label + "\n" + boundary
+            + "\nO " + String.format(Locale.US, "%.3f", c.open) + " H " + String.format(Locale.US, "%.3f", c.high)
+            + "\nL " + String.format(Locale.US, "%.3f", c.low) + " C " + String.format(Locale.US, "%.3f", c.close);
     }
 
     @Override public IndicatorInfo getIndicatorInfo() { return info; }
