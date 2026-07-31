@@ -52,6 +52,17 @@ final class TradingViewTimeEngine {
         return intervalMillis != 24L * 60 * 60 * 1000 || dailySession(epochMillis, instrument).contains(epochMillis);
     }
 
+    // TradingView shows the first US index 4H candle after the 18:00 reopening
+    // as a partial 18:00→21:00 candle, not as an empty 17:00→21:00 bucket.
+    long visibleCandleStart(long barTime, long bucketStart, long intervalMillis, String instrument) {
+        if (intervalMillis != 4L * 60 * 60 * 1000 || dailyStartHour(instrument) != 18) return bucketStart;
+        ZonedDateTime bucket = Instant.ofEpochMilli(bucketStart).atZone(DISPLAY_UTC_MINUS_4);
+        ZonedDateTime sessionStart = bucket.toLocalDate().atTime(18, 0).atZone(DISPLAY_UTC_MINUS_4);
+        long start = sessionStart.toInstant().toEpochMilli();
+        long bucketEnd = bucketStart + intervalMillis;
+        return barTime >= start && start > bucketStart && start < bucketEnd ? start : bucketStart;
+    }
+
     int fourHourAnchor(String instrument) {
         if (profile == Profile.GOLD) return 2;
         if (profile == Profile.FX_INDEX) return 1;
