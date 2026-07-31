@@ -58,6 +58,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     // 0 = Auto, 1..6 = 15m..W, 7 = Off.
     private int closureFocus = 0;
     private V2HtfPipeline pipeline;
+    private TradingViewTimeEngine auditClock = new TradingViewTimeEngine(TradingViewTimeEngine.Profile.AUTO, 1);
     private String pipelineInstrument = "";
     private volatile VisualFrame frame;
 
@@ -67,12 +68,14 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         final long marketClockTime;
         final long baseInterval;
         final HtfCandleBuilder.Snapshot[] layers;
-        VisualFrame(String instrument, long sourceLastBarTime, long marketClockTime, long baseInterval, HtfCandleBuilder.Snapshot[] layers) {
+        final String audit;
+        VisualFrame(String instrument, long sourceLastBarTime, long marketClockTime, long baseInterval, HtfCandleBuilder.Snapshot[] layers, String audit) {
             this.instrument = instrument;
             this.sourceLastBarTime = sourceLastBarTime;
             this.marketClockTime = marketClockTime;
             this.baseInterval = baseInterval;
             this.layers = layers;
+            this.audit = audit;
         }
     }
 
@@ -107,6 +110,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         if (!instrument.equals(pipelineInstrument)) {
             pipelineInstrument = instrument;
             pipeline = new V2HtfPipeline(TradingViewTimeEngine.Profile.AUTO, 1, instrument);
+            auditClock = new TradingViewTimeEngine(TradingViewTimeEngine.Profile.AUTO, 1);
         }
 
         // Full input history is available because V2 explicitly requests
@@ -128,7 +132,8 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             long tickTime = context.getHistory().getTimeOfLastTick(context.getFeedDescriptor().getInstrument());
             if (tickTime > 0) marketClock = tickTime;
         } catch (Exception ignored) { }
-        frame = new VisualFrame(instrument, bars[sourceEnd].getTime(), marketClock, baseInterval, next);
+        String audit = build4HAudit(bars, sourceEnd, instrument, next[3]);
+        frame = new VisualFrame(instrument, bars[sourceEnd].getTime(), marketClock, baseInterval, next, audit);
 
         int length = endIndex - startIndex + 1;
         double[] canvas = outputs[0] instanceof double[] && ((double[]) outputs[0]).length == length ? (double[]) outputs[0] : new double[length];
@@ -144,6 +149,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
         VisualFrame current = frame;
         if (current == null) return null;
         V2HtfRenderer renderer = new V2HtfRenderer();
+        renderer.drawAudit(g2, current.audit);
         // Match Basic: Candle Closure belongs to one focus layer only — the
         // nearest valid HTF — so all vertical intervals have one cadence.
         int focusIndex = closureFocus == 0 ? -1 : closureFocus - 1;
@@ -180,6 +186,23 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             offset += count * (style.candleWidth + style.candleGap) + 30;
         }
         return null;
+    }
+
+    private String build4HAudit(IBar[] source, int sourceEnd, String instrument, HtfCandleBuilder.Snapshot fourHour) {
+        if (fourHour == null || fourHour.completed.isEmpty()) return "";
+        HtfCandleBuilder.Candle target = fourHour.completed.get(fourHour.completed.size() - 1);
+        SimpleDateFormat clock = new SimpleDateFormat("HH:mm");
+        clock.setTimeZone(TimeZone.getTimeZone("GMT-04:00"));
+        StringBuilder out = new StringBuilder("AUDIT 4H " + clock.format(new Date(target.start)) + "→" + clock.format(new Date(target.end)));
+        for (int i = 0; i <= sourceEnd && i < source.length; i++) {
+            IBar bar = source[i];
+            if (bar == null) continue;
+            long bucket = auditClock.start(bar.getTime(), 4L * 60 * 60 * 1000, instrument);
+            if (bucket == target.start) out.append("\n").append(clock.format(new Date(bar.getTime())))
+                .append(" O ").append(String.format(Locale.US, "%.2f", bar.getOpen()))
+                .append(" C ").append(String.format(Locale.US, "%.2f", bar.getClose()));
+        }
+        return out.toString();
     }
 
     private String formatRemaining(HtfCandleBuilder.Snapshot snapshot, long marketClockTime) {
@@ -461,6 +484,17 @@ final class V2HtfRenderer {
                 + " C " + String.format(Locale.US, "%.2f", c.close);
             g.drawString(row, 16, 158 + (i + 1) * lineHeight);
         }
+    }
+
+    void drawAudit(Graphics2D g, String audit) {
+        if (audit == null || audit.length() == 0) return;
+        String[] rows = audit.split("\n");
+        g.setFont(g.getFont().deriveFont(Font.PLAIN, 8f));
+        int h = rows.length * g.getFontMetrics().getHeight() + 8;
+        g.setColor(new Color(10, 15, 20, 220));
+        g.fillRoundRect(8, 175, 300, h, 5, 5);
+        g.setColor(Color.WHITE);
+        for (int i = 0; i < rows.length; i++) g.drawString(rows[i], 14, 183 + (i + 1) * g.getFontMetrics().getHeight());
     }
 
     void drawClosureSeries(Graphics2D g, IIndicatorDrawingSupport support, HtfCandleBuilder.Snapshot snapshot, Color color) {
