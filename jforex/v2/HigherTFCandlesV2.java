@@ -168,7 +168,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
                 new Color(38, 178, 104, 220), new Color(214, 82, 82, 220),
                 new Color(30, 35, 40), new Color(30, 35, 40), new Color(20, 24, 28), Color.WHITE);
             renderer.drawClosure(g2, support, snapshot, new Color(105, 165, 255, 95));
-            renderer.draw(g2, support, snapshot, formatLayerLabel(LABELS[i], snapshot) + formatRemaining(snapshot, current.marketClockTime), style);
+            renderer.draw(g2, support, snapshot, formatLayerLabel(LABELS[i], snapshot) + formatRemaining(snapshot, current.marketClockTime), style, "4H".equals(LABELS[i]));
             int count = snapshot.completed.size() + 1;
             offset += count * (style.candleWidth + style.candleGap) + 30;
         }
@@ -468,7 +468,7 @@ final class V2HtfRenderer {
     }
 
     void draw(Graphics2D g, IIndicatorDrawingSupport support, HtfCandleBuilder.Snapshot snapshot,
-              String label, Style style) {
+              String label, Style style, boolean showCandleTimes) {
         if (snapshot == null || snapshot.current == null) return;
         List<HtfCandleBuilder.Candle> candles = new ArrayList<>(snapshot.completed);
         candles.add(snapshot.current);
@@ -508,6 +508,13 @@ final class V2HtfRenderer {
 
             // Temporary V2 validation marker: ties the visual candle to the
             // exact OHLC being shown in the layer label.
+            if (showCandleTimes) {
+                SimpleDateFormat clock = new SimpleDateFormat("HH:mm");
+                clock.setTimeZone(TimeZone.getTimeZone("GMT-04:00"));
+                g.setColor(new Color(80, 160, 255, 220));
+                g.setFont(g.getFont().deriveFont(Font.PLAIN, 8f));
+                g.drawString(clock.format(new Date(candle.start)) + "→" + clock.format(new Date(candle.end)), x - 12, Math.max(90, yHigh - 6));
+            }
             if (i == total - 1) {
                 g.setColor(new Color(40, 190, 255, 220));
                 g.setStroke(new BasicStroke(1.2f));
