@@ -238,7 +238,10 @@ final class TradingViewTimeEngine {
         return value.contains("EUR") ? 17 : 18;
     }
 
-    private int dailyEndHour(String instrument) { return 16; }
+    private int dailyEndHour(String instrument) {
+        String value = instrument == null ? "" : instrument.toUpperCase();
+        return value.contains("USATECH") ? 17 : 16;
+    }
 
     SessionWindow dailySession(long epochMillis, String instrument) {
         ZonedDateTime time = Instant.ofEpochMilli(epochMillis).atZone(DISPLAY_UTC_MINUS_4);
@@ -273,14 +276,11 @@ final class TradingViewTimeEngine {
         return result > epochMillis ? result - intervalMillis : result;
     }
 
-    long end(long startMillis, long intervalMillis) {
+    long end(long startMillis, long intervalMillis, String instrument) {
         if (intervalMillis < 24L * 60 * 60 * 1000) return startMillis + intervalMillis;
         if (intervalMillis == 24L * 60 * 60 * 1000) {
-            // Start is a known session start; use its profile-defined close.
             ZonedDateTime start = Instant.ofEpochMilli(startMillis).atZone(DISPLAY_UTC_MINUS_4);
-            String instrument = ""; // caller uses the matching session start; profile end is resolved in dailySession.
-            int endHour = 16;
-            return start.toLocalDate().plusDays(1).atTime(endHour, 0).atZone(DISPLAY_UTC_MINUS_4).toInstant().toEpochMilli();
+            return start.toLocalDate().plusDays(1).atTime(dailyEndHour(instrument), 0).atZone(DISPLAY_UTC_MINUS_4).toInstant().toEpochMilli();
         }
         ZonedDateTime start = Instant.ofEpochMilli(startMillis).atZone(DAILY_NEW_YORK);
         return start.plusDays(7).toInstant().toEpochMilli();
@@ -353,7 +353,7 @@ final class HtfCandleBuilder {
             if (bar == null || bar.time <= 0) continue;
             if (!clock.includes(bar.time, interval, instrument)) continue;
             long bucketStart = clock.start(bar.time, interval, instrument);
-            long bucketEnd = clock.end(bucketStart, interval);
+            long bucketEnd = clock.end(bucketStart, interval, instrument);
             if (activeStart == Long.MIN_VALUE || bucketStart != activeStart) {
                 if (activeStart != Long.MIN_VALUE) {
                     completed.add(new Candle(activeStart, activeEnd, open, high, low, close, true));
