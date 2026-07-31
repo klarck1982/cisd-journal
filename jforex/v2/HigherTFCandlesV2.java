@@ -12,6 +12,7 @@ import com.dukascopy.api.indicators.InputParameterInfo;
 import com.dukascopy.api.indicators.OptInputParameterInfo;
 import com.dukascopy.api.indicators.OutputParameterInfo;
 import com.dukascopy.api.indicators.IntegerListDescription;
+import com.dukascopy.api.indicators.IntegerRangeDescription;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -51,7 +52,9 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     private InputParameterInfo[] inputs;
     private OutputParameterInfo[] outputInfo;
     private OptInputParameterInfo[] optInfo;
-    private final boolean[] layerEnabled = {true, true, true, true, true, true};
+    // Pine Reference preset: 4H (6 candles) + Daily (3 candles).
+    private final boolean[] layerEnabled = {false, false, false, true, true, false};
+    private final int[] layerDisplayCount = {10, 8, 6, 6, 3, 3};
     // 0 = Auto, 1..6 = 15m..W, 7 = Off.
     private int closureFocus = 0;
     private V2HtfPipeline pipeline;
@@ -75,15 +78,18 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
 
     @Override public void onStart(IIndicatorContext context) {
         this.context = context;
-        info = new IndicatorInfo("HigherTFCandlesV2", "HTF Candles V2 — Visual Test", "CISD V2", true, false, false, 1, 7, 1);
+        info = new IndicatorInfo("HigherTFCandlesV2", "HTF Candles V2 — Visual Test", "CISD V2", true, false, false, 1, 13, 1);
         info.setRecalculateAll(true);
         int[] layerValues = {0, 1};
         String[] layerNames = {"Off", "On"};
-        optInfo = new OptInputParameterInfo[7];
+        optInfo = new OptInputParameterInfo[13];
         for (int i = 0; i < 6; i++)
             optInfo[i] = new OptInputParameterInfo("[V2] Show " + LABELS[i], OptInputParameterInfo.Type.OTHER,
-                new IntegerListDescription(1, layerValues, layerNames));
-        optInfo[6] = new OptInputParameterInfo("[V2] Candle Closure Focus", OptInputParameterInfo.Type.OTHER,
+                new IntegerListDescription(layerEnabled[i] ? 1 : 0, layerValues, layerNames));
+        for (int i = 0; i < 6; i++)
+            optInfo[6 + i] = new OptInputParameterInfo("[V2] " + LABELS[i] + " Candles", OptInputParameterInfo.Type.OTHER,
+                new IntegerRangeDescription(layerDisplayCount[i], 1, 12, 1));
+        optInfo[12] = new OptInputParameterInfo("[V2] Candle Closure Focus", OptInputParameterInfo.Type.OTHER,
             new IntegerListDescription(0, new int[]{0,1,2,3,4,5,6,7}, new String[]{"Auto","15m","30m","1H","4H","Daily","Weekly","Off"}));
         inputs = new InputParameterInfo[]{new InputParameterInfo("Chart Bars", InputParameterInfo.Type.BAR)};
         outputInfo = new OutputParameterInfo[]{new OutputParameterInfo("V2 Canvas", OutputParameterInfo.Type.DOUBLE, OutputParameterInfo.DrawingStyle.LINE)};
@@ -115,7 +121,7 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
             // honestly from a higher-TF source bar.
             if (!layerEnabled[i]) continue;
             if (baseInterval > 0 && INTERVALS[i] <= baseInterval) continue;
-            next[i] = pipeline.build(bars, sourceEnd, INTERVALS[i], 6);
+            next[i] = pipeline.build(bars, sourceEnd, INTERVALS[i], layerDisplayCount[i]);
         }
         long marketClock = System.currentTimeMillis();
         try {
@@ -204,7 +210,8 @@ public class HigherTFCandlesV2 implements IIndicator, IDrawingIndicator {
     @Override public OutputParameterInfo getOutputParameterInfo(int i) { return outputInfo[i]; }
     @Override public void setOptInputParameter(int i, Object value) {
         if (i >= 0 && i < 6) layerEnabled[i] = ((Integer) value) == 1;
-        else if (i == 6) closureFocus = (Integer) value;
+        else if (i >= 6 && i < 12) layerDisplayCount[i - 6] = (Integer) value;
+        else if (i == 12) closureFocus = (Integer) value;
     }
     @Override public void setInputParameter(int i, Object value) { bars = (IBar[]) value; }
     @Override public void setOutputParameter(int i, Object value) { outputs[i] = value; }
