@@ -1161,14 +1161,19 @@ public class HigherTFCandles implements IIndicator, IDrawingIndicator {
         String buildKey = htfBuildKey(currentPeriodMs);
         if (!buildKey.equals(lastHtfBuildKey)) markHtfStateDirty();
         int htfStartIndex = startIndex;
+        int htfEndIndex = Math.min(endIndex, bars.length - 1);
         if (htfStateDirty) {
             clearHtfLayerState();
+            // JForex can request a small output range immediately after an
+            // option change. HTF state must still be rebuilt from all available
+            // input bars in this one pass, otherwise several Refreshes are needed.
             htfStartIndex = 0;
-            context.getConsole().getOut().println("HTF rebuild: " + buildKey);
+            htfEndIndex = bars.length - 1;
+            context.getConsole().getOut().println("HTF rebuild: " + buildKey + " bars=0.." + htfEndIndex);
         }
         for (LayerData layer : layers) {
             if (!layer.enabled) continue;
-            for (int i = htfStartIndex; i <= endIndex && i < bars.length; i++) {
+            for (int i = htfStartIndex; i <= htfEndIndex; i++) {
                 if (bars[i].getTime() <= 0) continue;
                 processChartBar(layer, bars[i]);
             }
