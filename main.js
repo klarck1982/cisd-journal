@@ -21,12 +21,16 @@ const { parseFundingPipsSharedText } = require('./lib/funding-shared-parser');
 const { applyInvestorPassSnapshot } = require('./lib/investor-pass-sync');
 const { resolveMt5BridgeCandidates } = require('./lib/mt5-bridge');
 const { buildRuntimeReadinessSnapshot } = require('./lib/runtime-readiness');
+const { matchesBacktestFilters } = require('./lib/cisd-signals');
+const { writeDecisionsFile } = require('./lib/backtest-decisions');
+const { buildFactorBreakdown, findComboLeaders, buildGradeBreakdown, evaluateCombination } = require('./lib/engines/backtest-factors');
 
 let win = null;
 let signalWatchPath = null;
 let signalsInitialized = false;
 let newsCache = [];
 const fundedNextWatchers = {};
+const backtestWatchers = new Map();
 
 const store = createStore(app);
 const { dataFile, initial, logError, read, save } = store;
@@ -157,6 +161,75 @@ function watchSignalsFile() {
   signalWatchPath = read().settings.csvPath;
   if (signalWatchPath) fs.watchFile(signalWatchPath, { interval: 2000 }, syncSignalsFromFile);
   syncSignalsFromFile();
+}
+
+/**
+ * Live capture for backtest sessions.
+ *
+ * While a session is ACTIVE with capture enabled, its signals CSV (the file
+ * the JForex indicator appends CISD rows to, including during Replay) is
+ * polled like the live-signals file. New rows matching the session filters
+ * appear in the review list ~2s after they show up on the chart, so the
+ * trader grades opportunities as the replay unfolds instead of batching after.
+ */
+function stopBacktestCapture(id) {
+  const watched = backtestWatchers.get(id);
+  if (watched) {
+    fs.unwatchFile(watched);
+    backtestWatchers.delete(id);
+  }
+}
+
+function startBacktestCapture(id) {
+  const data = read();
+  const backtest = (data.backtests || []).find((item) => item.id === id);
+  if (!backtest || backtest.status !== 'ACTIVE' || backtest.captureEnabled === false) return;
+
+  let csvPath = backtest.sourceCsvPath || backtest.backtestCsvPath || '';
+  if (!csvPath || !fs.existsSync(csvPath)) {
+    csvPath = data.settings?.csvPath && fs.existsSync(data.settings.csvPath) ? data.settings.csvPath : '';
+  }
+  if (!csvPath) return;
+  if (backtestWatchers.get(id) === csvPath) return;
+
+  stopBacktestCapture(id);
+  backtestWatchers.set(id, csvPath);
+  fs.watchFile(csvPath, { interval: 2000 }, () => {
+    try {
+      const result = importBacktestSessionSignals(id, { recordNoop: true });
+      if (result.count > 0) sendStateChanged(result.state);
+    } catch (error) {
+      logError('backtestCapture', error);
+    }
+  });
+}
+
+function syncBacktestCaptureWatchers() {
+  const data = read();
+  const wanted = new Set(
+    (data.backtests || [])
+      .filter((item) => item.status === 'ACTIVE' && item.captureEnabled !== false)
+      .map((item) => item.id)
+  );
+  for (const id of [...backtestWatchers.keys()]) {
+    if (!wanted.has(id)) stopBacktestCapture(id);
+  }
+  for (const id of wanted) startBacktestCapture(id);
+}
+
+/**
+ * Rebuilds the indicator-facing CISD_Journal_Decisions.csv next to every
+ * signals CSV the journal knows about, so chart labels (✓ ENTERED / × SKIPPED
+ * / — IGNORED) mirror the reviews made here — live chart and replay alike.
+ */
+function syncDecisionsBridge(data) {
+  const targets = new Set();
+  if (data.settings?.csvPath) targets.add(data.settings.csvPath);
+  for (const backtest of data.backtests || []) {
+    if (backtest.sourceCsvPath) targets.add(backtest.sourceCsvPath);
+    if (backtest.backtestCsvPath) targets.add(backtest.backtestCsvPath);
+  }
+  for (const csvPath of targets) writeDecisionsFile(csvPath, data);
 }
 
 /**
@@ -868,6 +941,7 @@ function registerHandlers() {
       ...payload,
       id: crypto.randomUUID(),
       status: 'ACTIVE',
+      captureEnabled: payload.captureEnabled !== false,
       createdAt: new Date().toISOString(),
       accountId: payload.accountId,
       sourceCsvPath: csvPath,
@@ -883,7 +957,69 @@ function registerHandlers() {
     data.backtests.unshift(backtest);
     data.activeBacktestId = backtest.id;
     save(data);
+    syncBacktestCaptureWatchers();
     return importBacktestSessionSignals(backtest.id, { recordNoop: true });
+  });
+
+  /**
+   * Edits a session's name / CSV link / filters. Filter changes prune captured
+   * occurrences that no longer match (preserving reviews of those that still
+   * do) and re-import from the CSV — dedup keys make the re-import idempotent.
+   */
+  ipcMain.handle('backtest:update', (_, id, patch = {}) => {
+    const data = read();
+    const backtest = data.backtests.find((item) => item.id === id);
+    if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
+
+    const nextFilters = { ...(backtest.filters || {}) };
+    for (const key of ['start', 'end', 'session', 'symbol', 'tf']) {
+      if (patch.filters && patch.filters[key] !== undefined) nextFilters[key] = patch.filters[key];
+    }
+    const filtersChanged = JSON.stringify(nextFilters) !== JSON.stringify(backtest.filters || {});
+
+    if (patch.name !== undefined) backtest.name = String(patch.name || '').trim();
+    if (patch.backtestCsvPath !== undefined) {
+      backtest.backtestCsvPath = patch.backtestCsvPath || '';
+      if (patch.backtestCsvPath && fs.existsSync(patch.backtestCsvPath)) backtest.sourceCsvPath = patch.backtestCsvPath;
+    }
+    if (patch.captureEnabled !== undefined) backtest.captureEnabled = Boolean(patch.captureEnabled);
+    backtest.filters = nextFilters;
+    backtest.updatedAt = new Date().toISOString();
+
+    if (filtersChanged) {
+      data.backtestSignals = (data.backtestSignals || []).filter(
+        (signal) => signal.backtestId !== id || matchesBacktestFilters(signal, nextFilters)
+      );
+    }
+
+    save(data);
+    syncBacktestCaptureWatchers();
+    if (filtersChanged || patch.backtestCsvPath !== undefined) {
+      return importBacktestSessionSignals(id, { recordNoop: true });
+    }
+    return { state: data, count: 0 };
+  });
+
+  ipcMain.handle('backtest:capture', (_, id, enabled) => {
+    const data = read();
+    const backtest = data.backtests.find((item) => item.id === id);
+    if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
+    backtest.captureEnabled = Boolean(enabled);
+    save(data);
+    syncBacktestCaptureWatchers();
+    return data;
+  });
+
+  ipcMain.handle('backtest:factors', (_, id, options = {}) => {
+    const data = read();
+    const signals = (data.backtestSignals || []).filter((item) => item.backtestId === id);
+    return {
+      factors: buildFactorBreakdown(signals),
+      leaders: findComboLeaders(signals),
+      grades: buildGradeBreakdown(signals),
+      combo: Array.isArray(options.factors) && options.factors.length ? evaluateCombination(signals, options.factors) : null,
+      total: signals.length,
+    };
   });
 
   ipcMain.handle('backtest:archive', (_, id) => {
@@ -891,6 +1027,7 @@ function registerHandlers() {
     const backtest = data.backtests.find((item) => item.id === id);
     if (backtest) backtest.status = 'ARCHIVED';
     save(data);
+    syncBacktestCaptureWatchers();
     return data;
   });
 
@@ -899,6 +1036,7 @@ function registerHandlers() {
     data.backtestSignals = (data.backtestSignals || []).filter((item) => item.backtestId !== id);
     data.backtests = data.backtests.filter((item) => item.id !== id);
     if (data.activeBacktestId === id) data.activeBacktestId = null;
+    stopBacktestCapture(id);
     save(data);
     return data;
   });
@@ -909,19 +1047,41 @@ function registerHandlers() {
     if (active) active.status = 'FINISHED';
     data.activeBacktestId = null;
     save(data);
+    syncBacktestCaptureWatchers();
     return data;
   });
 
   ipcMain.handle('backtest:refresh', (_, id) => importBacktestSessionSignals(id, { recordNoop: true }));
+
+  const REVIEWABLE_STATUSES = new Set(['NEW', 'WIN', 'LOSS', 'BE', 'MISSED', 'SKIPPED']);
+
   ipcMain.handle('backtest:review-signal', (_, signalId, payload = {}) => {
     const data = read();
     const signal = (data.backtestSignals || []).find((item) => item.id === signalId);
     if (!signal) throw new Error(getBundle(data.settings?.locale).errors.backtestSignalNotFound || 'Backtest signal not found');
-    signal.status = payload.status || signal.status || 'NEW';
-    signal.resultR = payload.resultR !== undefined ? Number(payload.resultR) : signal.resultR;
+
+    // Reject unknown statuses instead of silently persisting junk that later
+    // breaks win-rate math and the indicator decisions bridge.
+    const status = String(payload.status || signal.status || 'NEW').toUpperCase();
+    if (!REVIEWABLE_STATUSES.has(status)) {
+      throw new Error(`Invalid backtest review status: ${status}`);
+    }
+    signal.status = status;
+
+    const scored = ['WIN', 'LOSS', 'BE'].includes(status);
+    if (!scored) {
+      signal.resultR = null;
+    } else if (payload.resultR !== undefined && payload.resultR !== null && payload.resultR !== '') {
+      const resultR = Number(payload.resultR);
+      // Number('abc') / accidental NaN must never reach the analytics engine.
+      if (!Number.isFinite(resultR)) throw new Error('resultR must be a finite number');
+      signal.resultR = resultR;
+    }
+
     signal.reviewNote = payload.note || '';
     signal.reviewedAt = new Date().toISOString();
     save(data);
+    syncDecisionsBridge(data);
     return data;
   });
 
@@ -1065,6 +1225,7 @@ function registerHandlers() {
         updatedAt: new Date().toISOString(),
       };
       save(data);
+      syncDecisionsBridge(data);
     }
     return data;
   });
@@ -1090,6 +1251,7 @@ if (!hasInstanceLock) {
     createWindow();
     watchSignalsFile();
     watchAllFundedNextFolders();
+    syncBacktestCaptureWatchers();
     registerHandlers();
     scheduleNewsAutoFetch();
   });

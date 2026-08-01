@@ -95,6 +95,14 @@ function bindEvents() {
 
   $('#tradeForm').addEventListener('submit', saveTrade);
   $('#backtestForm').addEventListener('submit', startBacktest);
+  const openBacktestFormBtn = $('#openBacktestFormBtn');
+  if (openBacktestFormBtn) openBacktestFormBtn.onclick = () => openBacktestFormModal(null);
+  const closeBacktestFormModalBtn = $('#closeBacktestFormModal');
+  if (closeBacktestFormModalBtn) closeBacktestFormModalBtn.onclick = closeBacktestFormModal;
+  const backtestFormModal = $('#backtestFormModal');
+  if (backtestFormModal) backtestFormModal.addEventListener('click', (event) => {
+    if (event.target.id === 'backtestFormModal') closeBacktestFormModal();
+  });
   const chooseBacktestCsvBtn = $('#chooseBacktestCsvBtn');
   if (chooseBacktestCsvBtn) chooseBacktestCsvBtn.onclick = chooseBacktestCsv;
   const clearBacktestCsvBtn = $('#clearBacktestCsvBtn');

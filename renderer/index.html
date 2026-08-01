@@ -341,71 +341,18 @@
               <h1 id="backtestTitle"></h1>
               <p id="backtestDescription"></p>
             </div>
+            <div class="page-actions">
+              <button class="primary" id="openBacktestFormBtn"></button>
+            </div>
           </div>
 
-          <div class="grid two">
-            <section class="panel">
-              <div class="panel-head">
-                <h3 id="backtestCreateTitle"></h3>
-                <span id="backtestCreateHint" class="panel-hint"></span>
-              </div>
-              <form id="backtestForm" class="form-grid">
-                <label>
-                  <span id="backtestNameLabel"></span>
-                  <input id="backtestName" placeholder="London Gold Drill">
-                </label>
-                <label>
-                  <span id="backtestSessionLabel"></span>
-                  <select id="backtestSession">
-                    <option value="">All</option>
-                    <option value="London">London</option>
-                    <option value="New York">New York</option>
-                    <option value="After">After</option>
-                  </select>
-                </label>
-                <label>
-                  <span id="backtestStartLabel"></span>
-                  <input id="backtestStart" type="date">
-                </label>
-                <label>
-                  <span id="backtestEndLabel"></span>
-                  <input id="backtestEnd" type="date">
-                </label>
-                <label>
-                  <span id="backtestSymbolLabel"></span>
-                  <input id="backtestSymbol" placeholder="XAUUSD">
-                </label>
-                <label>
-                  <span id="backtestTfLabel"></span>
-                  <input id="backtestTf" placeholder="15m">
-                </label>
-                <div class="full">
-                  <div class="panel slim" style="padding:12px;">
-                    <div class="panel-head" style="margin-bottom:8px;">
-                      <h3 id="backtestCsvLabel" style="font-size:13px;">ملف CSV للباكتيست (اختياري)</h3>
-                      <span class="panel-hint" id="backtestCsvHint">لو تركته فارغاً سيستخدم نفس ملف الإشارات الحية</span>
-                    </div>
-                    <div class="button-row">
-                      <button type="button" class="ghost small" id="chooseBacktestCsvBtn">اختيار ملف باكتيست</button>
-                      <button type="button" class="ghost small hidden" id="clearBacktestCsvBtn">إزالة</button>
-                    </div>
-                    <div class="inline-note" id="backtestCsvPathLabel" style="margin-top:8px; word-break:break-all;">يستخدم الملف الحي الافتراضي</div>
-                  </div>
-                </div>
-                <div class="form-actions full">
-                  <button type="submit" class="primary" id="backtestStartBtn"></button>
-                </div>
-              </form>
-            </section>
-
-            <section class="panel">
-              <div class="panel-head">
-                <h3 id="backtestLibraryTitle"></h3>
-                <span id="backtestLibraryHint" class="panel-hint"></span>
-              </div>
-              <div id="backtestLibrary" class="list"></div>
-            </section>
-          </div>
+          <section class="panel">
+            <div class="panel-head">
+              <h3 id="backtestLibraryTitle"></h3>
+              <span id="backtestLibraryHint" class="panel-hint"></span>
+            </div>
+            <div id="backtestLibrary" class="list"></div>
+          </section>
 
           <section class="panel slim backtest-spotlight">
             <div class="panel-head">
@@ -414,6 +361,15 @@
             </div>
             <div id="backtestSpotlightCards" class="metric-grid compact"></div>
             <div id="backtestSpotlightTags" class="tag-cloud"></div>
+            <div id="backtestCurve" class="backtest-curve"></div>
+          </section>
+
+          <section class="panel" id="backtestFactorsPanel">
+            <div class="panel-head">
+              <h3 id="backtestFactorsTitle"></h3>
+              <span id="backtestFactorsHint" class="panel-hint"></span>
+            </div>
+            <div id="backtestFactorsBody"></div>
           </section>
 
           <section class="panel">
@@ -1142,6 +1098,67 @@
     </div>
   </div>
 
+  <div id="backtestFormModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="backtestCreateTitle">
+    <div class="modal-card review-modal-card">
+      <div class="panel-head">
+        <h3 id="backtestCreateTitle"></h3>
+        <button id="closeBacktestFormModal" class="ghost icon" aria-label="Close">×</button>
+      </div>
+      <p id="backtestCreateHint" class="muted"></p>
+      <form id="backtestForm" class="form-grid">
+        <label>
+          <span id="backtestNameLabel"></span>
+          <input id="backtestName" placeholder="London Gold Drill">
+        </label>
+        <label>
+          <span id="backtestSessionLabel"></span>
+          <select id="backtestSession">
+            <option value="">All</option>
+            <option value="London">London</option>
+            <option value="New York">New York</option>
+            <option value="Asia">Asia</option>
+          </select>
+        </label>
+        <label>
+          <span id="backtestStartLabel"></span>
+          <input id="backtestStart" type="date">
+        </label>
+        <label>
+          <span id="backtestEndLabel"></span>
+          <input id="backtestEnd" type="date">
+        </label>
+        <label>
+          <span id="backtestSymbolLabel"></span>
+          <input id="backtestSymbol" placeholder="XAUUSD">
+        </label>
+        <label>
+          <span id="backtestTfLabel"></span>
+          <input id="backtestTf" placeholder="15m">
+        </label>
+        <div class="full">
+          <div class="panel slim" style="padding:12px;">
+            <div class="panel-head" style="margin-bottom:8px;">
+              <h3 id="backtestCsvLabel" style="font-size:13px;">ملف CSV للباكتيست (اختياري)</h3>
+              <span class="panel-hint" id="backtestCsvHint">لو تركته فارغاً سيستخدم نفس ملف الإشارات الحية</span>
+            </div>
+            <div class="button-row">
+              <button type="button" class="ghost small" id="chooseBacktestCsvBtn">اختيار ملف باكتيست</button>
+              <button type="button" class="ghost small hidden" id="clearBacktestCsvBtn">إزالة</button>
+            </div>
+            <div class="inline-note" id="backtestCsvPathLabel" style="margin-top:8px; word-break:break-all;">يستخدم الملف الحي الافتراضي</div>
+          </div>
+        </div>
+        <label class="full checkbox-row">
+          <input type="checkbox" id="backtestCapture" checked>
+          <span id="backtestCaptureLabel"></span>
+        </label>
+        <div class="form-actions full">
+          <button type="submit" class="primary" id="backtestStartBtn"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="appLoading" class="loading-overlay hidden" aria-live="polite">
     <div class="loading-card">
       <div class="spinner"></div>
@@ -1286,6 +1303,8 @@
   <script src="app/04-pages-overview.js"></script>
   <script src="app/05-pages-trading.js"></script>
   <script src="app/05a-trade-edit.js"></script>
+  <script src="app/05b-backtest.js"></script>
+  <script src="app/05c-backtest-form.js"></script>
   <script src="app/06-pages-daily.js"></script>
   <script src="app/07-pages-playbooks.js"></script>
   <script src="app/08-pages-edge.js"></script>

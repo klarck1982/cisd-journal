@@ -359,6 +359,8 @@ function renderBacktestReviewModal() {
       <span class="tag neutral">${escapeHtml(signal.TF || '')}</span>
       <span class="tag neutral">${escapeHtml(signal.Session || '')}</span>
       <span class="tag blue">${escapeHtml(formatDateTime(signal.signalAt || signal.importedAt || ''))}</span>
+      ${signal.Score && signal.Score !== '-' ? `<span class="tag blue">Score ${escapeHtml(signal.Score)}</span>` : ''}
+      ${['Trend', 'Fib', 'MS', 'HTF', 'MomVol', 'Confirmed'].filter((key) => signal[key] === '1').map((key) => `<span class="tag safe">${escapeHtml(key)}</span>`).join('')}
       ${signal.SignalID ? `<span class="tag neutral">ID: ${escapeHtml(signal.SignalID)}</span>` : ''}
     </div>
   `;
@@ -367,6 +369,7 @@ function renderBacktestReviewModal() {
     { key: 'WIN', label: t('backtest.review.statuses.win'), cls: 'win', defaultResult: '1' },
     { key: 'LOSS', label: t('backtest.review.statuses.loss'), cls: 'loss', defaultResult: '-1' },
     { key: 'BE', label: t('backtest.review.statuses.be'), cls: 'be', defaultResult: '0' },
+    { key: 'SKIPPED', label: t('backtest.review.statuses.skipped'), cls: 'skipped', defaultResult: '' },
     { key: 'MISSED', label: t('backtest.review.statuses.missed'), cls: 'missed', defaultResult: '' },
   ];
   $('#backtestReviewStatusButtons').innerHTML = statuses.map((status) => `
@@ -374,13 +377,14 @@ function renderBacktestReviewModal() {
   `).join('');
 
   const resultInput = $('#backtestReviewResultInput');
-  resultInput.disabled = model.backtestReviewStatus === 'MISSED';
-  if (model.backtestReviewStatus === 'MISSED') resultInput.value = '';
+  const unscored = ['MISSED', 'SKIPPED'].includes(model.backtestReviewStatus);
+  resultInput.disabled = unscored;
+  if (unscored) resultInput.value = '';
 
   $$('[data-review-status]').forEach((button) => {
     button.onclick = () => {
       model.backtestReviewStatus = button.dataset.reviewStatus;
-      if (model.backtestReviewStatus !== 'MISSED' && !$('#backtestReviewResultInput').value) {
+      if (!['MISSED', 'SKIPPED'].includes(model.backtestReviewStatus) && !$('#backtestReviewResultInput').value) {
         $('#backtestReviewResultInput').value = button.dataset.defaultResult || '';
       }
       renderBacktestReviewModal();
@@ -394,13 +398,14 @@ async function saveBacktestReviewFromModal() {
   const status = model.backtestReviewStatus;
   const note = $('#backtestReviewNoteInput').value.trim();
   const resultValue = $('#backtestReviewResultInput').value.trim();
-  if (status !== 'MISSED' && resultValue === '') {
+  const unscored = ['MISSED', 'SKIPPED'].includes(status);
+  if (!unscored && resultValue === '') {
     toast(t('backtest.review.resultRequired'), 'warn');
     return;
   }
   await runBusy(t('ui.loading'), () => cisd.reviewBacktestSignal(model.backtestReviewSignalId, {
     status,
-    resultR: status === 'MISSED' ? null : Number(resultValue || 0),
+    resultR: unscored ? null : Number(resultValue || 0),
     note,
   }));
   await refreshStateAndRender();

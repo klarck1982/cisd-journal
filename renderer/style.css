@@ -1620,3 +1620,80 @@ body.density-compact .calendar-cell { min-height: 48px; padding: 4px 6px; }
 .dashboard-item.dragging { opacity: 0.4; transform: scale(0.98); }
 .dashboard-item.drag-over { outline: 2px dashed var(--blue-edge); outline-offset: 2px; border-radius: var(--radius); }
 #overviewDashboard .panel { position: relative; }
+
+/* --- Backtest workspace: factors panel, combo chips, capture, curve --- */
+.chip-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+.chip-toggle:hover {
+  transform: translateY(-1px);
+}
+.chip.red-dot {
+  color: var(--red);
+  border-color: var(--red-edge);
+  background: var(--red-wash);
+  animation: capturePulse 1.6s ease-in-out infinite;
+}
+.tag.pulse-dot {
+  animation: capturePulse 1.6s ease-in-out infinite;
+}
+@keyframes capturePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.backtest-curve {
+  margin-top: 14px;
+}
+.backtest-curve .curve-title {
+  font-size: var(--t-xs);
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.factor-row .factor-cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+.factor-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-sm);
+}
+.factor-cell-label {
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+.factor-cell-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.combo-result {
+  margin-bottom: 10px;
+}
+.review-status-grid .ghost.skipped.active {
+  border-color: var(--yellow-edge);
+  background: var(--yellow-wash);
+  color: var(--yellow);
+}
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: row;
+}
+.checkbox-row input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+@media (max-width: 720px) {
+  .factor-row .factor-cells {
+    grid-template-columns: 1fr;
+  }
+}
