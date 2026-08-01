@@ -5,6 +5,62 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added — backtest replay workspace
+
+- **Live capture during JForex Replay.** Active sessions now poll their
+  signals CSV like the live-signals file: a CISD written by the indicator
+  appears in the review list ~2s after it prints on the chart, so signals are
+  graded as the replay unfolds instead of in a batch afterwards.
+- **Two-way indicator bridge.** Backtest reviews and live signal decisions are
+  exported to `CISD_Journal_Decisions.csv` next to the signals file. The
+  indicator watches that file and draws `✓ ENTERED / × SKIPPED / — IGNORED`
+  beside each signal — including inside a running replay. The vocabulary
+  matches the indicator source: graded R results map to ENTERED, SKIPPED to
+  SKIPPED, MISSED to IGNORED; backtest reviews win over stale live decisions.
+- **Filter attribution panel ("best 4 conditions").** Per-filter pass/fail/
+  inactive outcome splits (Trend, Fib, MS, HTF, MomVol, Confirmed), grade
+  breakdown, an interactive combination comparator, and auto-ranked combo
+  leaders by average R.
+- **Session lifecycle: edit, delete, capture toggle.** Sessions are editable
+  (name, CSV link, filters — re-import prunes out-of-range occurrences while
+  preserving reviews), deletable with an explicit confirmation, and the
+  creation form is now an on-demand modal instead of a permanent page section.
+- **New review vocabulary + equity curve.** SKIPPED is now distinct from
+  MISSED (declining a signal is not missing it), every occurrence can be sent
+  to the manual journal prefilled, and the session spotlight renders a
+  cumulative R equity curve ordered by signal time.
+- **Session filter aligned with the indicator.** Asia is now an option and
+  "NY"/"Closed" rows normalize to "New York"/"After".
+
+### Fixed — backtest time & identity integrity
+
+- **`SignalTimeNY` was parsed in the machine's local timezone.** The indicator
+  stamps signals with a New York wall clock; `new Date()` read it as PC-local
+  time, so `signalAt` and the de-dup `occurrenceKey` both baked in the
+  trader's timezone (a Singapore PC shifted every signal +12h). Parsing is now
+  zone-aware with DST-correct EST/EDT conversion, and date-range filters use
+  New York calendar days — identical results on any machine.
+- **Symbol filter failed against real indicator files.** The indicator writes
+  `XAU/USD` but the filter compared strings literally against `XAUUSD`.
+  Symbols are normalized (slashes/dots/case stripped) on both sides.
+- **Backtest analytics events were dated by import instant.** Every occurrence
+  of a session shared the same `importedAt` timestamp, destroying equity-curve
+  chronology. Events now use `signalAt`.
+- **Review input validation.** Unknown statuses were persisted verbatim and
+  `Number(null)` stored `0` for unscored reviews; statuses are now whitelisted
+  (`WIN/LOSS/BE/MISSED/SKIPPED/NEW`), non-scored statuses null the R value,
+  and non-finite R is rejected.
+- **Archived sessions never disappeared.** The library filtered an
+  `item.archived` flag that nothing set; archiving sets `status`, which the
+  filter now checks.
+
+### Added — regression coverage
+
+- `qa/backtest-upgrade-tests.js`: NY-time parsing stability across machine
+  timezones (incl. DST), symbol/session normalization, decisions-bridge
+  vocabulary and priority, factor attribution, `signalAt`-ordered analytics
+  events.
+
 ### Fixed — data loss and numeric accuracy
 
 - **The daily-loss guard no longer misses evening trades.** `risk.js` resolved
