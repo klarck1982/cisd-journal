@@ -346,41 +346,65 @@
             </div>
           </div>
 
-          <section class="panel">
-            <div class="panel-head">
-              <h3 id="backtestLibraryTitle"></h3>
-              <span id="backtestLibraryHint" class="panel-hint"></span>
+          <section class="panel backtest-workspace-panel">
+            <div class="backtest-session-bar">
+              <div class="backtest-session-picker">
+                <label for="backtestSessionSelect"><span id="backtestLibraryTitle"></span></label>
+                <select id="backtestSessionSelect"></select>
+                <span id="backtestLibraryHint" class="panel-hint"></span>
+              </div>
+              <div id="backtestSessionStatus" class="backtest-session-status"></div>
+              <div class="backtest-session-actions">
+                <button class="ghost small" id="backtestFilterToggleBtn" type="button"></button>
+                <button class="ghost small" id="backtestManualTradeBtn" type="button"></button>
+              </div>
             </div>
-            <div id="backtestLibrary" class="list"></div>
-          </section>
+            <div id="backtestSessionActions" class="backtest-session-actions-row"></div>
+            <div id="backtestLibrary" class="hidden" aria-hidden="true"></div>
 
-          <section class="panel slim backtest-spotlight">
-            <div class="panel-head">
+            <div class="backtest-filter-row">
+              <div id="backtestSpotlightTags" class="tag-cloud"></div>
+              <span class="backtest-filter-caption" id="backtestSpotlightHint"></span>
+            </div>
+            <div id="backtestFilterDrawer" class="backtest-filter-drawer hidden"></div>
+
+            <div class="backtest-insights-head">
               <h3 id="backtestSpotlightTitle"></h3>
-              <span id="backtestSpotlightHint" class="panel-hint"></span>
+              <span class="panel-hint" id="backtestSpotlightMeta"></span>
             </div>
-            <div id="backtestSpotlightCards" class="metric-grid compact"></div>
-            <div id="backtestSpotlightTags" class="tag-cloud"></div>
-            <div id="backtestCurve" class="backtest-curve"></div>
-          </section>
+            <div id="backtestSpotlightCards" class="metric-grid compact backtest-insight-grid"></div>
 
-          <section class="panel" id="backtestFactorsPanel">
-            <div class="panel-head">
-              <h3 id="backtestFactorsTitle"></h3>
-              <span id="backtestFactorsHint" class="panel-hint"></span>
-            </div>
-            <div id="backtestFactorsBody"></div>
-          </section>
+            <div class="backtest-review-grid">
+              <section class="panel backtest-queue-panel">
+                <div class="panel-head">
+                  <div><h3 id="backtestReviewTitle"></h3><span class="panel-hint" id="backtestReviewHint"></span></div>
+                  <span class="panel-hint" id="backtestReviewCount"></span>
+                </div>
+                <div class="toolbar-inline">
+                  <input id="backtestSearch" class="search-input" type="search" placeholder="Search backtest signals">
+                </div>
+                <div id="backtestReviewList" class="list backtest-queue-list"></div>
+              </section>
 
-          <section class="panel">
-            <div class="panel-head">
-              <h3 id="backtestReviewTitle"></h3>
-              <span id="backtestReviewHint" class="panel-hint"></span>
+              <section class="panel backtest-current-panel">
+                <div class="panel-head"><div><h3 id="backtestCurrentTitle"></h3><span class="panel-hint" id="backtestCurrentHint"></span></div><span id="backtestCurrentStatus" class="chip yellow"></span></div>
+                <div id="backtestCurrentSignal" class="backtest-current-body"></div>
+              </section>
             </div>
-            <div class="toolbar-inline">
-              <input id="backtestSearch" class="search-input" type="search" placeholder="Search backtest signals">
-            </div>
-            <div id="backtestReviewList" class="list"></div>
+
+            <section class="panel backtest-analysis-panel" id="backtestFactorsPanel">
+              <div class="panel-head backtest-analysis-head">
+                <div><h3 id="backtestFactorsTitle"></h3><span class="panel-hint" id="backtestFactorsHint"></span></div>
+                <div id="backtestAnalysisTabs" class="backtest-analysis-tabs">
+                  <button type="button" class="chip blue active" data-backtest-analysis="filters"></button>
+                  <button type="button" class="chip neutral" data-backtest-analysis="sessions"></button>
+                  <button type="button" class="chip neutral" data-backtest-analysis="days"></button>
+                </div>
+              </div>
+              <div id="backtestAnalysisSummary" class="backtest-analysis-summary"></div>
+              <div id="backtestAnalysisBody"></div>
+              <div id="backtestCurve" class="backtest-curve"></div>
+            </section>
           </section>
         </section>
 
@@ -1084,6 +1108,10 @@
         <span id="backtestReviewStatusLabel"></span>
         <div id="backtestReviewStatusButtons" class="preset-grid review-status-grid"></div>
       </label>
+      <label class="full hidden" id="backtestReviewOutcomeWrap">
+        <span id="backtestReviewOutcomeLabel"></span>
+        <div id="backtestReviewOutcomeButtons" class="preset-grid review-status-grid"></div>
+      </label>
       <label class="full">
         <span id="backtestReviewResultLabel"></span>
         <input id="backtestReviewResultInput" type="number" step="0.01" placeholder="1.0">
@@ -1095,6 +1123,51 @@
       <div class="form-actions">
         <button id="saveBacktestReviewBtn" class="primary"></button>
       </div>
+    </div>
+  </div>
+
+
+  <div id="backtestManualTradeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="backtestManualTradeTitle">
+    <div class="modal-card backtest-manual-modal-card">
+      <div class="panel-head">
+        <h3 id="backtestManualTradeTitle"></h3>
+        <button id="closeBacktestManualTradeModal" class="ghost icon" aria-label="Close">×</button>
+      </div>
+      <p id="backtestManualTradeHint" class="muted"></p>
+      <form id="backtestManualTradeForm" class="form-grid compact-form">
+        <label>
+          <span id="backtestManualInstrumentLabel"></span>
+          <input id="backtestManualInstrument" class="readonly-field" readonly>
+        </label>
+        <label>
+          <span id="backtestManualDirectionLabel"></span>
+          <select id="backtestManualDirection"><option value="Buy">Buy</option><option value="Sell">Sell</option></select>
+        </label>
+        <label>
+          <span id="backtestManualDateLabel"></span>
+          <input id="backtestManualDate" type="date">
+        </label>
+        <label>
+          <span id="backtestManualSessionLabel"></span>
+          <select id="backtestManualSession"><option value="">All / derived</option><option value="London">London</option><option value="New York">New York</option><option value="Asia">Asia</option><option value="After">After</option></select>
+        </label>
+        <label>
+          <span id="backtestManualOutcomeLabel"></span>
+          <select id="backtestManualOutcome"><option value="WIN">Win</option><option value="LOSS">Loss</option><option value="BE">BE</option></select>
+        </label>
+        <label>
+          <span id="backtestManualResultLabel"></span>
+          <input id="backtestManualResult" type="number" step="0.01" placeholder="1.0">
+        </label>
+        <label class="full">
+          <span id="backtestManualNoteLabel"></span>
+          <textarea id="backtestManualNote" rows="3"></textarea>
+        </label>
+        <div class="form-actions full">
+          <button type="button" class="ghost" id="cancelBacktestManualTradeBtn"></button>
+          <button type="submit" class="primary" id="saveBacktestManualTradeBtn"></button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1305,6 +1378,8 @@
   <script src="app/05a-trade-edit.js"></script>
   <script src="app/05b-backtest.js"></script>
   <script src="app/05c-backtest-form.js"></script>
+  <script src="app/05d-backtest-analysis.js"></script>
+  <script src="app/05e-backtest-manual.js"></script>
   <script src="app/06-pages-daily.js"></script>
   <script src="app/07-pages-playbooks.js"></script>
   <script src="app/08-pages-edge.js"></script>

@@ -268,7 +268,16 @@ assert.equal(factorValue({ Trend: '0' }, 'Trend'), 'failed');
 const { buildAccountAnalyticsSnapshot } = require('../lib/engines/analytics');
 const analyticsState = store.initial();
 analyticsState.accounts = [{ id: 'a1', capital: 1000, currentBalance: 1000 }];
-analyticsState.trades = [];
+analyticsState.trades = [{
+  accountId: 'a1',
+  backtestId: 'bt-1',
+  source: 'BACKTEST_MANUAL',
+  symbol: 'XAUUSD',
+  side: 'Buy',
+  session: 'London',
+  date: '2026-07-21',
+  resultR: 2,
+}];
 analyticsState.openPositions = [];
 analyticsState.backtests = [{
   id: 'bt-1',
@@ -295,6 +304,8 @@ const comparison = snapshot.backtestComparison.find((item) => item.id === 'bt-1'
 assert.equal(comparison.symbol, 'XAUUSD', 'backtest comparison reads symbol/timeframe from session filters');
 assert.equal(comparison.timeframe, '15m');
 assert.equal(comparison.reviewed, 2, 'legacy scored statuses without an R result stay out of comparison math');
-assert.equal(comparison.netResult, 0, 'comparison net follows signalAt-ordered scored outcomes');
+assert.equal(comparison.manualTrades, 1, 'manual trades are attached to the backtest session');
+assert.equal(comparison.executedTrades, 3, 'signal reviews and manual trades form one session comparison');
+assert.equal(comparison.netResult, 2, 'manual R is included once in the backtest comparison');
 
 console.log('Backtest Upgrade QA: PASS (NY-time/DST parsing, symbol/session normalization, decisions bridge, factor attribution, signalAt analytics)');

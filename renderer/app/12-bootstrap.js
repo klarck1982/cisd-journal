@@ -107,6 +107,16 @@ function bindEvents() {
   if (chooseBacktestCsvBtn) chooseBacktestCsvBtn.onclick = chooseBacktestCsv;
   const clearBacktestCsvBtn = $('#clearBacktestCsvBtn');
   if (clearBacktestCsvBtn) clearBacktestCsvBtn.onclick = clearBacktestCsv;
+  const manualBacktestBtn = $('#backtestManualTradeBtn');
+  if (manualBacktestBtn) manualBacktestBtn.onclick = openBacktestManualTradeModal;
+  const manualBacktestModal = $('#backtestManualTradeModal');
+  if (manualBacktestModal) manualBacktestModal.addEventListener('click', (event) => { if (event.target.id === 'backtestManualTradeModal') closeBacktestManualTradeModal(); });
+  const closeManualBacktestBtn = $('#closeBacktestManualTradeModal');
+  if (closeManualBacktestBtn) closeManualBacktestBtn.onclick = closeBacktestManualTradeModal;
+  const cancelManualBacktestBtn = $('#cancelBacktestManualTradeBtn');
+  if (cancelManualBacktestBtn) cancelManualBacktestBtn.onclick = closeBacktestManualTradeModal;
+  const manualBacktestForm = $('#backtestManualTradeForm');
+  if (manualBacktestForm) manualBacktestForm.addEventListener('submit', saveBacktestManualTrade);
   const toggleDensityBtn = $('#toggleDensityBtn');
   if (toggleDensityBtn) toggleDensityBtn.onclick = toggleDensity;
   $('#accountSettingsForm').addEventListener('submit', saveAccountSettings);
@@ -199,6 +209,7 @@ function bindEvents() {
     if (!$('#tradeEditModal').classList.contains('hidden')) closeTradeEditModal();
     if (model.reasonSignalId) closeReasonModal();
     if (model.backtestReviewSignalId) closeBacktestReviewModal();
+    if (!$('#backtestManualTradeModal').classList.contains('hidden')) closeBacktestManualTradeModal();
   });
 }
 

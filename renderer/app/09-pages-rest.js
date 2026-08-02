@@ -324,12 +324,30 @@ function backtestSignalById(signalId) {
   return (model.state?.backtestSignals || []).find((item) => item.id === signalId) || null;
 }
 
-function openBacktestReviewModal(signalId, presetStatus = 'WIN', presetResult = '') {
+function reviewDecisionFromStatus(status) {
+  const key = String(status || '').toUpperCase();
+  if (['WIN', 'LOSS', 'BE'].includes(key)) return 'ENTERED';
+  if (key === 'SKIPPED') return 'SKIPPED';
+  if (key === 'MISSED') return 'MISSED';
+  return 'ENTERED';
+}
+
+function reviewOutcomeFromStatus(status) {
+  const key = String(status || '').toUpperCase();
+  return ['WIN', 'LOSS', 'BE'].includes(key) ? key : 'WIN';
+}
+
+function openBacktestReviewModal(signalId, presetDecision = 'ENTERED') {
   const signal = backtestSignalById(signalId);
   if (!signal) return;
+  const legacyStatus = ['WIN', 'LOSS', 'BE', 'SKIPPED', 'MISSED'].includes(String(presetDecision).toUpperCase());
   model.backtestReviewSignalId = signalId;
-  model.backtestReviewStatus = presetStatus;
-  $('#backtestReviewResultInput').value = presetResult;
+  model.backtestReviewDecision = legacyStatus ? reviewDecisionFromStatus(presetDecision) : presetDecision;
+  model.backtestReviewOutcome = legacyStatus ? reviewOutcomeFromStatus(presetDecision) : reviewOutcomeFromStatus(signal.status);
+  model.backtestReviewStatus = signal.status || 'NEW';
+  $('#backtestReviewResultInput').value = legacyStatus && ['WIN', 'LOSS', 'BE'].includes(String(presetDecision).toUpperCase())
+    ? (signal.resultR ?? (presetDecision === 'WIN' ? '1' : presetDecision === 'LOSS' ? '-1' : '0'))
+    : (signal.resultR ?? '');
   $('#backtestReviewNoteInput').value = signal.reviewNote || '';
   renderBacktestReviewModal();
 }
@@ -337,6 +355,8 @@ function openBacktestReviewModal(signalId, presetStatus = 'WIN', presetResult = 
 function closeBacktestReviewModal() {
   model.backtestReviewSignalId = null;
   model.backtestReviewStatus = 'WIN';
+  model.backtestReviewDecision = 'ENTERED';
+  model.backtestReviewOutcome = 'WIN';
   $('#backtestReviewResultInput').value = '';
   $('#backtestReviewNoteInput').value = '';
   renderBacktestReviewModal();
@@ -365,28 +385,42 @@ function renderBacktestReviewModal() {
     </div>
   `;
 
-  const statuses = [
-    { key: 'WIN', label: t('backtest.review.statuses.win'), cls: 'win', defaultResult: '1' },
-    { key: 'LOSS', label: t('backtest.review.statuses.loss'), cls: 'loss', defaultResult: '-1' },
-    { key: 'BE', label: t('backtest.review.statuses.be'), cls: 'be', defaultResult: '0' },
-    { key: 'SKIPPED', label: t('backtest.review.statuses.skipped'), cls: 'skipped', defaultResult: '' },
-    { key: 'MISSED', label: t('backtest.review.statuses.missed'), cls: 'missed', defaultResult: '' },
+  const decisions = [
+    { key: 'ENTERED', label: t('backtest.current.entered'), cls: 'win' },
+    { key: 'SKIPPED', label: t('backtest.current.skipped'), cls: 'skipped' },
+    { key: 'MISSED', label: t('backtest.current.missed'), cls: 'missed' },
   ];
-  $('#backtestReviewStatusButtons').innerHTML = statuses.map((status) => `
-    <button class="ghost ${status.cls} ${model.backtestReviewStatus === status.key ? 'active' : ''}" data-review-status="${status.key}" data-default-result="${status.defaultResult}">${escapeHtml(status.label)}</button>
+  $('#backtestReviewStatusButtons').innerHTML = decisions.map((decision) => `
+    <button class="ghost ${decision.cls} ${model.backtestReviewDecision === decision.key ? 'active' : ''}" data-review-decision="${decision.key}">${escapeHtml(decision.label)}</button>
   `).join('');
 
+  const outcomeWrap = $('#backtestReviewOutcomeWrap');
+  const outcomeButtons = $('#backtestReviewOutcomeButtons');
   const resultInput = $('#backtestReviewResultInput');
-  const unscored = ['MISSED', 'SKIPPED'].includes(model.backtestReviewStatus);
-  resultInput.disabled = unscored;
-  if (unscored) resultInput.value = '';
+  const entered = model.backtestReviewDecision === 'ENTERED';
+  outcomeWrap?.classList.toggle('hidden', !entered);
+  if (outcomeButtons) {
+    const outcomes = [
+      { key: 'WIN', label: t('backtest.review.statuses.win'), defaultResult: '1' },
+      { key: 'LOSS', label: t('backtest.review.statuses.loss'), defaultResult: '-1' },
+      { key: 'BE', label: t('backtest.review.statuses.be'), defaultResult: '0' },
+    ];
+    outcomeButtons.innerHTML = outcomes.map((outcome) => `<button class="ghost ${model.backtestReviewOutcome === outcome.key ? 'active' : ''}" data-review-outcome="${outcome.key}" data-default-result="${outcome.defaultResult}">${escapeHtml(outcome.label)}</button>`).join('');
+  }
+  resultInput.disabled = !entered;
+  if (!entered) resultInput.value = '';
+  else if (!resultInput.value) resultInput.value = model.backtestReviewOutcome === 'WIN' ? '1' : model.backtestReviewOutcome === 'LOSS' ? '-1' : '0';
 
-  $$('[data-review-status]').forEach((button) => {
+  $$('[data-review-decision]').forEach((button) => {
     button.onclick = () => {
-      model.backtestReviewStatus = button.dataset.reviewStatus;
-      if (!['MISSED', 'SKIPPED'].includes(model.backtestReviewStatus) && !$('#backtestReviewResultInput').value) {
-        $('#backtestReviewResultInput').value = button.dataset.defaultResult || '';
-      }
+      model.backtestReviewDecision = button.dataset.reviewDecision;
+      renderBacktestReviewModal();
+    };
+  });
+  $$('[data-review-outcome]').forEach((button) => {
+    button.onclick = () => {
+      model.backtestReviewOutcome = button.dataset.reviewOutcome;
+      if (!$('#backtestReviewResultInput').value) $('#backtestReviewResultInput').value = button.dataset.defaultResult || '';
       renderBacktestReviewModal();
     };
   });
@@ -395,17 +429,18 @@ function renderBacktestReviewModal() {
 async function saveBacktestReviewFromModal() {
   const signal = backtestSignalById(model.backtestReviewSignalId);
   if (!signal) return;
-  const status = model.backtestReviewStatus;
+  const decision = model.backtestReviewDecision;
+  const status = decision === 'ENTERED' ? model.backtestReviewOutcome : decision;
   const note = $('#backtestReviewNoteInput').value.trim();
   const resultValue = $('#backtestReviewResultInput').value.trim();
-  const unscored = ['MISSED', 'SKIPPED'].includes(status);
-  if (!unscored && resultValue === '') {
+  const entered = decision === 'ENTERED';
+  if (entered && resultValue === '') {
     toast(t('backtest.review.resultRequired'), 'warn');
     return;
   }
   await runBusy(t('ui.loading'), () => cisd.reviewBacktestSignal(model.backtestReviewSignalId, {
     status,
-    resultR: unscored ? null : Number(resultValue || 0),
+    resultR: entered ? Number(resultValue || 0) : null,
     note,
   }));
   await refreshStateAndRender();

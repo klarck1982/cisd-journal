@@ -23,7 +23,6 @@ const { resolveMt5BridgeCandidates } = require('./lib/mt5-bridge');
 const { buildRuntimeReadinessSnapshot } = require('./lib/runtime-readiness');
 const { matchesBacktestFilters } = require('./lib/cisd-signals');
 const { writeDecisionsFile } = require('./lib/backtest-decisions');
-const { buildFactorBreakdown, findComboLeaders, buildGradeBreakdown, evaluateCombination } = require('./lib/engines/backtest-factors');
 const {
   DEFAULT_POLL_INTERVAL_MS,
   DEFAULT_SETTLE_DELAY_MS,
@@ -1195,18 +1194,6 @@ function registerHandlers() {
     return data;
   });
 
-  ipcMain.handle('backtest:factors', (_, id, options = {}) => {
-    const data = read();
-    const signals = (data.backtestSignals || []).filter((item) => item.backtestId === id);
-    return {
-      factors: buildFactorBreakdown(signals),
-      leaders: findComboLeaders(signals),
-      grades: buildGradeBreakdown(signals),
-      combo: Array.isArray(options.factors) && options.factors.length ? evaluateCombination(signals, options.factors) : null,
-      total: signals.length,
-    };
-  });
-
   ipcMain.handle('backtest:archive', (_, id) => {
     const data = read();
     const backtest = data.backtests.find((item) => item.id === id);
@@ -1223,6 +1210,7 @@ function registerHandlers() {
     const removedBacktest = data.backtests.find((item) => item.id === id);
     const removedDecisionPaths = removedBacktest ? [removedBacktest.sourceCsvPath, removedBacktest.backtestCsvPath] : [];
     data.backtestSignals = (data.backtestSignals || []).filter((item) => item.backtestId !== id);
+    data.trades = (data.trades || []).filter((item) => item.backtestId !== id);
     data.backtests = data.backtests.filter((item) => item.id !== id);
     if (data.activeBacktestId === id) data.activeBacktestId = null;
     stopBacktestCapture(id);

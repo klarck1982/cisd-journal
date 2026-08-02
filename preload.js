@@ -41,7 +41,6 @@ contextBridge.exposeInMainWorld('cisd', {
   stopBacktest: (id) => ipcRenderer.invoke('backtest:stop', id),
   refreshBacktest: (id) => ipcRenderer.invoke('backtest:refresh', id),
   setBacktestCapture: (id, enabled) => ipcRenderer.invoke('backtest:capture', id, enabled),
-  getBacktestFactors: (id, options) => ipcRenderer.invoke('backtest:factors', id, options),
   chooseBacktestCsv: () => ipcRenderer.invoke('backtest:csv:choose'),
   reviewBacktestSignal: (signalId, payload) => ipcRenderer.invoke('backtest:review-signal', signalId, payload),
   saveDaily: (day, payload) => ipcRenderer.invoke('daily:save', day, payload),
