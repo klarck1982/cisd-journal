@@ -264,6 +264,17 @@
       "stopped": "Session finished ✓",
       "archived": "Session archived ✓"
     },
+    "capture": {
+      "source": "Source",
+      "lastScan": "Last scan",
+      "status": {
+        "ready": "File ready",
+        "waiting": "Waiting for change",
+        "missing": "File unavailable",
+        "error": "Read error",
+        "idle": "Not scanned yet"
+      }
+    },
     "factors": {
       "title": "Filter Analyzer: Where Is the Edge?",
       "hint": "Compare outcomes by indicator filters (Trend/Fib/MS/HTF/MomVol/Confirmed) and find the best combination",

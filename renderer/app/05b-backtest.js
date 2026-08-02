@@ -3,12 +3,10 @@
  * equity curve, filter-attribution panel, per-signal review actions.
  * Split from 05-pages-trading.js to honor the 450-line module contract.
  */
-
 const BACKTEST_SCORED_STATUSES = new Set(['WIN', 'LOSS', 'BE']);
 const BACKTEST_REVIEWED_STATUSES = new Set(['WIN', 'LOSS', 'BE', 'MISSED', 'SKIPPED']);
 const BACKTEST_FACTOR_KEYS = ['Trend', 'Fib', 'MS', 'HTF', 'MomVol', 'Confirmed'];
 const BACKTEST_PRESET_COMBO = ['Trend', 'Fib', 'MomVol', 'Confirmed'];
-
 function backtestsForAccount() {
   return (model.state?.backtests || [])
     .filter((item) => item.accountId === model.accountId)
@@ -253,8 +251,6 @@ function renderBacktestSpotlight(selected, reviewSignals) {
     curveHost.innerHTML = points.length
       ? `<div class="curve-title">${escapeHtml(t('backtest.curve.title'))}</div>${buildCurveSvg(points)}`
       : `<div class="panel-hint">${escapeHtml(t('backtest.curve.empty'))}</div>`;
-    // Reuse the shared hover inspector so every R point exposes its signal
-    // time, individual result and running equity instead of being decorative.
     if (points.length) bindCurveTooltip('#backtestCurve', 'R');
   }
 }
@@ -271,6 +267,12 @@ function renderBacktest() {
     const reviewed = signals.filter((item) => BACKTEST_REVIEWED_STATUSES.has(String(item.status || '').toUpperCase())).length;
     const isActive = session.id === selected?.id;
     const capturing = session.status === 'ACTIVE' && session.captureEnabled !== false;
+    const captureDiagnostics = session.captureDiagnostics || {};
+    const captureState = String(captureDiagnostics.status || (capturing ? 'WAITING' : 'IDLE')).toLowerCase();
+    const captureClass = captureState === 'error' ? 'bad' : captureState === 'missing' ? 'warn' : captureState === 'ready' ? 'safe' : 'neutral';
+    const captureLabel = t(`backtest.capture.status.${captureState}`);
+    const sourcePath = captureDiagnostics.sourcePath || session.backtestCsvPath || session.sourceCsvPath || '';
+    const sourceName = sourcePath ? sourcePath.split(/[\\/]/).pop() : '—';
     return `
       <article class="item ${isActive ? 'account-card active' : ''}">
         <div class="item-head">
@@ -288,6 +290,9 @@ function renderBacktest() {
           ${session.filters?.session ? `<span class="tag neutral">${escapeHtml(session.filters.session)}</span>` : ''}
           ${session.filters?.symbol ? `<span class="tag neutral">${escapeHtml(session.filters.symbol)}</span>` : ''}
           ${session.filters?.tf ? `<span class="tag neutral">${escapeHtml(session.filters.tf)}</span>` : ''}
+          <span class="tag ${captureClass}" title="${escapeHtml(captureDiagnostics.lastError || sourcePath)}">${escapeHtml(captureLabel)}</span>
+          <span class="tag neutral" title="${escapeHtml(sourcePath)}">${escapeHtml(t('backtest.capture.source'))}: ${escapeHtml(sourceName)}</span>
+          ${captureDiagnostics.lastSuccessfulImportAt ? `<span class="tag neutral">${escapeHtml(t('backtest.capture.lastScan'))}: ${escapeHtml(formatDateTime(captureDiagnostics.lastSuccessfulImportAt))}</span>` : ''}
           <span class="tag neutral">${reviewed}/${signals.length} ${escapeHtml(t('backtest.library.reviewed'))}</span>
         </div>
         <div class="item-actions">

@@ -32,8 +32,10 @@ const {
   matchesBacktestFilters,
   normalizeSession,
   normalizeSymbol,
+  normalizeIndicatorSignal,
   importBacktestSignals,
 } = require('../lib/cisd-signals');
+const { fileSignature, signatureKey, hasFileChanged, retryDelay } = require('../lib/backtest-capture');
 const { serializeDecisions } = require('../lib/backtest-decisions');
 const { buildFactorBreakdown, evaluateCombination, findComboLeaders, factorValue } = require('../lib/engines/backtest-factors');
 const { createStore } = require('../lib/store');
@@ -49,6 +51,23 @@ for (const tz of ['Asia/Singapore', 'America/New_York', 'Asia/Damascus']) {
   assert.equal(summer.toISOString(), '2026-07-15T13:00:00.000Z', `${tz}: July (EDT) 09:00 NY = 13:00Z`);
   assert.equal(winter.toISOString(), '2026-01-15T14:00:00.000Z', `${tz}: January (EST) 09:00 NY = 14:00Z`);
 }
+
+// Indicator/Excel-compatible fallbacks: the source is ISO, but a CSV viewed or
+// exported through Excel can expose M/D/YYYY and turn +Cisd into #NAME?.
+const slashTime = parseSignalTimestamp({ SignalTimeNY: '1/2/2026 8:30' });
+assert.equal(slashTime.toISOString(), '2026-01-02T13:30:00.000Z', 'M/D/YYYY H:mm is interpreted as a New York wall clock');
+assert.equal(
+  normalizeIndicatorSignal({ SignalID: 'XAU_USD_15m_SELL_1767359700000', Direction: '#NAME?' }).Direction,
+  '-Cisd',
+  'a corrupted Excel direction falls back to the BUY/SELL token in SignalID'
+);
+
+const signatureA = fileSignature({ size: 10, mtimeMs: 100, ctimeMs: 100 });
+const signatureB = fileSignature({ size: 11, mtimeMs: 100, ctimeMs: 100 });
+assert.equal(signatureKey(signatureA), '10:100:100');
+assert.ok(hasFileChanged(signatureA, signatureB), 'an appended row changes the capture fingerprint');
+assert.equal(retryDelay(0), 250);
+assert.equal(retryDelay(99), 4000);
 
 // --- 2) Symbol normalization: XAU/USD matches a XAUUSD filter ---------------
 assert.equal(normalizeSymbol('XAU/USD'), 'XAUUSD');
@@ -162,7 +181,30 @@ const occurrenceB = stateB.backtestSignals[0];
 assert.equal(occurrenceA.signalAt, occurrenceB.signalAt, 'the stored instant must not depend on the PC timezone');
 assert.equal(occurrenceA.occurrenceKey, occurrenceB.occurrenceKey, 'de-dup keys must not depend on the PC timezone');
 
-// --- 5) Decisions bridge: chart vocabulary + backtest priority ---------------
+// --- 5) Indicator append-only order ------------------------------------------
+// The indicator appends a historical Replay row at the bottom of the CSV. The
+// importer must still accept it and the renderer can sort the resulting rows by
+// signalAt afterwards.
+const indicatorCsv = [
+  'SignalID,SignalTimeNY,WaveStartTimeNY,Date,Day,Session,Instrument,TF,Direction,Grade,Score,Trend,Fib,MS,HTF,MomVol,Confirmed',
+  'XAU_USD_15m_SELL_1767663900000,2026-01-06 03:45:00,2026-01-06 03:30:00,2026-01-06,Tuesday,London,XAU/USD,15m,-Cisd,Standard,2/2,-,1,-,-,1,1',
+  'XAU_USD_15m_SELL_1767359700000,1/2/2026 8:30,1/2/2026 7:45,1/2/2026,Friday,NY,XAU/USD,15m,#NAME?,Standard,2/2,-,1,-,-,1,1',
+].join('\n');
+const indicatorState = freshState();
+const indicatorResult = importBacktestSignals(
+  indicatorState,
+  indicatorCsv,
+  { id: 'bt-indicator', accountId: 'a1', filters: { start: '2026-01-02', end: '2026-01-06', symbol: 'XAUUSD', tf: '15m' } }
+);
+assert.equal(indicatorResult.count, 2, 'both an ISO row and an appended M/D/YYYY row are imported');
+assert.equal(indicatorState.backtestSignals[1].Direction, '-Cisd', 'direction survives the Excel #NAME? display');
+assert.deepEqual(
+  indicatorState.backtestSignals.map((item) => item.signalAt).sort(),
+  ['2026-01-02T13:30:00.000Z', '2026-01-06T08:45:00.000Z'],
+  'signal order is independent of the CSV row order'
+);
+
+// --- 6) Decisions bridge: chart vocabulary + backtest priority ---------------
 const decisionState = {
   signals: [
     { SignalID: 'SIG-LIVE-1', decisions: { a1: { status: 'EXECUTED' } } },
