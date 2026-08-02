@@ -32,6 +32,7 @@ const {
   matchesBacktestFilters,
   normalizeSession,
   normalizeSymbol,
+  normalizeTimeframe,
   normalizeIndicatorSignal,
   importBacktestSignals,
 } = require('../lib/cisd-signals');
@@ -72,10 +73,13 @@ assert.equal(retryDelay(99), 4000);
 // --- 2) Symbol normalization: XAU/USD matches a XAUUSD filter ---------------
 assert.equal(normalizeSymbol('XAU/USD'), 'XAUUSD');
 assert.equal(normalizeSymbol('xau.usd'), 'XAUUSD');
+assert.equal(normalizeTimeframe('15'), '15m');
+assert.equal(normalizeTimeframe('M15'), '15m');
+assert.equal(normalizeTimeframe('1H'), '60m');
 assert.ok(
   matchesBacktestFilters(
     { SignalTimeNY: '2026-07-24 08:15', Session: 'London', Instrument: 'XAU/USD', TF: '15m' },
-    { start: '2026-07-24', end: '2026-07-24', session: 'London', symbol: 'XAUUSD', tf: '15m' }
+    { start: '2026-07-24', end: '2026-07-24', session: 'London', symbol: 'XAUUSD', tf: '15' }
   ),
   'the indicator writes XAU/USD; the trader types XAUUSD — they must match'
 );
@@ -194,7 +198,7 @@ const indicatorState = freshState();
 const indicatorResult = importBacktestSignals(
   indicatorState,
   indicatorCsv,
-  { id: 'bt-indicator', accountId: 'a1', filters: { start: '2026-01-02', end: '2026-01-06', symbol: 'XAUUSD', tf: '15m' } }
+  { id: 'bt-indicator', accountId: 'a1', filters: { start: '2026-01-02', end: '2026-01-06', symbol: 'XAUUSD', tf: '15' } }
 );
 assert.equal(indicatorResult.count, 2, 'both an ISO row and an appended M/D/YYYY row are imported');
 assert.equal(indicatorState.backtestSignals[1].Direction, '-Cisd', 'direction survives the Excel #NAME? display');
