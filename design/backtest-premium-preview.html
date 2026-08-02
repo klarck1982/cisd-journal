@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CISD Journal — Backtest Premium Preview</title>
+<style>
+@font-face{font-family:PlexArabic;font-style:normal;font-weight:400;src:url('../renderer/fonts/plex-arabic-400.woff2') format('woff2')}
+@font-face{font-family:PlexArabic;font-style:normal;font-weight:600;src:url('../renderer/fonts/plex-arabic-600.woff2') format('woff2')}
+@font-face{font-family:PlexArabic;font-style:normal;font-weight:700;src:url('../renderer/fonts/plex-arabic-700.woff2') format('woff2')}
+@font-face{font-family:PlexLatin;font-style:normal;font-weight:400;src:url('../renderer/fonts/plex-latin-400.woff2') format('woff2')}
+@font-face{font-family:PlexLatin;font-style:normal;font-weight:600;src:url('../renderer/fonts/plex-latin-600.woff2') format('woff2')}
+:root{
+  --base:#07111d;--surface:#0d1a2b;--surface-2:#13243a;--surface-3:#1a2d47;
+  --line:rgba(153,184,220,.16);--line-soft:rgba(153,184,220,.09);--line-strong:rgba(153,184,220,.30);
+  --ink:#edf4ff;--muted:#a4b5cb;--dim:#71849d;
+  --blue:#5aa9ff;--blue-wash:rgba(90,169,255,.11);--blue-edge:rgba(90,169,255,.38);
+  --green:#50dda0;--green-wash:rgba(80,221,160,.11);--green-edge:rgba(80,221,160,.38);
+  --yellow:#ffcf68;--yellow-wash:rgba(255,207,104,.11);--yellow-edge:rgba(255,207,104,.38);
+  --red:#ff7d91;--red-wash:rgba(255,125,145,.11);--red-edge:rgba(255,125,145,.38);
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--shadow:0 12px 32px rgba(0,0,0,.32);
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;
+  --font:PlexArabic,"Segoe UI",Tahoma,sans-serif;--num:PlexLatin,PlexArabic,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 15% 0%,#122541 0,var(--base) 42%);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55}
+button,input,textarea,select{font:inherit}button{cursor:pointer;color:inherit}.num{font-family:var(--num);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed}
+.preview-wrap{max-width:1440px;margin:auto;padding:24px 28px 48px}.prototype-note{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px;margin:0 0 12px;padding:8px 12px;border:1px dashed var(--line);border-radius:var(--r-sm);background:rgba(255,255,255,.025)}
+.prototype-note strong{color:var(--blue)}
+.app-shell{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:rgba(9,20,34,.88);box-shadow:var(--shadow)}
+.app-topbar{height:58px;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 20px;border-bottom:1px solid var(--line-soft);background:rgba(13,26,43,.9)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600}.brand-mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),#4fd7c5);color:#061321;font-family:var(--num);font-weight:700}.brand small{display:block;color:var(--dim);font-size:10px;font-weight:400;margin-top:-2px}.brand-text{line-height:1.2}
+.top-meta{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}.top-meta .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px var(--green-wash)}
+.workspace-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;padding:24px 24px 16px}.kicker{color:var(--blue);font-size:11px;letter-spacing:.13em;font-family:var(--num);font-weight:600}.workspace-head h1{margin:3px 0 4px;font-size:25px;letter-spacing:-.03em}.workspace-head p{margin:0;color:var(--muted);font-size:13px;max-width:680px}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--surface-3);border-radius:var(--r-sm);padding:8px 13px;font-size:12px;transition:.14s ease}.btn:hover{border-color:var(--line-strong);transform:translateY(-1px)}.btn.primary{background:linear-gradient(135deg,var(--blue),#57d1c1);border-color:transparent;color:#06121e;font-weight:700}.btn.ghost{background:transparent;color:var(--muted)}.btn.small{padding:5px 9px;font-size:11px}
+.control-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 24px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);background:rgba(19,36,58,.62)}.control{display:flex;align-items:center;gap:7px;min-height:34px;padding:4px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:rgba(255,255,255,.025)}.control-label{color:var(--dim);font-size:11px}.control strong{font-size:12px}.status{display:inline-flex;align-items:center;gap:5px;color:var(--green);font-size:11px}.status i{width:6px;height:6px;background:var(--green);border-radius:50%}.control-spacer{flex:1}.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 8px;color:var(--muted);font-size:11px;white-space:nowrap}.chip.blue{border-color:var(--blue-edge);background:var(--blue-wash);color:var(--blue)}.chip.green{border-color:var(--green-edge);background:var(--green-wash);color:var(--green)}.chip.yellow{border-color:var(--yellow-edge);background:var(--yellow-wash);color:var(--yellow)}.chip b{font-family:var(--num);font-weight:600}
+.filter-drawer{margin:0 24px 12px;padding:14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.filter-drawer.hidden{display:none}.filter-group{display:grid;gap:5px}.filter-group label{font-size:11px;color:var(--dim)}.filter-group .select{border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 9px;background:var(--surface-2);font-size:12px}.filter-actions{display:flex;align-items:end;gap:7px}
+.insight-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:16px 24px}.insight{min-height:66px;border:1px solid var(--line-soft);border-radius:var(--r-md);background:var(--surface);padding:10px 12px;display:flex;align-items:center;gap:10px}.insight-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--blue-wash);color:var(--blue);font-family:var(--num);font-weight:600}.insight:nth-child(2) .insight-icon{background:var(--green-wash);color:var(--green)}.insight:nth-child(3) .insight-icon{background:var(--yellow-wash);color:var(--yellow)}.insight:nth-child(4) .insight-icon{background:var(--blue-wash);color:var(--blue)}.insight small{display:block;color:var(--dim);font-size:10px}.insight strong{display:block;font-size:12px;margin-top:1px}.insight .value{color:var(--green);font-family:var(--num);font-variant-numeric:tabular-nums}
+.workspace{display:grid;grid-template-columns:300px minmax(0,1fr);gap:12px;padding:0 24px 16px}.panel{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line-soft)}.panel-head h2{font-size:14px;margin:0}.panel-head small{color:var(--dim);font-size:11px}.search{margin:12px;border:1px solid var(--line);background:var(--base);border-radius:var(--r-sm);padding:8px 10px;color:var(--ink);width:calc(100% - 24px);font-size:12px;outline:none}.search:focus{border-color:var(--blue-edge);box-shadow:0 0 0 3px var(--blue-wash)}
+.queue-tabs{display:flex;gap:5px;padding:0 12px 10px}.queue-tab{border:0;background:transparent;color:var(--dim);font-size:11px;padding:4px 7px;border-radius:var(--r-sm)}.queue-tab.active{background:var(--blue-wash);color:var(--blue)}.signal-list{max-height:420px;overflow:auto;padding:0 8px 8px}.signal-row{display:grid;gap:3px;padding:10px 9px;border:1px solid transparent;border-radius:var(--r-md);margin:3px 0;cursor:pointer}.signal-row:hover{background:rgba(255,255,255,.025);border-color:var(--line)}.signal-row.active{background:var(--blue-wash);border-color:var(--blue-edge)}.signal-row-head{display:flex;justify-content:space-between;gap:8px}.signal-title{font-size:12px;font-weight:600}.signal-time{font-family:var(--num);font-size:10px;color:var(--dim);direction:ltr}.signal-meta{display:flex;gap:5px;flex-wrap:wrap;color:var(--dim);font-size:10px}.state-dot{width:7px;height:7px;border-radius:50%;background:var(--yellow);margin-top:5px;flex:none}.state-dot.good{background:var(--green)}.state-dot.bad{background:var(--red)}
+.review{min-width:0}.review-body{padding:18px 20px}.signal-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;padding-bottom:15px;border-bottom:1px solid var(--line-soft)}.signal-hero h3{margin:0;font-size:20px;letter-spacing:-.02em}.signal-hero p{margin:3px 0 0;color:var(--muted);font-size:12px}.hero-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.factor-line{display:flex;gap:6px;flex-wrap:wrap;padding:14px 0}.factor-line .factor{border:1px solid var(--line);border-radius:5px;padding:3px 7px;font-family:var(--num);font-size:10px;color:var(--dim)}.factor-line .factor.pass{border-color:var(--green-edge);background:var(--green-wash);color:var(--green)}.review-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}.review-section{display:grid;gap:8px}.section-label{color:var(--dim);font-size:11px}.decision-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.decision{border:1px solid var(--line);background:var(--surface-2);border-radius:var(--r-sm);padding:10px 8px;font-size:12px}.decision.active{border-color:var(--blue-edge);background:var(--blue-wash);color:var(--blue)}.result-row{display:grid;grid-template-columns:1fr 100px;gap:8px}.field{border:1px solid var(--line);background:var(--base);border-radius:var(--r-sm);padding:9px 10px;color:var(--ink);min-width:0}.field:focus{outline:2px solid var(--blue-edge);outline-offset:1px}.note-field{min-height:76px;resize:vertical}.review-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft)}.shortcut{color:var(--dim);font-size:10px}.shortcut kbd{border:1px solid var(--line);border-bottom-color:var(--line-strong);background:var(--surface-2);padding:2px 5px;border-radius:4px;font-family:var(--num)}
+.analysis{margin:0 24px 24px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);overflow:hidden}.analysis-head{display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid var(--line-soft)}.analysis-head h2{font-size:14px;margin:0}.analysis-head small{color:var(--dim);font-size:11px}.analysis-tabs{display:flex;gap:5px;margin-inline-start:auto}.analysis-tab{border:1px solid transparent;background:transparent;color:var(--dim);font-size:11px;border-radius:var(--r-sm);padding:5px 9px}.analysis-tab.active{color:var(--blue);border-color:var(--blue-edge);background:var(--blue-wash)}.analysis-body{padding:14px 16px}.analysis-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.summary-pill{border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 9px;font-size:11px;color:var(--muted)}.summary-pill strong{font-family:var(--num);color:var(--ink);margin-inline-start:4px}.analysis-table{width:100%;border-collapse:collapse;font-size:11px}.analysis-table th,.analysis-table td{padding:8px 9px;border-bottom:1px solid var(--line-soft);text-align:start}.analysis-table th{font-size:10px;color:var(--dim);font-weight:500}.analysis-table td.num{text-align:end}.analysis-table tr:last-child td{border-bottom:0}.positive{color:var(--green)}.negative{color:var(--red)}.bar{height:5px;min-width:90px;border-radius:99px;background:var(--surface-3);overflow:hidden}.bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--blue),var(--green))}
+.manual-modal{position:fixed;inset:0;background:rgba(3,9,17,.72);display:grid;place-items:center;padding:20px;z-index:10}.manual-modal.hidden{display:none}.modal-card{width:min(460px,100%);border:1px solid var(--line-strong);border-radius:var(--r-lg);background:var(--surface-2);box-shadow:var(--shadow);overflow:hidden}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid var(--line-soft)}.modal-head h2{font-size:16px;margin:0}.close{border:0;background:transparent;color:var(--muted);font-size:20px}.modal-body{padding:16px;display:grid;gap:12px}.modal-foot{padding:13px 16px;border-top:1px solid var(--line-soft);display:flex;justify-content:flex-end;gap:7px}.readonly{color:var(--muted);background:rgba(255,255,255,.025)}
+@media(max-width:980px){.preview-wrap{padding:14px}.workspace{grid-template-columns:1fr;padding-inline:14px}.signal-list{max-height:250px}.insight-strip{grid-template-columns:repeat(2,1fr);padding-inline:14px}.workspace-head{padding-inline:14px}.control-bar{padding-inline:14px}.analysis{margin-inline:14px}.filter-drawer{margin-inline:14px;grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.workspace-head{display:block}.actions{margin-top:12px}.insight-strip{grid-template-columns:1fr}.review-grid{grid-template-columns:1fr}.filter-drawer{grid-template-columns:1fr}.analysis-head{display:block}.analysis-tabs{margin:10px 0 0}.app-topbar{padding-inline:12px}.top-meta{display:none}}
+</style>
+</head>
+<body>
+<div class="preview-wrap">
+  <div class="prototype-note"><strong>نموذج بصري فقط</strong><span>هذه الصفحة لا تحفظ بيانات ولا تغيّر التطبيق. الهدف الاتفاق على الحجم والترتيب والأسلوب قبل التنفيذ.</span></div>
+  <main class="app-shell">
+    <header class="app-topbar">
+      <div class="brand"><span class="brand-mark">C</span><span class="brand-text">CISD Journal<small>Backtest workspace</small></span></div>
+      <div class="top-meta"><span class="dot"></span><span>مصدر البيانات متصل</span><span class="chip">FundingPips · حساب التحدي</span></div>
+    </header>
+
+    <section class="workspace-head">
+      <div><div class="kicker">BACKTEST WORKSPACE</div><h1>جلسة Test</h1><p>راجع إشارات Replay بسرعة، ثم اكتشف أي الفلاتر والجلسات والأيام تعطيك أفضلية حقيقية.</p></div>
+      <div class="actions"><button class="btn ghost">↻ فحص الآن</button><button class="btn primary">＋ جلسة جديدة</button></div>
+    </section>
+
+    <section class="control-bar">
+      <div class="control"><span class="control-label">الجلسة</span><strong>Test</strong><span class="chip green">نشطة</span></div>
+      <div class="control"><span class="control-label">المصدر</span><strong class="num">HigherTF_Signals.csv</strong><span class="status"><i></i> متاح</span></div>
+      <div class="control"><span class="control-label">آخر فحص</span><strong class="num">10:42:18</strong></div>
+      <div class="control"><span class="control-label">الإشارات</span><strong class="num">24</strong></div>
+      <div class="control-spacer"></div>
+      <button class="btn ghost small" id="filterToggle">⚙ الفلاتر <span class="chip blue"><b>4</b></span></button>
+      <button class="btn small" id="manualToggle">＋ صفقة</button>
+    </section>
+
+    <section class="filter-drawer hidden" id="filterDrawer">
+      <div class="filter-group"><label>الأداة من الجلسة</label><div class="select readonly">USA500.IDX/USD</div></div>
+      <div class="filter-group"><label>الفريم من الجلسة</label><div class="select readonly">15m</div></div>
+      <div class="filter-group"><label>الجلسة</label><div class="select">كل الجلسات</div></div>
+      <div class="filter-group"><label>اليوم</label><div class="select">كل الأيام</div></div>
+      <div class="filter-group"><label>شروط المؤشر</label><div class="select">Fib · Confirmed</div></div>
+      <div class="filter-actions"><button class="btn primary small" id="applyFilters">تطبيق الفلاتر</button><button class="btn ghost small" id="closeFilters">إغلاق</button></div>
+    </section>
+
+    <section class="insight-strip">
+      <div class="insight"><div class="insight-icon num">24</div><div><small>الأكثر إعطاءً للإشارات</small><strong>Trend · <span class="value">48% تغطية</span></strong></div></div>
+      <div class="insight"><div class="insight-icon num">+0.65R</div><div><small>الأفضل أداءً</small><strong>Confirmed · <span class="value">79% Win Rate</span></strong></div></div>
+      <div class="insight"><div class="insight-icon">L</div><div><small>أفضل جلسة</small><strong>London · <span class="value">+8.5R</span></strong></div></div>
+      <div class="insight"><div class="insight-icon">F</div><div><small>أفضل يوم</small><strong>Friday · <span class="value">+7.1R</span></strong></div></div>
+    </section>
+
+    <section class="workspace">
+      <aside class="panel">
+        <div class="panel-head"><h2>قائمة الإشارات</h2><small class="num">24 total</small></div>
+        <input class="search" placeholder="ابحث بالأداة أو الجلسة أو الوقت">
+        <div class="queue-tabs"><button class="queue-tab active">الكل 24</button><button class="queue-tab">جديدة 9</button><button class="queue-tab">مراجعة 15</button></div>
+        <div class="signal-list">
+          <div class="signal-row active"><div class="signal-row-head"><div class="signal-title">USA500.IDX/USD · +CISD</div><span class="state-dot"></span></div><div class="signal-time">02 Jan 2026 · 04:30 NY</div><div class="signal-meta"><span>London</span><span>15m</span><span class="chip blue">Standard</span></div></div>
+          <div class="signal-row"><div class="signal-row-head"><div class="signal-title">USA500.IDX/USD · -CISD</div><span class="state-dot good"></span></div><div class="signal-time">02 Jan 2026 · 06:15 NY</div><div class="signal-meta"><span>London</span><span>15m</span><span class="chip green">WIN</span></div></div>
+          <div class="signal-row"><div class="signal-row-head"><div class="signal-title">USA500.IDX/USD · +CISD</div><span class="state-dot bad"></span></div><div class="signal-time">02 Jan 2026 · 09:15 NY</div><div class="signal-meta"><span>NY</span><span>15m</span><span class="chip">MISSED</span></div></div>
+          <div class="signal-row"><div class="signal-row-head"><div class="signal-title">USA500.IDX/USD · -CISD</div><span class="state-dot good"></span></div><div class="signal-time">05 Jan 2026 · 10:00 NY</div><div class="signal-meta"><span>NY</span><span>15m</span><span class="chip green">+1.5R</span></div></div>
+          <div class="signal-row"><div class="signal-row-head"><div class="signal-title">USA500.IDX/USD · +CISD</div><span class="state-dot"></span></div><div class="signal-time">06 Jan 2026 · 03:45 NY</div><div class="signal-meta"><span>London</span><span>15m</span><span class="chip">NEW</span></div></div>
+        </div>
+      </aside>
+
+      <section class="panel review">
+        <div class="panel-head"><div><h2>مراجعة الإشارة الحالية</h2><small>1 من 24 · اضغط حفظ وانتقل للتالية</small></div><span class="chip yellow">قيد المراجعة</span></div>
+        <div class="review-body">
+          <div class="signal-hero"><div><h3>USA500.IDX/USD · +CISD</h3><p class="num">02 Jan 2026 · 04:30 NY · London · 15m</p></div><div class="hero-tags"><span class="chip blue">Standard</span><span class="chip">Score 2/2</span></div></div>
+          <div class="factor-line"><span class="factor">Trend —</span><span class="factor pass">Fib 1</span><span class="factor">MS —</span><span class="factor">HTF —</span><span class="factor pass">MomVol 1</span><span class="factor pass">Confirmed 1</span></div>
+          <div class="review-grid">
+            <div class="review-section"><div class="section-label">قرارك على الفرصة</div><div class="decision-row"><button class="decision active">دخلت</button><button class="decision">رفضتها</button><button class="decision">فاتتني</button></div><div class="section-label" style="margin-top:8px">النتيجة</div><div class="result-row"><select class="field"><option>ربح</option><option>خسارة</option><option>تعادل</option></select><input class="field num" value="1.5" aria-label="R"></div></div>
+            <div class="review-section"><div class="section-label">ملاحظة مختصرة</div><textarea class="field note-field" placeholder="ما الذي ستكرره أو تتجنبه؟"></textarea><div class="section-label">الصفقة اليدوية مستقلة؛ زر ＋ صفقة في شريط الجلسة.</div></div>
+          </div>
+          <div class="review-footer"><span class="shortcut"><kbd>←</kbd> السابق &nbsp; <kbd>Enter</kbd> حفظ وانتقل</span><div class="actions"><button class="btn ghost small">السابق</button><button class="btn primary">حفظ وانتقل للتالية ←</button></div></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="analysis">
+      <div class="analysis-head"><div><h2>تحليل الأفضلية</h2><small>لوحة مضغوطة — لا تأخذ مساحة العمل الرئيسية</small></div><div class="analysis-tabs"><button class="analysis-tab active" data-view="filters">الفلاتر</button><button class="analysis-tab" data-view="sessions">الجلسات</button><button class="analysis-tab" data-view="days">الأيام</button></div></div>
+      <div class="analysis-body"><div class="analysis-summary"><span class="summary-pill">الأكثر عدداً <strong>Trend · 24</strong></span><span class="summary-pill">الأفضل أداءً <strong class="positive">Confirmed · +0.65R</strong></span><span class="summary-pill">عينة محسوبة <strong class="num">24 / 24</strong></span></div>
+        <table class="analysis-table"><thead><tr><th>العنصر</th><th>عدد الإشارات</th><th>التغطية</th><th>Win Rate</th><th>Net R</th><th>متوسط R</th><th>الأثر</th></tr></thead><tbody id="analysisRows"></tbody></table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="manual-modal hidden" id="manualModal"><div class="modal-card"><div class="modal-head"><h2>تسجيل صفقة يدوية</h2><button class="close" id="closeManual">×</button></div><div class="modal-body"><p style="margin:0;color:var(--muted);font-size:12px">الصفقة تابعة لجلسة <strong>Test</strong> وتُحسب ضمن تحليلها. لا تحتاج إلى شارة أو SignalID.</p><div class="filter-group"><label>الأداة من الجلسة</label><div class="field readonly">USA500.IDX/USD</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="filter-group"><label>الاتجاه</label><select class="field"><option>Buy</option><option>Sell</option></select></div><div class="filter-group"><label>التاريخ</label><input class="field" value="2026-01-02"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="filter-group"><label>النتيجة</label><select class="field"><option>ربح</option><option>خسارة</option><option>تعادل</option></select></div><div class="filter-group"><label>R</label><input class="field num" value="1.0"></div></div><div class="filter-group"><label>ملاحظة</label><textarea class="field note-field" placeholder="ملاحظة اختيارية"></textarea></div></div><div class="modal-foot"><button class="btn ghost" id="cancelManual">إلغاء</button><button class="btn primary" id="saveManual">حفظ الصفقة</button></div></div></div>
+<script>
+const data={
+ filters:[['Trend','24','48%','62%','+6.5R','+0.27R',48],['Fib','18','36%','72%','+8.2R','+0.46R',36],['Confirmed','14','28%','79%','+9.1R','+0.65R',28],['MomVol','21','42%','57%','+3.4R','+0.16R',42]],
+ sessions:[['London','22','75%','+8.5R','+0.53R',76],['NY','18','50%','-1.0R','-0.08R',55],['Asia','7','40%','-2.2R','-0.44R',28]],
+ days:[['Friday','9','86%','+7.1R','+1.01R',92],['Tuesday','18','69%','+6.4R','+0.49R',73],['Monday','12','50%','+1.2R','+0.15R',44],['Thursday','14','43%','-0.8R','-0.06R',31]]
+};
+const headings={filters:['العنصر','عدد الإشارات','التغطية','Win Rate','Net R','متوسط R','الأثر'],sessions:['الجلسة','الإشارات','Win Rate','Net R','متوسط R','الأثر'],days:['اليوم','الإشارات','Win Rate','Net R','متوسط R','الأثر']};
+function renderTable(view){const rows=document.querySelector('#analysisRows');const h=headings[view];document.querySelector('.analysis-table thead').innerHTML='<tr>'+h.map((x,i)=>'<th>'+x+'</th>').join('')+'</tr>';rows.innerHTML=data[view].map(row=>{const [name,count,a,b,c,d,bar]=row;const nums=view==='filters'?[count,a,b,c,d]:[count,a,b,c];const cells=nums.map((v,i)=>'<td class="num '+(String(v).startsWith('-')?'negative':String(v).startsWith('+')?'positive':'')+'">'+v+'</td>').join('');return '<tr><td><strong>'+name+'</strong></td>'+cells+'<td><div class="bar"><i style="width:'+bar+'%"></i></div></td></tr>'}).join('')}
+renderTable('filters');document.querySelectorAll('.analysis-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.analysis-tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderTable(btn.dataset.view)}));
+const drawer=document.querySelector('#filterDrawer');document.querySelector('#filterToggle').onclick=()=>drawer.classList.toggle('hidden');document.querySelector('#closeFilters').onclick=()=>drawer.classList.add('hidden');document.querySelector('#applyFilters').onclick=()=>drawer.classList.add('hidden');
+const modal=document.querySelector('#manualModal');document.querySelector('#manualToggle').onclick=()=>modal.classList.remove('hidden');document.querySelector('#closeManual').onclick=()=>modal.classList.add('hidden');document.querySelector('#cancelManual').onclick=()=>modal.classList.add('hidden');document.querySelector('#saveManual').onclick=()=>modal.classList.add('hidden');modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.add('hidden')});
+</script>
+</body></html>

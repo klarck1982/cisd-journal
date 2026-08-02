@@ -23,7 +23,15 @@ const { resolveMt5BridgeCandidates } = require('./lib/mt5-bridge');
 const { buildRuntimeReadinessSnapshot } = require('./lib/runtime-readiness');
 const { matchesBacktestFilters } = require('./lib/cisd-signals');
 const { writeDecisionsFile } = require('./lib/backtest-decisions');
-const { buildFactorBreakdown, findComboLeaders, buildGradeBreakdown, evaluateCombination } = require('./lib/engines/backtest-factors');
+const {
+  DEFAULT_POLL_INTERVAL_MS,
+  DEFAULT_SETTLE_DELAY_MS,
+  DEFAULT_RETRY_DELAYS_MS,
+  fileSignature,
+  signatureKey,
+  hasFileChanged,
+  retryDelay,
+} = require('./lib/backtest-capture');
 
 let win = null;
 let signalWatchPath = null;
@@ -99,24 +107,64 @@ function importMT5File(filePath, accountId, options = {}) {
   }
 }
 
+function resolveBacktestCsvPath(data, backtest, options = {}) {
+  const candidates = backtest.backtestCsvPath
+    ? [backtest.backtestCsvPath, backtest.sourceCsvPath, data.settings?.csvPath]
+    : [backtest.sourceCsvPath, data.settings?.csvPath, backtest.backtestCsvPath];
+  const existing = candidates.find((candidate) => candidate && fs.existsSync(candidate));
+  if (existing) return existing;
+  return options.allowMissing ? candidates.find(Boolean) || '' : '';
+}
+
+function captureDiagnosticPatch(status, csvPath, stat, result, error = '') {
+  const diagnostics = result?.diagnostics || {};
+  return {
+    status,
+    sourcePath: csvPath || '',
+    checkedAt: new Date().toISOString(),
+    fileSize: stat ? Number(stat.size) || 0 : 0,
+    fileModifiedAt: stat?.mtimeMs ? new Date(stat.mtimeMs).toISOString() : '',
+    scannedRows: diagnostics.scannedRows || 0,
+    added: result?.count || 0,
+    duplicates: diagnostics.duplicates || 0,
+    skippedRows: diagnostics.skippedRows || 0,
+    invalidRows: diagnostics.invalidRows || 0,
+    lastError: error || '',
+  };
+}
+
 function importBacktestSessionSignals(backtestId, options = {}) {
   const data = read();
   const backtest = data.backtests.find((item) => item.id === backtestId);
   if (!backtest) throw new Error(getBundle(data.settings?.locale).errors.backtestNotFound || 'Backtest not found');
   // يدعم مسار مخصص للباكتيست (ملف Replay من JForex) - هذا ما طلبه المستخدم:
   // فترة الباكتيست كتاريخ تطابق فترة الباكتيست على JForex
-  let csvPath = backtest.sourceCsvPath || backtest.backtestCsvPath || '';
-  if (csvPath && fs.existsSync(csvPath)) {
-    // استخدم المسار المخصص للباكتيست
-  } else {
-    csvPath = ensureCsvPath(data);
+  let csvPath = resolveBacktestCsvPath(data, backtest);
+  let stat = null;
+  try {
+    if (!csvPath) csvPath = ensureCsvPath(data);
+    stat = fs.statSync(csvPath);
+    if (!stat.isFile()) throw new Error(`Backtest CSV is not a file: ${csvPath}`);
+    const result = importBacktestSignalsText(data, fs.readFileSync(csvPath, 'utf8'), backtest, csvPath, options);
+    const now = new Date().toISOString();
+    backtest.lastImportedAt = now;
+    backtest.lastDiagnostics = result.diagnostics;
+    backtest.captureDiagnostics = {
+      ...(backtest.captureDiagnostics || {}),
+      ...captureDiagnosticPatch('READY', csvPath, stat, result),
+      lastSuccessfulImportAt: now,
+    };
+    if (!backtest.sourceCsvPath) backtest.sourceCsvPath = csvPath;
+    save(data);
+    return { state: data, ...result };
+  } catch (error) {
+    backtest.captureDiagnostics = {
+      ...(backtest.captureDiagnostics || {}),
+      ...captureDiagnosticPatch('ERROR', csvPath, stat, null, error.message || String(error)),
+    };
+    save(data);
+    throw error;
   }
-  const result = importBacktestSignalsText(data, fs.readFileSync(csvPath, 'utf8'), backtest, csvPath, options);
-  backtest.lastImportedAt = new Date().toISOString();
-  backtest.lastDiagnostics = result.diagnostics;
-  if (!backtest.sourceCsvPath) backtest.sourceCsvPath = csvPath;
-  save(data);
-  return { state: data, ...result };
 }
 
 function syncSignalsFromFile() {
@@ -157,7 +205,10 @@ function syncSignalsFromFile() {
 }
 
 function watchSignalsFile() {
-  if (signalWatchPath) fs.unwatchFile(signalWatchPath);
+  // Remove only the live-signal listener. Backtest capture may watch the same
+  // CSV, and fs.unwatchFile(path) without a listener removes those listeners
+  // too, silently stopping Replay capture when the live CSV is changed.
+  if (signalWatchPath) fs.unwatchFile(signalWatchPath, syncSignalsFromFile);
   signalWatchPath = read().settings.csvPath;
   if (signalWatchPath) fs.watchFile(signalWatchPath, { interval: 2000 }, syncSignalsFromFile);
   syncSignalsFromFile();
@@ -166,55 +217,157 @@ function watchSignalsFile() {
 /**
  * Live capture for backtest sessions.
  *
- * While a session is ACTIVE with capture enabled, its signals CSV (the file
- * the JForex indicator appends CISD rows to, including during Replay) is
- * polled like the live-signals file. New rows matching the session filters
- * appear in the review list ~2s after they show up on the chart, so the
- * trader grades opportunities as the replay unfolds instead of batching after.
+ * JForex appends Replay rows to the end of HigherTF_Signals.csv. On Windows the
+ * indicator can still hold the file briefly after changing it, so a single file
+ * event is not reliable enough. Each active session gets a small polling loop:
+ * stat the file, wait for the write to settle, read the whole CSV, and retry a
+ * locked read with backoff. Row order never participates in detection.
  */
+function updateBacktestCaptureDiagnostics(id, patch, notify = false) {
+  const data = read();
+  const backtest = (data.backtests || []).find((item) => item.id === id);
+  if (!backtest) return;
+  backtest.captureDiagnostics = { ...(backtest.captureDiagnostics || {}), ...patch };
+  save(data);
+  if (notify) sendStateChanged(data);
+}
+
+function readCaptureFileSignature(csvPath) {
+  try {
+    const stat = fs.statSync(csvPath);
+    return stat.isFile() ? fileSignature(stat) : null;
+  } catch {
+    return null;
+  }
+}
+
+function runBacktestCaptureImport(id, expectedSignature, attempt = 0) {
+  const watched = backtestWatchers.get(id);
+  if (!watched || watched.inFlight) return;
+  watched.inFlight = true;
+  try {
+    const result = importBacktestSessionSignals(id, { recordNoop: true });
+    const latestSignature = readCaptureFileSignature(watched.path) || expectedSignature;
+    watched.lastImportedSignature = latestSignature;
+    watched.status = 'READY';
+    watched.inFlight = false;
+    // A no-op scan still updates diagnostics, but only new rows need a full
+    // renderer refresh during normal capture.
+    if (result.count > 0 || watched.lastNotifiedStatus !== 'READY') {
+      watched.lastNotifiedStatus = 'READY';
+      sendStateChanged(result.state);
+    }
+  } catch (error) {
+    watched.inFlight = false;
+    watched.status = 'ERROR';
+    logError('backtestCapture', error);
+    if (attempt < DEFAULT_RETRY_DELAYS_MS.length) {
+      watched.retryTimer = setTimeout(() => {
+        watched.retryTimer = null;
+        runBacktestCaptureImport(id, expectedSignature, attempt + 1);
+      }, retryDelay(attempt));
+      watched.retryTimer.unref?.();
+      return;
+    }
+    watched.lastNotifiedStatus = 'ERROR';
+    updateBacktestCaptureDiagnostics(
+      id,
+      { status: 'ERROR', checkedAt: new Date().toISOString(), lastError: error.message || String(error) },
+      true
+    );
+  }
+}
+
+function pollBacktestCapture(id) {
+  const watched = backtestWatchers.get(id);
+  if (!watched || watched.inFlight || watched.scanTimer || watched.retryTimer) return;
+
+  const signature = readCaptureFileSignature(watched.path);
+  if (!signature) {
+    if (watched.status !== 'MISSING') {
+      watched.status = 'MISSING';
+      watched.lastNotifiedStatus = 'MISSING';
+      updateBacktestCaptureDiagnostics(
+        id,
+        { status: 'MISSING', checkedAt: new Date().toISOString(), sourcePath: watched.path, lastError: 'CSV file is missing or unavailable' },
+        true
+      );
+    }
+    return;
+  }
+
+  if (watched.lastImportedSignature && !hasFileChanged(watched.lastImportedSignature, signature)) return;
+  watched.status = 'WAITING';
+  watched.pendingSignature = signature;
+  watched.scanTimer = setTimeout(() => {
+    watched.scanTimer = null;
+    runBacktestCaptureImport(id, watched.pendingSignature || signature);
+  }, DEFAULT_SETTLE_DELAY_MS);
+  watched.scanTimer.unref?.();
+}
+
 function stopBacktestCapture(id) {
   const watched = backtestWatchers.get(id);
   if (watched) {
-    fs.unwatchFile(watched);
+    clearInterval(watched.timer);
+    clearTimeout(watched.scanTimer);
+    clearTimeout(watched.retryTimer);
     backtestWatchers.delete(id);
   }
 }
 
-function startBacktestCapture(id) {
+function startBacktestCapture(id, options = {}) {
   const data = read();
   const backtest = (data.backtests || []).find((item) => item.id === id);
-  if (!backtest || backtest.status !== 'ACTIVE' || backtest.captureEnabled === false) return;
-
-  let csvPath = backtest.sourceCsvPath || backtest.backtestCsvPath || '';
-  if (!csvPath || !fs.existsSync(csvPath)) {
-    csvPath = data.settings?.csvPath && fs.existsSync(data.settings.csvPath) ? data.settings.csvPath : '';
+  if (!backtest || backtest.status !== 'ACTIVE' || backtest.captureEnabled === false) {
+    stopBacktestCapture(id);
+    return;
   }
-  if (!csvPath) return;
-  if (backtestWatchers.get(id) === csvPath) return;
+
+  const csvPath = resolveBacktestCsvPath(data, backtest, { allowMissing: true });
+  if (!csvPath) {
+    stopBacktestCapture(id);
+    updateBacktestCaptureDiagnostics(
+      id,
+      { status: 'MISSING', checkedAt: new Date().toISOString(), sourcePath: backtest.sourceCsvPath || backtest.backtestCsvPath || '', lastError: 'No readable CSV path configured' },
+      true
+    );
+    return;
+  }
+  const watched = backtestWatchers.get(id);
+  if (watched?.path === csvPath) return;
 
   stopBacktestCapture(id);
-  backtestWatchers.set(id, csvPath);
-  fs.watchFile(csvPath, { interval: 2000 }, () => {
-    try {
-      const result = importBacktestSessionSignals(id, { recordNoop: true });
-      if (result.count > 0) sendStateChanged(result.state);
-    } catch (error) {
-      logError('backtestCapture', error);
-    }
-  });
+  const currentSignature = readCaptureFileSignature(csvPath);
+  const next = {
+    path: csvPath,
+    timer: null,
+    scanTimer: null,
+    retryTimer: null,
+    inFlight: false,
+    status: 'IDLE',
+    lastImportedSignature: options.skipInitial ? currentSignature : null,
+    lastNotifiedStatus: '',
+    pendingSignature: null,
+  };
+  next.timer = setInterval(() => pollBacktestCapture(id), DEFAULT_POLL_INTERVAL_MS);
+  next.timer.unref?.();
+  backtestWatchers.set(id, next);
+  if (!options.skipInitial) pollBacktestCapture(id);
 }
 
-function syncBacktestCaptureWatchers() {
+function syncBacktestCaptureWatchers(options = {}) {
   const data = read();
   const wanted = new Set(
     (data.backtests || [])
       .filter((item) => item.status === 'ACTIVE' && item.captureEnabled !== false)
       .map((item) => item.id)
   );
+  const skipInitialIds = options.skipInitialIds || new Set();
   for (const id of [...backtestWatchers.keys()]) {
     if (!wanted.has(id)) stopBacktestCapture(id);
   }
-  for (const id of wanted) startBacktestCapture(id);
+  for (const id of wanted) startBacktestCapture(id, { skipInitial: skipInitialIds.has(id) });
 }
 
 /**
@@ -222,8 +375,8 @@ function syncBacktestCaptureWatchers() {
  * signals CSV the journal knows about, so chart labels (✓ ENTERED / × SKIPPED
  * / — IGNORED) mirror the reviews made here — live chart and replay alike.
  */
-function syncDecisionsBridge(data) {
-  const targets = new Set();
+function syncDecisionsBridge(data, extraPaths = []) {
+  const targets = new Set(extraPaths.filter(Boolean));
   if (data.settings?.csvPath) targets.add(data.settings.csvPath);
   for (const backtest of data.backtests || []) {
     if (backtest.sourceCsvPath) targets.add(backtest.sourceCsvPath);
@@ -839,9 +992,13 @@ function registerHandlers() {
     data.trades = data.trades.filter((item) => item.accountId !== accountId);
     data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== accountId);
 
-    const backtestIds = data.backtests.filter((item) => item.accountId === accountId).map((item) => item.id);
+    const removedBacktests = data.backtests.filter((item) => item.accountId === accountId);
+    const backtestIds = removedBacktests.map((item) => item.id);
+    const removedDecisionPaths = removedBacktests.flatMap((item) => [item.sourceCsvPath, item.backtestCsvPath]);
+    for (const backtestId of backtestIds) stopBacktestCapture(backtestId);
     data.backtests = data.backtests.filter((item) => item.accountId !== accountId);
     data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    if (backtestIds.includes(data.activeBacktestId)) data.activeBacktestId = null;
     data.daily = data.daily.filter((item) => item.accountId !== accountId);
 
     const account = data.accounts.find((item) => item.id === accountId);
@@ -852,6 +1009,8 @@ function registerHandlers() {
     }
 
     save(data);
+    syncBacktestCaptureWatchers();
+    syncDecisionsBridge(data, removedDecisionPaths);
     return data;
   });
 
@@ -905,9 +1064,13 @@ function registerHandlers() {
 
     closeFundedNextWatcher(id);
 
-    const backtestIds = (data.backtests || []).filter((item) => item.accountId === id).map((item) => item.id);
+    const removedBacktests = (data.backtests || []).filter((item) => item.accountId === id);
+    const backtestIds = removedBacktests.map((item) => item.id);
+    const removedDecisionPaths = removedBacktests.flatMap((item) => [item.sourceCsvPath, item.backtestCsvPath]);
+    for (const backtestId of backtestIds) stopBacktestCapture(backtestId);
     data.backtests = (data.backtests || []).filter((item) => item.accountId !== id);
     data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    if (backtestIds.includes(data.activeBacktestId)) data.activeBacktestId = null;
     data.trades = (data.trades || []).filter((item) => item.accountId !== id);
     data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== id);
     data.daily = (data.daily || []).filter((item) => item.accountId !== id);
@@ -930,13 +1093,16 @@ function registerHandlers() {
     }
 
     save(data);
+    syncBacktestCaptureWatchers();
+    syncDecisionsBridge(data, removedDecisionPaths);
     return data;
   });
 
   ipcMain.handle('backtest:start', (_, payload) => {
     const data = read();
     // إذا اختار المستخدم ملف CSV خاص بالباكتيست (من Replay JForex)، استخدمه، وإلا استخدم الملف الحي
-    const csvPath = payload.backtestCsvPath && fs.existsSync(payload.backtestCsvPath) ? payload.backtestCsvPath : ensureCsvPath(data);
+    const requestedCsvPath = payload.backtestCsvPath && fs.existsSync(payload.backtestCsvPath) ? payload.backtestCsvPath : '';
+    const csvPath = requestedCsvPath || ensureCsvPath(data);
     const backtest = {
       ...payload,
       id: crypto.randomUUID(),
@@ -945,7 +1111,7 @@ function registerHandlers() {
       createdAt: new Date().toISOString(),
       accountId: payload.accountId,
       sourceCsvPath: csvPath,
-      backtestCsvPath: payload.backtestCsvPath || '',
+      backtestCsvPath: requestedCsvPath,
       filters: {
         start: payload.start || '',
         end: payload.end || '',
@@ -957,8 +1123,11 @@ function registerHandlers() {
     data.backtests.unshift(backtest);
     data.activeBacktestId = backtest.id;
     save(data);
-    syncBacktestCaptureWatchers();
-    return importBacktestSessionSignals(backtest.id, { recordNoop: true });
+    const result = importBacktestSessionSignals(backtest.id, { recordNoop: true });
+    // The first import already scanned the current file. Start polling without
+    // importing the same snapshot again; future size/mtime changes still scan.
+    syncBacktestCaptureWatchers({ skipInitialIds: new Set([backtest.id]) });
+    return result;
   });
 
   /**
@@ -976,27 +1145,42 @@ function registerHandlers() {
       if (patch.filters && patch.filters[key] !== undefined) nextFilters[key] = patch.filters[key];
     }
     const filtersChanged = JSON.stringify(nextFilters) !== JSON.stringify(backtest.filters || {});
+    const previousDecisionPaths = [backtest.sourceCsvPath, backtest.backtestCsvPath];
+    const previousSourceCsvPath = backtest.sourceCsvPath || '';
 
     if (patch.name !== undefined) backtest.name = String(patch.name || '').trim();
     if (patch.backtestCsvPath !== undefined) {
-      backtest.backtestCsvPath = patch.backtestCsvPath || '';
-      if (patch.backtestCsvPath && fs.existsSync(patch.backtestCsvPath)) backtest.sourceCsvPath = patch.backtestCsvPath;
+      const requestedCsvPath = String(patch.backtestCsvPath || '').trim();
+      backtest.backtestCsvPath = requestedCsvPath && fs.existsSync(requestedCsvPath) ? requestedCsvPath : '';
+      // Clearing a custom Replay file must return the session to the current
+      // live CSV. Keeping the old sourceCsvPath here made the UI appear to
+      // clear the file while every re-import still read the old file.
+      backtest.sourceCsvPath = backtest.backtestCsvPath
+        || (data.settings?.csvPath && fs.existsSync(data.settings.csvPath) ? data.settings.csvPath : '');
     }
+    const sourceChanged = patch.backtestCsvPath !== undefined && backtest.sourceCsvPath !== previousSourceCsvPath;
     if (patch.captureEnabled !== undefined) backtest.captureEnabled = Boolean(patch.captureEnabled);
     backtest.filters = nextFilters;
     backtest.updatedAt = new Date().toISOString();
 
-    if (filtersChanged) {
+    if (sourceChanged) {
+      // A different Replay file is a different sample universe. Do not leave
+      // reviewed occurrences from the old file mixed into the new session.
+      data.backtestSignals = (data.backtestSignals || []).filter((signal) => signal.backtestId !== id);
+    } else if (filtersChanged) {
       data.backtestSignals = (data.backtestSignals || []).filter(
         (signal) => signal.backtestId !== id || matchesBacktestFilters(signal, nextFilters)
       );
     }
 
     save(data);
-    syncBacktestCaptureWatchers();
     if (filtersChanged || patch.backtestCsvPath !== undefined) {
-      return importBacktestSessionSignals(id, { recordNoop: true });
+      syncDecisionsBridge(data, previousDecisionPaths);
+      const result = importBacktestSessionSignals(id, { recordNoop: true });
+      syncBacktestCaptureWatchers({ skipInitialIds: new Set([id]) });
+      return result;
     }
+    syncBacktestCaptureWatchers();
     return { state: data, count: 0 };
   });
 
@@ -1010,42 +1194,40 @@ function registerHandlers() {
     return data;
   });
 
-  ipcMain.handle('backtest:factors', (_, id, options = {}) => {
-    const data = read();
-    const signals = (data.backtestSignals || []).filter((item) => item.backtestId === id);
-    return {
-      factors: buildFactorBreakdown(signals),
-      leaders: findComboLeaders(signals),
-      grades: buildGradeBreakdown(signals),
-      combo: Array.isArray(options.factors) && options.factors.length ? evaluateCombination(signals, options.factors) : null,
-      total: signals.length,
-    };
-  });
-
   ipcMain.handle('backtest:archive', (_, id) => {
     const data = read();
     const backtest = data.backtests.find((item) => item.id === id);
     if (backtest) backtest.status = 'ARCHIVED';
+    if (data.activeBacktestId === id) data.activeBacktestId = null;
     save(data);
     syncBacktestCaptureWatchers();
+    syncDecisionsBridge(data);
     return data;
   });
 
   ipcMain.handle('backtest:reset', (_, id) => {
     const data = read();
+    const removedBacktest = data.backtests.find((item) => item.id === id);
+    const removedDecisionPaths = removedBacktest ? [removedBacktest.sourceCsvPath, removedBacktest.backtestCsvPath] : [];
     data.backtestSignals = (data.backtestSignals || []).filter((item) => item.backtestId !== id);
+    data.trades = (data.trades || []).filter((item) => item.backtestId !== id);
     data.backtests = data.backtests.filter((item) => item.id !== id);
     if (data.activeBacktestId === id) data.activeBacktestId = null;
     stopBacktestCapture(id);
     save(data);
+    syncDecisionsBridge(data, removedDecisionPaths);
     return data;
   });
 
-  ipcMain.handle('backtest:stop', () => {
+  ipcMain.handle('backtest:stop', (_, id = '') => {
     const data = read();
-    const active = data.backtests.find((item) => item.id === data.activeBacktestId);
+    // The library renders a finish action on each session. Target the clicked
+    // session when supplied; the activeBacktestId fallback keeps older callers
+    // compatible and avoids finishing the wrong session.
+    const targetId = id || data.activeBacktestId;
+    const active = data.backtests.find((item) => item.id === targetId);
     if (active) active.status = 'FINISHED';
-    data.activeBacktestId = null;
+    if (data.activeBacktestId === targetId) data.activeBacktestId = null;
     save(data);
     syncBacktestCaptureWatchers();
     return data;
@@ -1200,6 +1382,9 @@ function registerHandlers() {
       data.settings.csvPath = result.filePaths[0];
       save(data);
       watchSignalsFile();
+      // An active backtest that was waiting for a CSV can start polling as
+      // soon as the live source is configured.
+      syncBacktestCaptureWatchers();
     }
 
     return read();

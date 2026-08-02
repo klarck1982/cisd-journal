@@ -112,6 +112,30 @@ function applyStaticText() {
   $('#backtestLibraryHint').textContent = t('backtest.library.hint');
   $('#backtestReviewTitle').innerHTML = iconText('signals', t('backtest.review.title'));
   $('#backtestReviewHint').textContent = t('backtest.review.hint');
+  const backtestManualTradeBtn = $('#backtestManualTradeBtn');
+  if (backtestManualTradeBtn) backtestManualTradeBtn.textContent = t('backtest.manual.button');
+  const backtestFilterToggleBtn = $('#backtestFilterToggleBtn');
+  if (backtestFilterToggleBtn) backtestFilterToggleBtn.textContent = t('backtest.filters.button');
+  const backtestCurrentTitle = $('#backtestCurrentTitle');
+  if (backtestCurrentTitle) backtestCurrentTitle.textContent = t('backtest.current.title');
+  const backtestManualTitle = $('#backtestManualTradeTitle');
+  if (backtestManualTitle) backtestManualTitle.textContent = t('backtest.manual.title');
+  const backtestManualHint = $('#backtestManualTradeHint');
+  if (backtestManualHint) backtestManualHint.textContent = t('backtest.manual.hint');
+  const manualLabels = {
+    backtestManualInstrumentLabel: 'backtest.manual.instrument',
+    backtestManualDirectionLabel: 'backtest.manual.direction',
+    backtestManualDateLabel: 'backtest.manual.date',
+    backtestManualSessionLabel: 'backtest.manual.session',
+    backtestManualOutcomeLabel: 'backtest.manual.outcome',
+    backtestManualResultLabel: 'backtest.manual.result',
+    backtestManualNoteLabel: 'backtest.manual.note',
+  };
+  Object.entries(manualLabels).forEach(([id, key]) => { const node = $(`#${id}`); if (node) node.textContent = t(key); });
+  const cancelManual = $('#cancelBacktestManualTradeBtn');
+  if (cancelManual) cancelManual.textContent = t('backtest.manual.cancel');
+  const saveManual = $('#saveBacktestManualTradeBtn');
+  if (saveManual) saveManual.textContent = t('backtest.manual.save');
   $('#backtestSearch').placeholder = t('backtest.searchPlaceholder');
 
   $('#analyticsKicker').textContent = t('analytics.kicker');
@@ -339,7 +363,9 @@ function applyStaticText() {
 
   $('#backtestReviewModalTitle').textContent = t('backtest.review.modalTitle');
   $('#backtestReviewModalDescription').textContent = t('backtest.review.modalDescription');
-  $('#backtestReviewStatusLabel').textContent = t('backtest.review.statusLabel');
+  $('#backtestReviewStatusLabel').textContent = t('backtest.review.decisionLabel');
+  const backtestReviewOutcomeLabel = $('#backtestReviewOutcomeLabel');
+  if (backtestReviewOutcomeLabel) backtestReviewOutcomeLabel.textContent = t('backtest.review.outcomeLabel');
   $('#backtestReviewResultLabel').textContent = t('backtest.review.resultLabel');
   $('#backtestReviewNoteLabel').textContent = t('backtest.review.noteLabel');
   $('#saveBacktestReviewBtn').textContent = t('backtest.review.save');

@@ -32,8 +32,11 @@ const {
   matchesBacktestFilters,
   normalizeSession,
   normalizeSymbol,
+  normalizeTimeframe,
+  normalizeIndicatorSignal,
   importBacktestSignals,
 } = require('../lib/cisd-signals');
+const { fileSignature, signatureKey, hasFileChanged, retryDelay } = require('../lib/backtest-capture');
 const { serializeDecisions } = require('../lib/backtest-decisions');
 const { buildFactorBreakdown, evaluateCombination, findComboLeaders, factorValue } = require('../lib/engines/backtest-factors');
 const { createStore } = require('../lib/store');
@@ -50,13 +53,33 @@ for (const tz of ['Asia/Singapore', 'America/New_York', 'Asia/Damascus']) {
   assert.equal(winter.toISOString(), '2026-01-15T14:00:00.000Z', `${tz}: January (EST) 09:00 NY = 14:00Z`);
 }
 
+// Indicator/Excel-compatible fallbacks: the source is ISO, but a CSV viewed or
+// exported through Excel can expose M/D/YYYY and turn +Cisd into #NAME?.
+const slashTime = parseSignalTimestamp({ SignalTimeNY: '1/2/2026 8:30' });
+assert.equal(slashTime.toISOString(), '2026-01-02T13:30:00.000Z', 'M/D/YYYY H:mm is interpreted as a New York wall clock');
+assert.equal(
+  normalizeIndicatorSignal({ SignalID: 'XAU_USD_15m_SELL_1767359700000', Direction: '#NAME?' }).Direction,
+  '-Cisd',
+  'a corrupted Excel direction falls back to the BUY/SELL token in SignalID'
+);
+
+const signatureA = fileSignature({ size: 10, mtimeMs: 100, ctimeMs: 100 });
+const signatureB = fileSignature({ size: 11, mtimeMs: 100, ctimeMs: 100 });
+assert.equal(signatureKey(signatureA), '10:100:100');
+assert.ok(hasFileChanged(signatureA, signatureB), 'an appended row changes the capture fingerprint');
+assert.equal(retryDelay(0), 250);
+assert.equal(retryDelay(99), 4000);
+
 // --- 2) Symbol normalization: XAU/USD matches a XAUUSD filter ---------------
 assert.equal(normalizeSymbol('XAU/USD'), 'XAUUSD');
 assert.equal(normalizeSymbol('xau.usd'), 'XAUUSD');
+assert.equal(normalizeTimeframe('15'), '15m');
+assert.equal(normalizeTimeframe('M15'), '15m');
+assert.equal(normalizeTimeframe('1H'), '60m');
 assert.ok(
   matchesBacktestFilters(
     { SignalTimeNY: '2026-07-24 08:15', Session: 'London', Instrument: 'XAU/USD', TF: '15m' },
-    { start: '2026-07-24', end: '2026-07-24', session: 'London', symbol: 'XAUUSD', tf: '15m' }
+    { start: '2026-07-24', end: '2026-07-24', session: 'London', symbol: 'XAUUSD', tf: '15' }
   ),
   'the indicator writes XAU/USD; the trader types XAUUSD — they must match'
 );
@@ -94,6 +117,38 @@ for (const tz of ['Asia/Singapore', 'America/New_York']) {
   );
 }
 
+// New York calendar boundaries must remain correct on 23-hour and 25-hour
+// daylight-saving days; adding a fixed 24 hours would leak into the adjacent
+// date in March and cut off the final hour in November.
+assert.ok(
+  matchesBacktestFilters(
+    { SignalTimeNY: '2026-03-08 23:59', Session: 'NY', Instrument: 'XAUUSD', TF: '15m' },
+    { start: '2026-03-08', end: '2026-03-08' }
+  ),
+  'the DST-start day includes its final New York minute'
+);
+assert.ok(
+  !matchesBacktestFilters(
+    { SignalTimeNY: '2026-03-09 00:00', Session: 'NY', Instrument: 'XAUUSD', TF: '15m' },
+    { start: '2026-03-08', end: '2026-03-08' }
+  ),
+  'the day after DST start is outside the selected date'
+);
+assert.ok(
+  matchesBacktestFilters(
+    { SignalTimeNY: '2026-11-01 23:59', Session: 'NY', Instrument: 'XAUUSD', TF: '15m' },
+    { start: '2026-11-01', end: '2026-11-01' }
+  ),
+  'the DST-end day includes its repeated final hour'
+);
+assert.ok(
+  !matchesBacktestFilters(
+    { SignalTimeNY: '2026-11-02 00:00', Session: 'NY', Instrument: 'XAUUSD', TF: '15m' },
+    { start: '2026-11-01', end: '2026-11-01' }
+  ),
+  'the day after DST end is outside the selected date'
+);
+
 // --- 4) Occurrence keys are stable across machines (de-dup survives sync) -----
 process.env.TZ = 'Asia/Singapore';
 const csv = [
@@ -130,7 +185,30 @@ const occurrenceB = stateB.backtestSignals[0];
 assert.equal(occurrenceA.signalAt, occurrenceB.signalAt, 'the stored instant must not depend on the PC timezone');
 assert.equal(occurrenceA.occurrenceKey, occurrenceB.occurrenceKey, 'de-dup keys must not depend on the PC timezone');
 
-// --- 5) Decisions bridge: chart vocabulary + backtest priority ---------------
+// --- 5) Indicator append-only order ------------------------------------------
+// The indicator appends a historical Replay row at the bottom of the CSV. The
+// importer must still accept it and the renderer can sort the resulting rows by
+// signalAt afterwards.
+const indicatorCsv = [
+  'SignalID,SignalTimeNY,WaveStartTimeNY,Date,Day,Session,Instrument,TF,Direction,Grade,Score,Trend,Fib,MS,HTF,MomVol,Confirmed',
+  'XAU_USD_15m_SELL_1767663900000,2026-01-06 03:45:00,2026-01-06 03:30:00,2026-01-06,Tuesday,London,XAU/USD,15m,-Cisd,Standard,2/2,-,1,-,-,1,1',
+  'XAU_USD_15m_SELL_1767359700000,1/2/2026 8:30,1/2/2026 7:45,1/2/2026,Friday,NY,XAU/USD,15m,#NAME?,Standard,2/2,-,1,-,-,1,1',
+].join('\n');
+const indicatorState = freshState();
+const indicatorResult = importBacktestSignals(
+  indicatorState,
+  indicatorCsv,
+  { id: 'bt-indicator', accountId: 'a1', filters: { start: '2026-01-02', end: '2026-01-06', symbol: 'XAUUSD', tf: '15' } }
+);
+assert.equal(indicatorResult.count, 2, 'both an ISO row and an appended M/D/YYYY row are imported');
+assert.equal(indicatorState.backtestSignals[1].Direction, '-Cisd', 'direction survives the Excel #NAME? display');
+assert.deepEqual(
+  indicatorState.backtestSignals.map((item) => item.signalAt).sort(),
+  ['2026-01-02T13:30:00.000Z', '2026-01-06T08:45:00.000Z'],
+  'signal order is independent of the CSV row order'
+);
+
+// --- 6) Decisions bridge: chart vocabulary + backtest priority ---------------
 const decisionState = {
   signals: [
     { SignalID: 'SIG-LIVE-1', decisions: { a1: { status: 'EXECUTED' } } },
@@ -190,13 +268,29 @@ assert.equal(factorValue({ Trend: '0' }, 'Trend'), 'failed');
 const { buildAccountAnalyticsSnapshot } = require('../lib/engines/analytics');
 const analyticsState = store.initial();
 analyticsState.accounts = [{ id: 'a1', capital: 1000, currentBalance: 1000 }];
-analyticsState.trades = [];
+analyticsState.trades = [{
+  accountId: 'a1',
+  backtestId: 'bt-1',
+  source: 'BACKTEST_MANUAL',
+  symbol: 'XAUUSD',
+  side: 'Buy',
+  session: 'London',
+  date: '2026-07-21',
+  resultR: 2,
+}];
 analyticsState.openPositions = [];
-analyticsState.backtests = [{ id: 'bt-1', accountId: 'a1', name: 't', status: 'ACTIVE' }];
+analyticsState.backtests = [{
+  id: 'bt-1',
+  accountId: 'a1',
+  name: 't',
+  status: 'ACTIVE',
+  filters: { symbol: 'XAUUSD', tf: '15m' },
+}];
 analyticsState.backtestSignals = [
   // Deliberately unsorted input: the 22nd arrives before the 20th.
   { backtestId: 'bt-1', status: 'LOSS', resultR: -1, signalAt: '2026-07-22T12:00:00.000Z', importedAt: '2026-07-30T00:00:00.000Z', Instrument: 'XAU/USD', Direction: '+Cisd', Session: 'London' },
   { backtestId: 'bt-1', status: 'WIN', resultR: 1, signalAt: '2026-07-20T12:00:00.000Z', importedAt: '2026-07-30T00:00:00.000Z', Instrument: 'XAU/USD', Direction: '+Cisd', Session: 'London' },
+  { backtestId: 'bt-1', status: 'WIN', resultR: null, signalAt: '2026-07-21T12:00:00.000Z', importedAt: '2026-07-30T00:00:00.000Z', Instrument: 'XAU/USD', Direction: '+Cisd', Session: 'London' },
 ];
 const snapshot = buildAccountAnalyticsSnapshot(analyticsState, 'a1', { timezone: 'America/New_York' });
 const backtestEvents = (snapshot.events || []).filter((event) => event.kind === 'backtest');
@@ -206,5 +300,12 @@ assert.ok(
   'event ordering follows signalAt (20th then 22nd), not the shared import instant (30th)'
 );
 assert.ok(backtestEvents.every((event) => event.date.startsWith('2026-07-2') && !event.date.endsWith('30')), 'event dates come from signalAt, not importedAt');
+const comparison = snapshot.backtestComparison.find((item) => item.id === 'bt-1');
+assert.equal(comparison.symbol, 'XAUUSD', 'backtest comparison reads symbol/timeframe from session filters');
+assert.equal(comparison.timeframe, '15m');
+assert.equal(comparison.reviewed, 2, 'legacy scored statuses without an R result stay out of comparison math');
+assert.equal(comparison.manualTrades, 1, 'manual trades are attached to the backtest session');
+assert.equal(comparison.executedTrades, 3, 'signal reviews and manual trades form one session comparison');
+assert.equal(comparison.netResult, 2, 'manual R is included once in the backtest comparison');
 
-console.log('Backtest Upgrade QA: PASS (NY-time parsing stability, symbol/session normalization, decisions bridge, factor attribution, signalAt equity)');
+console.log('Backtest Upgrade QA: PASS (NY-time/DST parsing, symbol/session normalization, decisions bridge, factor attribution, signalAt analytics)');

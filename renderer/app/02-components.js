@@ -164,7 +164,7 @@ function renderBreakdown(containerSelector, items, type = 'default') {
             <div class="breakdown-head">
               <div>
                 <div class="item-title">${escapeHtml(item.name)}</div>
-                <div class="breakdown-meta">${escapeHtml(item.symbol || item.type || '')} · ${item.reviewed}/${item.totalSignals} ${escapeHtml(t('analytics.columns.reviewed'))}</div>
+                <div class="breakdown-meta">${escapeHtml(item.symbol || item.type || '')} · ${item.reviewed}/${item.totalSignals} ${escapeHtml(t('analytics.columns.reviewed'))}${item.manualTrades ? ` · ${item.manualTrades} ${escapeHtml(t('analytics.columns.manual'))}` : ''}</div>
               </div>
               <div class="${classForSigned(item.netResult)}">${item.netResult > 0 ? '+' : ''}${formatNumber(item.netResult, 2)}R</div>
             </div>
