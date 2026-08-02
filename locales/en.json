@@ -233,6 +233,7 @@
       "defaultName": "Untitled Backtest",
       "defaultCsvHint": "Uses live CSV by default",
       "dateRequired": "Pick start and end dates - must match JForex Replay period",
+      "dateOrder": "Start date must be before or equal to end date.",
       "csvLabel": "Backtest CSV (optional)",
       "csvHint": "If empty, uses live file but filters only your chosen period to match JForex",
       "chooseCsv": "Choose Backtest CSV",

@@ -38,7 +38,7 @@ contextBridge.exposeInMainWorld('cisd', {
   updateBacktest: (id, patch) => ipcRenderer.invoke('backtest:update', id, patch),
   archiveBacktest: (id) => ipcRenderer.invoke('backtest:archive', id),
   resetBacktest: (id) => ipcRenderer.invoke('backtest:reset', id),
-  stopBacktest: () => ipcRenderer.invoke('backtest:stop'),
+  stopBacktest: (id) => ipcRenderer.invoke('backtest:stop', id),
   refreshBacktest: (id) => ipcRenderer.invoke('backtest:refresh', id),
   setBacktestCapture: (id, enabled) => ipcRenderer.invoke('backtest:capture', id, enabled),
   getBacktestFactors: (id, options) => ipcRenderer.invoke('backtest:factors', id, options),

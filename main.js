@@ -157,7 +157,10 @@ function syncSignalsFromFile() {
 }
 
 function watchSignalsFile() {
-  if (signalWatchPath) fs.unwatchFile(signalWatchPath);
+  // Remove only the live-signal listener. Backtest capture may watch the same
+  // CSV, and fs.unwatchFile(path) without a listener removes those listeners
+  // too, silently stopping Replay capture when the live CSV is changed.
+  if (signalWatchPath) fs.unwatchFile(signalWatchPath, syncSignalsFromFile);
   signalWatchPath = read().settings.csvPath;
   if (signalWatchPath) fs.watchFile(signalWatchPath, { interval: 2000 }, syncSignalsFromFile);
   syncSignalsFromFile();
@@ -175,7 +178,8 @@ function watchSignalsFile() {
 function stopBacktestCapture(id) {
   const watched = backtestWatchers.get(id);
   if (watched) {
-    fs.unwatchFile(watched);
+    // Keep listeners independent when several sessions watch the same CSV.
+    fs.unwatchFile(watched.path, watched.listener);
     backtestWatchers.delete(id);
   }
 }
@@ -183,25 +187,33 @@ function stopBacktestCapture(id) {
 function startBacktestCapture(id) {
   const data = read();
   const backtest = (data.backtests || []).find((item) => item.id === id);
-  if (!backtest || backtest.status !== 'ACTIVE' || backtest.captureEnabled === false) return;
+  if (!backtest || backtest.status !== 'ACTIVE' || backtest.captureEnabled === false) {
+    stopBacktestCapture(id);
+    return;
+  }
 
   let csvPath = backtest.sourceCsvPath || backtest.backtestCsvPath || '';
   if (!csvPath || !fs.existsSync(csvPath)) {
     csvPath = data.settings?.csvPath && fs.existsSync(data.settings.csvPath) ? data.settings.csvPath : '';
   }
-  if (!csvPath) return;
-  if (backtestWatchers.get(id) === csvPath) return;
+  if (!csvPath) {
+    stopBacktestCapture(id);
+    return;
+  }
+  const watched = backtestWatchers.get(id);
+  if (watched?.path === csvPath) return;
 
   stopBacktestCapture(id);
-  backtestWatchers.set(id, csvPath);
-  fs.watchFile(csvPath, { interval: 2000 }, () => {
+  const listener = () => {
     try {
       const result = importBacktestSessionSignals(id, { recordNoop: true });
       if (result.count > 0) sendStateChanged(result.state);
     } catch (error) {
       logError('backtestCapture', error);
     }
-  });
+  };
+  backtestWatchers.set(id, { path: csvPath, listener });
+  fs.watchFile(csvPath, { interval: 2000 }, listener);
 }
 
 function syncBacktestCaptureWatchers() {
@@ -222,8 +234,8 @@ function syncBacktestCaptureWatchers() {
  * signals CSV the journal knows about, so chart labels (✓ ENTERED / × SKIPPED
  * / — IGNORED) mirror the reviews made here — live chart and replay alike.
  */
-function syncDecisionsBridge(data) {
-  const targets = new Set();
+function syncDecisionsBridge(data, extraPaths = []) {
+  const targets = new Set(extraPaths.filter(Boolean));
   if (data.settings?.csvPath) targets.add(data.settings.csvPath);
   for (const backtest of data.backtests || []) {
     if (backtest.sourceCsvPath) targets.add(backtest.sourceCsvPath);
@@ -839,9 +851,13 @@ function registerHandlers() {
     data.trades = data.trades.filter((item) => item.accountId !== accountId);
     data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== accountId);
 
-    const backtestIds = data.backtests.filter((item) => item.accountId === accountId).map((item) => item.id);
+    const removedBacktests = data.backtests.filter((item) => item.accountId === accountId);
+    const backtestIds = removedBacktests.map((item) => item.id);
+    const removedDecisionPaths = removedBacktests.flatMap((item) => [item.sourceCsvPath, item.backtestCsvPath]);
+    for (const backtestId of backtestIds) stopBacktestCapture(backtestId);
     data.backtests = data.backtests.filter((item) => item.accountId !== accountId);
     data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    if (backtestIds.includes(data.activeBacktestId)) data.activeBacktestId = null;
     data.daily = data.daily.filter((item) => item.accountId !== accountId);
 
     const account = data.accounts.find((item) => item.id === accountId);
@@ -852,6 +868,8 @@ function registerHandlers() {
     }
 
     save(data);
+    syncBacktestCaptureWatchers();
+    syncDecisionsBridge(data, removedDecisionPaths);
     return data;
   });
 
@@ -905,9 +923,13 @@ function registerHandlers() {
 
     closeFundedNextWatcher(id);
 
-    const backtestIds = (data.backtests || []).filter((item) => item.accountId === id).map((item) => item.id);
+    const removedBacktests = (data.backtests || []).filter((item) => item.accountId === id);
+    const backtestIds = removedBacktests.map((item) => item.id);
+    const removedDecisionPaths = removedBacktests.flatMap((item) => [item.sourceCsvPath, item.backtestCsvPath]);
+    for (const backtestId of backtestIds) stopBacktestCapture(backtestId);
     data.backtests = (data.backtests || []).filter((item) => item.accountId !== id);
     data.backtestSignals = (data.backtestSignals || []).filter((item) => !backtestIds.includes(item.backtestId));
+    if (backtestIds.includes(data.activeBacktestId)) data.activeBacktestId = null;
     data.trades = (data.trades || []).filter((item) => item.accountId !== id);
     data.openPositions = (data.openPositions || []).filter((item) => item.accountId !== id);
     data.daily = (data.daily || []).filter((item) => item.accountId !== id);
@@ -930,13 +952,16 @@ function registerHandlers() {
     }
 
     save(data);
+    syncBacktestCaptureWatchers();
+    syncDecisionsBridge(data, removedDecisionPaths);
     return data;
   });
 
   ipcMain.handle('backtest:start', (_, payload) => {
     const data = read();
     // إذا اختار المستخدم ملف CSV خاص بالباكتيست (من Replay JForex)، استخدمه، وإلا استخدم الملف الحي
-    const csvPath = payload.backtestCsvPath && fs.existsSync(payload.backtestCsvPath) ? payload.backtestCsvPath : ensureCsvPath(data);
+    const requestedCsvPath = payload.backtestCsvPath && fs.existsSync(payload.backtestCsvPath) ? payload.backtestCsvPath : '';
+    const csvPath = requestedCsvPath || ensureCsvPath(data);
     const backtest = {
       ...payload,
       id: crypto.randomUUID(),
@@ -945,7 +970,7 @@ function registerHandlers() {
       createdAt: new Date().toISOString(),
       accountId: payload.accountId,
       sourceCsvPath: csvPath,
-      backtestCsvPath: payload.backtestCsvPath || '',
+      backtestCsvPath: requestedCsvPath,
       filters: {
         start: payload.start || '',
         end: payload.end || '',
@@ -976,17 +1001,29 @@ function registerHandlers() {
       if (patch.filters && patch.filters[key] !== undefined) nextFilters[key] = patch.filters[key];
     }
     const filtersChanged = JSON.stringify(nextFilters) !== JSON.stringify(backtest.filters || {});
+    const previousDecisionPaths = [backtest.sourceCsvPath, backtest.backtestCsvPath];
+    const previousSourceCsvPath = backtest.sourceCsvPath || '';
 
     if (patch.name !== undefined) backtest.name = String(patch.name || '').trim();
     if (patch.backtestCsvPath !== undefined) {
-      backtest.backtestCsvPath = patch.backtestCsvPath || '';
-      if (patch.backtestCsvPath && fs.existsSync(patch.backtestCsvPath)) backtest.sourceCsvPath = patch.backtestCsvPath;
+      const requestedCsvPath = String(patch.backtestCsvPath || '').trim();
+      backtest.backtestCsvPath = requestedCsvPath && fs.existsSync(requestedCsvPath) ? requestedCsvPath : '';
+      // Clearing a custom Replay file must return the session to the current
+      // live CSV. Keeping the old sourceCsvPath here made the UI appear to
+      // clear the file while every re-import still read the old file.
+      backtest.sourceCsvPath = backtest.backtestCsvPath
+        || (data.settings?.csvPath && fs.existsSync(data.settings.csvPath) ? data.settings.csvPath : '');
     }
+    const sourceChanged = patch.backtestCsvPath !== undefined && backtest.sourceCsvPath !== previousSourceCsvPath;
     if (patch.captureEnabled !== undefined) backtest.captureEnabled = Boolean(patch.captureEnabled);
     backtest.filters = nextFilters;
     backtest.updatedAt = new Date().toISOString();
 
-    if (filtersChanged) {
+    if (sourceChanged) {
+      // A different Replay file is a different sample universe. Do not leave
+      // reviewed occurrences from the old file mixed into the new session.
+      data.backtestSignals = (data.backtestSignals || []).filter((signal) => signal.backtestId !== id);
+    } else if (filtersChanged) {
       data.backtestSignals = (data.backtestSignals || []).filter(
         (signal) => signal.backtestId !== id || matchesBacktestFilters(signal, nextFilters)
       );
@@ -995,6 +1032,7 @@ function registerHandlers() {
     save(data);
     syncBacktestCaptureWatchers();
     if (filtersChanged || patch.backtestCsvPath !== undefined) {
+      syncDecisionsBridge(data, previousDecisionPaths);
       return importBacktestSessionSignals(id, { recordNoop: true });
     }
     return { state: data, count: 0 };
@@ -1026,26 +1064,35 @@ function registerHandlers() {
     const data = read();
     const backtest = data.backtests.find((item) => item.id === id);
     if (backtest) backtest.status = 'ARCHIVED';
+    if (data.activeBacktestId === id) data.activeBacktestId = null;
     save(data);
     syncBacktestCaptureWatchers();
+    syncDecisionsBridge(data);
     return data;
   });
 
   ipcMain.handle('backtest:reset', (_, id) => {
     const data = read();
+    const removedBacktest = data.backtests.find((item) => item.id === id);
+    const removedDecisionPaths = removedBacktest ? [removedBacktest.sourceCsvPath, removedBacktest.backtestCsvPath] : [];
     data.backtestSignals = (data.backtestSignals || []).filter((item) => item.backtestId !== id);
     data.backtests = data.backtests.filter((item) => item.id !== id);
     if (data.activeBacktestId === id) data.activeBacktestId = null;
     stopBacktestCapture(id);
     save(data);
+    syncDecisionsBridge(data, removedDecisionPaths);
     return data;
   });
 
-  ipcMain.handle('backtest:stop', () => {
+  ipcMain.handle('backtest:stop', (_, id = '') => {
     const data = read();
-    const active = data.backtests.find((item) => item.id === data.activeBacktestId);
+    // The library renders a finish action on each session. Target the clicked
+    // session when supplied; the activeBacktestId fallback keeps older callers
+    // compatible and avoids finishing the wrong session.
+    const targetId = id || data.activeBacktestId;
+    const active = data.backtests.find((item) => item.id === targetId);
     if (active) active.status = 'FINISHED';
-    data.activeBacktestId = null;
+    if (data.activeBacktestId === targetId) data.activeBacktestId = null;
     save(data);
     syncBacktestCaptureWatchers();
     return data;

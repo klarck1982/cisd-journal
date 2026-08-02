@@ -94,6 +94,38 @@ for (const tz of ['Asia/Singapore', 'America/New_York']) {
   );
 }
 
+// New York calendar boundaries must remain correct on 23-hour and 25-hour
+// daylight-saving days; adding a fixed 24 hours would leak into the adjacent
+// date in March and cut off the final hour in November.
+assert.ok(
+  matchesBacktestFilters(
+    { SignalTimeNY: '2026-03-08 23:59', Session: 'NY', Instrument: 'XAUUSD', TF: '15m' },
+    { start: '2026-03-08', end: '2026-03-08' }
+  ),
+  'the DST-start day includes its final New York minute'
+);
+assert.ok(
+  !matchesBacktestFilters(
+    { SignalTimeNY: '2026-03-09 00:00', Session: 'NY', Instrument: 'XAUUSD', TF: '15m' },
+    { start: '2026-03-08', end: '2026-03-08' }
+  ),
+  'the day after DST start is outside the selected date'
+);
+assert.ok(
+  matchesBacktestFilters(
+    { SignalTimeNY: '2026-11-01 23:59', Session: 'NY', Instrument: 'XAUUSD', TF: '15m' },
+    { start: '2026-11-01', end: '2026-11-01' }
+  ),
+  'the DST-end day includes its repeated final hour'
+);
+assert.ok(
+  !matchesBacktestFilters(
+    { SignalTimeNY: '2026-11-02 00:00', Session: 'NY', Instrument: 'XAUUSD', TF: '15m' },
+    { start: '2026-11-01', end: '2026-11-01' }
+  ),
+  'the day after DST end is outside the selected date'
+);
+
 // --- 4) Occurrence keys are stable across machines (de-dup survives sync) -----
 process.env.TZ = 'Asia/Singapore';
 const csv = [
@@ -192,11 +224,18 @@ const analyticsState = store.initial();
 analyticsState.accounts = [{ id: 'a1', capital: 1000, currentBalance: 1000 }];
 analyticsState.trades = [];
 analyticsState.openPositions = [];
-analyticsState.backtests = [{ id: 'bt-1', accountId: 'a1', name: 't', status: 'ACTIVE' }];
+analyticsState.backtests = [{
+  id: 'bt-1',
+  accountId: 'a1',
+  name: 't',
+  status: 'ACTIVE',
+  filters: { symbol: 'XAUUSD', tf: '15m' },
+}];
 analyticsState.backtestSignals = [
   // Deliberately unsorted input: the 22nd arrives before the 20th.
   { backtestId: 'bt-1', status: 'LOSS', resultR: -1, signalAt: '2026-07-22T12:00:00.000Z', importedAt: '2026-07-30T00:00:00.000Z', Instrument: 'XAU/USD', Direction: '+Cisd', Session: 'London' },
   { backtestId: 'bt-1', status: 'WIN', resultR: 1, signalAt: '2026-07-20T12:00:00.000Z', importedAt: '2026-07-30T00:00:00.000Z', Instrument: 'XAU/USD', Direction: '+Cisd', Session: 'London' },
+  { backtestId: 'bt-1', status: 'WIN', resultR: null, signalAt: '2026-07-21T12:00:00.000Z', importedAt: '2026-07-30T00:00:00.000Z', Instrument: 'XAU/USD', Direction: '+Cisd', Session: 'London' },
 ];
 const snapshot = buildAccountAnalyticsSnapshot(analyticsState, 'a1', { timezone: 'America/New_York' });
 const backtestEvents = (snapshot.events || []).filter((event) => event.kind === 'backtest');
@@ -206,5 +245,10 @@ assert.ok(
   'event ordering follows signalAt (20th then 22nd), not the shared import instant (30th)'
 );
 assert.ok(backtestEvents.every((event) => event.date.startsWith('2026-07-2') && !event.date.endsWith('30')), 'event dates come from signalAt, not importedAt');
+const comparison = snapshot.backtestComparison.find((item) => item.id === 'bt-1');
+assert.equal(comparison.symbol, 'XAUUSD', 'backtest comparison reads symbol/timeframe from session filters');
+assert.equal(comparison.timeframe, '15m');
+assert.equal(comparison.reviewed, 2, 'legacy scored statuses without an R result stay out of comparison math');
+assert.equal(comparison.netResult, 0, 'comparison net follows signalAt-ordered scored outcomes');
 
-console.log('Backtest Upgrade QA: PASS (NY-time parsing stability, symbol/session normalization, decisions bridge, factor attribution, signalAt equity)');
+console.log('Backtest Upgrade QA: PASS (NY-time/DST parsing, symbol/session normalization, decisions bridge, factor attribution, signalAt analytics)');

@@ -75,6 +75,10 @@ async function startBacktest(event) {
     toast(t('backtest.create.dateRequired') || 'اختر تاريخ البداية والنهاية ليطابق JForex Replay', 'warn');
     return;
   }
+  if (payload.start > payload.end) {
+    toast(t('backtest.create.dateOrder') || 'يجب أن يكون تاريخ البداية قبل تاريخ النهاية', 'warn');
+    return;
+  }
   try {
     if (model.editingBacktestId) {
       await runBusy(t('ui.loading'), () =>

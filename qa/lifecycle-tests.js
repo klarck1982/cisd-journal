@@ -176,6 +176,9 @@ function runHandler(channel, state, args = []) {
     fs: { existsSync: () => false, unlinkSync: () => {} },
     logError: () => {},
     closeFundedNextWatcher: () => {},
+    stopBacktestCapture: () => {},
+    syncBacktestCaptureWatchers: () => {},
+    syncDecisionsBridge: () => {},
     accountSecretFile: () => '/tmp/none.bin',
     getBundle: () => ({ errors: {} }),
     createPlaybook: (payload) => payload,
@@ -296,7 +299,23 @@ function runHandler(channel, state, args = []) {
   assert.equal(state.accounts[0].archived, false, 'archiving must be reversible');
 }
 
-// --- 6) onboardingComplete is actually consumed by the renderer --------------
+// --- 6) stopping a session targets the clicked card --------------------------
+{
+  const state = {
+    backtests: [
+      { id: 'bt-active', status: 'ACTIVE' },
+      { id: 'bt-other', status: 'ACTIVE' },
+    ],
+    activeBacktestId: 'bt-active',
+    settings: {},
+  };
+  runHandler('backtest:stop', state, ['bt-other']);
+  assert.equal(state.backtests[0].status, 'ACTIVE', 'finishing another session must not finish the active one');
+  assert.equal(state.backtests[1].status, 'FINISHED', 'the clicked session is the one that becomes finished');
+  assert.equal(state.activeBacktestId, 'bt-active', 'the active session pointer survives a non-active finish');
+}
+
+// --- 7) onboardingComplete is actually consumed by the renderer --------------
 // The flag was written by two handlers and read by nothing, so "Restart
 // onboarding" reported success and showed no screen.
 {

@@ -63,10 +63,18 @@ function ensureBacktestFactors(sessionId) {
     });
 }
 
+function isBacktestScored(signal) {
+  return BACKTEST_SCORED_STATUSES.has(String(signal?.status || '').toUpperCase())
+    && signal?.resultR !== null
+    && signal?.resultR !== undefined
+    && signal?.resultR !== ''
+    && Number.isFinite(Number(signal.resultR));
+}
+
 function buildBacktestCurvePoints(signals) {
   let equity = 0;
   return signals
-    .filter((signal) => BACKTEST_SCORED_STATUSES.has(String(signal.status || '').toUpperCase()))
+    .filter(isBacktestScored)
     .map((signal) => {
       equity += Number(signal.resultR) || 0;
       return { at: signal.signalAt || signal.importedAt || '', result: Number(signal.resultR) || 0, equity };
@@ -217,7 +225,7 @@ function renderBacktestSpotlight(selected, reviewSignals) {
     return;
   }
   const reviewed = reviewSignals.filter((signal) => BACKTEST_REVIEWED_STATUSES.has(String(signal.status || '').toUpperCase()));
-  const scored = reviewSignals.filter((signal) => BACKTEST_SCORED_STATUSES.has(String(signal.status || '').toUpperCase()));
+  const scored = reviewSignals.filter(isBacktestScored);
   const wins = scored.filter((signal) => String(signal.status).toUpperCase() === 'WIN').length;
   const net = scored.reduce((sum, signal) => sum + (Number(signal.resultR) || 0), 0);
   const avg = scored.length ? net / scored.length : 0;
@@ -245,6 +253,9 @@ function renderBacktestSpotlight(selected, reviewSignals) {
     curveHost.innerHTML = points.length
       ? `<div class="curve-title">${escapeHtml(t('backtest.curve.title'))}</div>${buildCurveSvg(points)}`
       : `<div class="panel-hint">${escapeHtml(t('backtest.curve.empty'))}</div>`;
+    // Reuse the shared hover inspector so every R point exposes its signal
+    // time, individual result and running equity instead of being decorative.
+    if (points.length) bindCurveTooltip('#backtestCurve', 'R');
   }
 }
 
@@ -282,9 +293,9 @@ function renderBacktest() {
         <div class="item-actions">
           <button class="ghost" data-backtest-open="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.open'))}</button>
           <button class="ghost" data-backtest-edit="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.edit'))}</button>
-          <button class="ghost ${capturing ? 'active' : ''}" data-backtest-capture="${escapeHtml(session.id)}" data-enabled="${capturing ? '0' : '1'}" title="${escapeHtml(t('backtest.library.captureHint'))}">${escapeHtml(capturing ? t('backtest.library.captureStop') : t('backtest.library.captureStart'))}</button>
+          ${session.status === 'ACTIVE' ? `<button class="ghost ${capturing ? 'active' : ''}" data-backtest-capture="${escapeHtml(session.id)}" data-enabled="${capturing ? '0' : '1'}" title="${escapeHtml(t('backtest.library.captureHint'))}">${escapeHtml(capturing ? t('backtest.library.captureStop') : t('backtest.library.captureStart'))}</button>` : ''}
           <button class="ghost" data-backtest-refresh="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.refresh'))}</button>
-          ${session.status === 'FINISHED' ? '' : `<button class="ghost" data-backtest-stop="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.stop'))}</button>`}
+          ${session.status === 'ACTIVE' ? `<button class="ghost" data-backtest-stop="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.stop'))}</button>` : ''}
           <button class="ghost" data-backtest-archive="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.archive'))}</button>
           <button class="ghost danger" data-backtest-reset="${escapeHtml(session.id)}">${escapeHtml(t('backtest.library.delete'))}</button>
         </div>
@@ -301,6 +312,9 @@ function renderBacktest() {
   const statusLabel = (status) => {
     const key = String(status || 'NEW').toUpperCase();
     if (key === 'NEW') return t('signals.status.pending');
+    if (key === 'WIN') return t('backtest.review.statuses.win');
+    if (key === 'LOSS') return t('backtest.review.statuses.loss');
+    if (key === 'BE') return t('backtest.review.statuses.be');
     if (key === 'SKIPPED') return t('backtest.review.statuses.skipped');
     if (key === 'MISSED') return t('backtest.review.statuses.missed');
     return key;
@@ -390,7 +404,7 @@ function renderBacktest() {
         confirmLabel: t('backtest.library.stop'),
       });
       if (!ok) return;
-      await runBusy(t('ui.loading'), () => cisd.stopBacktest());
+      await runBusy(t('ui.loading'), () => cisd.stopBacktest(button.dataset.backtestStop));
       await refreshStateAndRender();
       toast(t('backtest.library.stopped'), 'success');
     };
